@@ -1,0 +1,1587 @@
+<?xml version="1.0"?>
+<site-list version="9.7">
+ <site url="%2A.climespace.net">
+  <compat-mode>Default</compat-mode>
+  <open-in>IE11</open-in>
+ </site>
+ <site url="%2Agedt-opidis.myengie.com">
+  <compat-mode>Default</compat-mode>
+  <open-in>IE11</open-in>
+ </site>
+ <site url="10.10.71.12">
+  <compat-mode>Default</compat-mode>
+  <open-in>IE11</open-in>
+ </site>
+ <site url="10.10.71.12/genesis64/components">
+  <compat-mode>Default</compat-mode>
+  <open-in>IE11</open-in>
+ </site>
+ <site url="10.211.219.113">
+  <compat-mode>Default</compat-mode>
+  <open-in>IE11</open-in>
+ </site>
+ <site url="10.254.164.65/avon_live">
+  <compat-mode>IE8Enterprise</compat-mode>
+  <open-in>IE11</open-in>
+ </site>
+ <site url="10.254.164.65/avon_test">
+  <compat-mode>IE8Enterprise</compat-mode>
+  <open-in>IE11</open-in>
+ </site>
+ <site url="10.254.164.65/dedisa_live">
+  <compat-mode>IE8Enterprise</compat-mode>
+  <open-in>IE11</open-in>
+ </site>
+ <site url="10.254.164.65/dedisa_test">
+  <compat-mode>IE8Enterprise</compat-mode>
+  <open-in>IE11</open-in>
+ </site>
+ <site url="10.43.7.117">
+  <compat-mode>Default</compat-mode>
+  <open-in>IE11</open-in>
+ </site>
+ <site url="10.64.133.148">
+  <compat-mode>IE8Enterprise</compat-mode>
+  <open-in>IE11</open-in>
+ </site>
+ <site url="10.64.133.153">
+  <compat-mode>IE8Enterprise</compat-mode>
+  <open-in>IE11</open-in>
+ </site>
+ <site url="10.64.133.250">
+  <compat-mode>IE8Enterprise</compat-mode>
+  <open-in>IE11</open-in>
+ </site>
+ <site url="10.64.133.251">
+  <compat-mode>IE8Enterprise</compat-mode>
+  <open-in>IE11</open-in>
+ </site>
+ <site url="192.168.1.2">
+  <compat-mode>Default</compat-mode>
+  <open-in>IE11</open-in>
+ </site>
+ <site url="193.252.182.89">
+  <compat-mode>Default</compat-mode>
+  <open-in>IE11</open-in>
+ </site>
+ <site url="2020.engie-cofely.fr">
+  <compat-mode>IE11</compat-mode>
+  <open-in>IE11</open-in>
+ </site>
+ <site url="80.13.140.121">
+  <compat-mode>Default</compat-mode>
+  <open-in>IE11</open-in>
+ </site>
+ <site url="80.13.147.75">
+  <compat-mode>Default</compat-mode>
+  <open-in>IE11</open-in>
+ </site>
+ <site url="80.13.203.28">
+  <compat-mode>Default</compat-mode>
+  <open-in>IE11</open-in>
+ </site>
+ <site url="80.14.32.59">
+  <compat-mode>Default</compat-mode>
+  <open-in>IE11</open-in>
+ </site>
+ <site url="80.14.61.206">
+  <compat-mode>Default</compat-mode>
+  <open-in>IE11</open-in>
+ </site>
+ <site url="91.151.126.18/13_08_13_13929">
+  <compat-mode>Default</compat-mode>
+  <open-in>IE11</open-in>
+ </site>
+ <site url="admin-is.flexiblecontactcenter.orange-business">
+  <compat-mode>IE10</compat-mode>
+  <open-in>IE11</open-in>
+ </site>
+ <site url="anweb401">
+  <compat-mode>IE8Enterprise</compat-mode>
+  <open-in>IE11</open-in>
+ </site>
+ <site url="anweb402">
+  <compat-mode>IE8Enterprise</compat-mode>
+  <open-in>IE11</open-in>
+ </site>
+ <site url="anweb403">
+  <compat-mode>IE8Enterprise</compat-mode>
+  <open-in>IE11</open-in>
+ </site>
+ <site url="app.creditrisk.pdm.gem.myengie.com/adaptiv">
+  <compat-mode>Default</compat-mode>
+  <open-in>IE11</open-in>
+ </site>
+ <site url="aso-it-support.prd.apps.telenet.be">
+  <compat-mode>IE8Enterprise</compat-mode>
+  <open-in>IE11</open-in>
+ </site>
+ <site url="avis-situation-sirene.insee.fr">
+  <compat-mode>Default</compat-mode>
+  <open-in>MSEdge</open-in>
+ </site>
+ <site url="b2b.hp.com">
+  <compat-mode>IE8Enterprise</compat-mode>
+  <open-in>IE11</open-in>
+ </site>
+ <site url="bambelgium.sharepoint.com">
+  <compat-mode>IE8Enterprise</compat-mode>
+  <open-in>IE11</open-in>
+ </site>
+ <site url="bi-foundation-acc.gdfsuez.net">
+  <compat-mode>IE10</compat-mode>
+  <open-in>IE11</open-in>
+ </site>
+ <site url="bi-foundation-dev.gdfsuez.net">
+  <compat-mode>IE10</compat-mode>
+  <open-in>IE11</open-in>
+ </site>
+ <site url="bi-foundation.gdfsuez.net">
+  <compat-mode>IE10</compat-mode>
+  <open-in>IE11</open-in>
+ </site>
+ <site url="bi.d79.tes.local">
+  <compat-mode>IE8Enterprise</compat-mode>
+  <open-in>IE11</open-in>
+ </site>
+ <site url="bidev.d79.tes.local">
+  <compat-mode>IE8Enterprise</compat-mode>
+  <open-in>IE11</open-in>
+ </site>
+ <site url="bun-collab.electrabel.be/sites/begws">
+  <compat-mode>Default</compat-mode>
+  <open-in>IE11</open-in>
+ </site>
+ <site url="bun-collab.electrabel.be/sites/ecnsd">
+  <compat-mode>Default</compat-mode>
+  <open-in>IE11</open-in>
+ </site>
+ <site url="bvs-acc.myengie.com">
+  <compat-mode>Default</compat-mode>
+  <open-in>IE11</open-in>
+ </site>
+ <site url="bvs.myengie.com">
+  <compat-mode>Default</compat-mode>
+  <open-in>IE11</open-in>
+ </site>
+ <site url="ca.epartem.com">
+  <compat-mode>Default</compat-mode>
+  <open-in>IE11</open-in>
+ </site>
+ <site url="cafe.prd.apps.telenet.be">
+  <compat-mode>IE8Enterprise</compat-mode>
+  <open-in>IE11</open-in>
+ </site>
+ <site url="certificate.extragora.com">
+  <compat-mode>IE8Enterprise</compat-mode>
+  <open-in>IE11</open-in>
+ </site>
+ <site url="chronos.d80.tes.local:81">
+  <compat-mode>Default</compat-mode>
+  <open-in>IE11</open-in>
+ </site>
+ <site url="chronos.iuris-link.eu">
+  <compat-mode>Default</compat-mode>
+  <open-in>IE11</open-in>
+ </site>
+ <site url="chronospp:81/tps/chronoslogin.html">
+  <compat-mode>Default</compat-mode>
+  <open-in>IE11</open-in>
+ </site>
+ <site url="clouditsm.osiatis.com">
+  <compat-mode>IE8Enterprise</compat-mode>
+  <open-in>IE11</open-in>
+ </site>
+ <site url="cmapplicationcatalog.skynote.gdfsuez.net">
+  <compat-mode>Default</compat-mode>
+  <open-in>IE11</open-in>
+ </site>
+ <site url="conectividade.caixa.gov.br">
+  <compat-mode>Default</compat-mode>
+  <open-in>IE11</open-in>
+ </site>
+ <site url="connect.telenet.be">
+  <compat-mode>IE8Enterprise</compat-mode>
+  <open-in>IE11</open-in>
+ </site>
+ <site url="connective.eu">
+  <compat-mode>Default</compat-mode>
+  <open-in>MSEdge</open-in>
+ </site>
+ <site url="cpcu.preventiel.fr">
+  <compat-mode>Default</compat-mode>
+  <open-in>IE11</open-in>
+ </site>
+ <site url="csl.cochinshipyard.in">
+  <compat-mode>Default</compat-mode>
+  <open-in>IE11</open-in>
+ </site>
+ <site url="d80gp2.eib.electrabel.be">
+  <compat-mode>IE8Enterprise</compat-mode>
+  <open-in>IE11</open-in>
+ </site>
+ <site url="dcvsva046/tps">
+  <compat-mode>Default</compat-mode>
+  <open-in>IE11</open-in>
+ </site>
+ <site url="decireg-prd-ep.grdf.fr">
+  <compat-mode>Default</compat-mode>
+  <open-in>IE11</open-in>
+ </site>
+ <site url="decireg-rec-ep.grdf.fr">
+  <compat-mode>Default</compat-mode>
+  <open-in>IE11</open-in>
+ </site>
+ <site url="detectmybrowser.com">
+  <compat-mode>IE8Enterprise</compat-mode>
+  <open-in>IE11</open-in>
+ </site>
+ <site url="docs.ewaybillgst.gov.in">
+  <compat-mode>Default</compat-mode>
+  <open-in>IE11</open-in>
+ </site>
+ <site url="dtcahomada09w.prod.par.gaselys.com/adaptiv">
+  <compat-mode>Default</compat-mode>
+  <open-in>IE11</open-in>
+ </site>
+ <site url="dtcahomada10w.prod.par.gaselys.com/adaptiv">
+  <compat-mode>Default</compat-mode>
+  <open-in>IE11</open-in>
+ </site>
+ <site url="dtcaprdada11w/adaptiv">
+  <compat-mode>Default</compat-mode>
+  <open-in>IE11</open-in>
+ </site>
+ <site url="dtcaprdada11w.prod.par.gaselys.com">
+  <compat-mode>Default</compat-mode>
+  <open-in>IE11</open-in>
+ </site>
+ <site url="dtcaprdada11w.prod.par.gaselys.com/adaptiv">
+  <compat-mode>Default</compat-mode>
+  <open-in>IE11</open-in>
+ </site>
+ <site url="dtcaprdada16w.prod.par.gaselys.com/adaptiv">
+  <compat-mode>Default</compat-mode>
+  <open-in>IE11</open-in>
+ </site>
+ <site url="dtcbdrpada10.prod.par.gaselys.com/adaptiv">
+  <compat-mode>Default</compat-mode>
+  <open-in>IE11</open-in>
+ </site>
+ <site url="e-logistic.gdfsuez.com">
+  <compat-mode>Default</compat-mode>
+  <open-in>IE11</open-in>
+ </site>
+ <site url="e-logistics.gdfsuez.net">
+  <compat-mode>Default</compat-mode>
+  <open-in>IE11</open-in>
+ </site>
+ <site url="e3-server/uch2_power_station">
+  <compat-mode>Default</compat-mode>
+  <open-in allow-redirect="true">IE11</open-in>
+ </site>
+ <site url="e3-server/uch_power_station">
+  <compat-mode>Default</compat-mode>
+  <open-in allow-redirect="true">IE11</open-in>
+ </site>
+ <site url="eagleone.gdfsuez.net">
+  <compat-mode>Default</compat-mode>
+  <open-in>IE11</open-in>
+ </site>
+ <site url="eagleone.myengie.com">
+  <compat-mode>Default</compat-mode>
+  <open-in>IE11</open-in>
+ </site>
+ <site url="eagleoneacc.gdfsuez.net">
+  <compat-mode>Default</compat-mode>
+  <open-in>IE11</open-in>
+ </site>
+ <site url="ebl-hp-alm.cms.atrias.be">
+  <compat-mode>Default</compat-mode>
+  <open-in>IE11</open-in>
+ </site>
+ <site url="ec.europa.eu">
+  <compat-mode>Default</compat-mode>
+  <open-in>MSEdge</open-in>
+ </site>
+ <site url="efluid:2180/application/jsp/arc/commun">
+  <compat-mode>Default</compat-mode>
+  <open-in>IE11</open-in>
+ </site>
+ <site url="elbetih-ise001.aaa.myengie.com">
+  <compat-mode>Default</compat-mode>
+  <open-in>IE11</open-in>
+ </site>
+ <site url="en-aws-sql04.d55.tes.local/mds/explorer">
+  <compat-mode>Default</compat-mode>
+  <open-in>IE11</open-in>
+ </site>
+ <site url="enco-acc.myengie.com">
+  <compat-mode>Default</compat-mode>
+  <open-in>IE11</open-in>
+ </site>
+ <site url="enco-dev.myengie.com">
+  <compat-mode>Default</compat-mode>
+  <open-in>IE11</open-in>
+ </site>
+ <site url="enco.myengie.com">
+  <compat-mode>Default</compat-mode>
+  <open-in>IE11</open-in>
+ </site>
+ <site url="endoftheinternet.com">
+  <compat-mode>IE8Enterprise</compat-mode>
+  <open-in>IE11</open-in>
+ </site>
+ <site url="engie.okta-emea.com">
+  <compat-mode>Default</compat-mode>
+  <open-in>NEUTRAL</open-in>
+ </site>
+ <site url="eprocure.gov.in/eprocure">
+  <compat-mode>Default</compat-mode>
+  <open-in>IE11</open-in>
+ </site>
+ <site url="eprocuregrse.co.in/nicgep">
+  <compat-mode>Default</compat-mode>
+  <open-in>IE11</open-in>
+ </site>
+ <site url="eprocurehsl.nic.in">
+  <compat-mode>Default</compat-mode>
+  <open-in>IE11</open-in>
+ </site>
+ <site url="eprocuremdl.nic.in/nicgep">
+  <compat-mode>Default</compat-mode>
+  <open-in>IE11</open-in>
+ </site>
+ <site url="esap549.eib.electrabel.be">
+  <compat-mode>Default</compat-mode>
+  <open-in>IE11</open-in>
+ </site>
+ <site url="esap589.eib.electrabel.be">
+  <compat-mode>Default</compat-mode>
+  <open-in>IE11</open-in>
+ </site>
+ <site url="esirius.myengie.com">
+  <compat-mode>Default</compat-mode>
+  <open-in>IE11</open-in>
+ </site>
+ <site url="etrm.gem.myengie.com">
+  <compat-mode>Default</compat-mode>
+  <open-in>IE11</open-in>
+ </site>
+ <site url="ev1.melinda.local">
+  <compat-mode>Default</compat-mode>
+  <open-in>IE11</open-in>
+ </site>
+ <site url="ev2.melinda.local">
+  <compat-mode>Default</compat-mode>
+  <open-in>IE11</open-in>
+ </site>
+ <site url="ev3.melinda.local">
+  <compat-mode>Default</compat-mode>
+  <open-in>IE11</open-in>
+ </site>
+ <site url="ev4.melinda.local">
+  <compat-mode>Default</compat-mode>
+  <open-in>IE11</open-in>
+ </site>
+ <site url="ewb-acc.myengie.com">
+  <compat-mode>Default</compat-mode>
+  <open-in>IE11</open-in>
+ </site>
+ <site url="faturas.portaldasfinancas.gov.pt">
+  <compat-mode>Default</compat-mode>
+  <open-in>IE11</open-in>
+ </site>
+ <site url="fm0faaac.fabricom-gdfsuez.suez">
+  <compat-mode>IE8Enterprise</compat-mode>
+  <open-in>IE11</open-in>
+ </site>
+ <site url="fm0facac.fabricom-gdfsuez.suez">
+  <compat-mode>IE8Enterprise</compat-mode>
+  <open-in>IE11</open-in>
+ </site>
+ <site url="fm0faeac.fabricom-gdfsuez.suez">
+  <compat-mode>IE8Enterprise</compat-mode>
+  <open-in>IE11</open-in>
+ </site>
+ <site url="fm0fpapc.fabricom-gdfsuez.suez">
+  <compat-mode>IE8Enterprise</compat-mode>
+  <open-in>IE11</open-in>
+ </site>
+ <site url="fm0fpcpc.fabricom-gdfsuez.suez">
+  <compat-mode>IE8Enterprise</compat-mode>
+  <open-in>IE11</open-in>
+ </site>
+ <site url="fm0fpepc.fabricom-gdfsuez.suez">
+  <compat-mode>IE8Enterprise</compat-mode>
+  <open-in>IE11</open-in>
+ </site>
+ <site url="fm0fpepc.fabricom-gdfsuez.suez/irj/portal">
+  <compat-mode>IE8Enterprise</compat-mode>
+  <open-in>IE11</open-in>
+ </site>
+ <site url="fpe.d30.tes.local">
+  <compat-mode>IE8Enterprise</compat-mode>
+  <open-in>IE11</open-in>
+ </site>
+ <site url="gdfsuez.taleo.net">
+  <compat-mode>Default</compat-mode>
+  <open-in>IE11</open-in>
+ </site>
+ <site url="gdfsuez.uft.mft-online.com">
+  <compat-mode>Default</compat-mode>
+  <open-in>IE11</open-in>
+ </site>
+ <site url="gdfsuez.uft.mft-online.com/zephyr/connect">
+  <compat-mode>IE8Enterprise</compat-mode>
+  <open-in>IE11</open-in>
+ </site>
+ <site url="gedt-cav-app.myengie.com">
+  <compat-mode>Default</compat-mode>
+  <open-in>IE11</open-in>
+ </site>
+ <site url="genesis-ppr.cofely-fr.gdfsuez.net">
+  <compat-mode>Default</compat-mode>
+  <open-in>IE11</open-in>
+ </site>
+ <site url="genesis-rec.cofely-fr.gdfsuez.net">
+  <compat-mode>Default</compat-mode>
+  <open-in>IE11</open-in>
+ </site>
+ <site url="grcpro.myengie.com">
+  <compat-mode>Default</compat-mode>
+  <open-in>IE11</open-in>
+ </site>
+ <site url="gta-e-prod.grdf.fr/gta">
+  <compat-mode>Default</compat-mode>
+  <open-in>MSEdge</open-in>
+ </site>
+ <site url="gta-pp.myengie.com/gta">
+  <compat-mode>Default</compat-mode>
+  <open-in>IE11</open-in>
+ </site>
+ <site url="gta.myengie.com">
+  <compat-mode>Default</compat-mode>
+  <open-in>IE11</open-in>
+ </site>
+ <site url="gtadev.myengie.com">
+  <compat-mode>Default</compat-mode>
+  <open-in>IE11</open-in>
+ </site>
+ <site url="gwtoolbar.prd.apps.telenet.be">
+  <compat-mode>IE8Enterprise</compat-mode>
+  <open-in>IE11</open-in>
+ </site>
+ <site url="hpqc-acc.alm.engie-electrabel.be">
+  <compat-mode>Default</compat-mode>
+  <open-in>IE11</open-in>
+ </site>
+ <site url="hpqc.alm.engie-electrabel.be/qcbin">
+  <compat-mode>Default</compat-mode>
+  <open-in>IE11</open-in>
+ </site>
+ <site url="industrialvpn.gdfsuez.net">
+  <compat-mode>Default</compat-mode>
+  <open-in>IE11</open-in>
+ </site>
+ <site url="irebsprdportal.ingersollrand.com">
+  <compat-mode>IE8Enterprise</compat-mode>
+  <open-in>IE11</open-in>
+ </site>
+ <site url="izfs101">
+  <compat-mode>IE8Enterprise</compat-mode>
+  <open-in>IE11</open-in>
+ </site>
+ <site url="klantenservice.prd.apps.telenet.be">
+  <compat-mode>IE8Enterprise</compat-mode>
+  <open-in>IE11</open-in>
+ </site>
+ <site url="labint509.d11.tes.local">
+  <compat-mode>IE9</compat-mode>
+  <open-in>IE11</open-in>
+ </site>
+ <site url="labnet.laborelec.infra.com">
+  <compat-mode>Default</compat-mode>
+  <open-in>IE11</open-in>
+ </site>
+ <site url="lbedoc.gdfsuez.net">
+  <compat-mode>Default</compat-mode>
+  <open-in>IE11</open-in>
+ </site>
+ <site url="lime.la-on.eu">
+  <compat-mode>Default</compat-mode>
+  <open-in>IE11</open-in>
+ </site>
+ <site url="localhost:8083/cape">
+  <compat-mode>Default</compat-mode>
+  <open-in>IE11</open-in>
+ </site>
+ <site url="lsr09617.eib.electrabel.be">
+  <compat-mode>Default</compat-mode>
+  <open-in>IE11</open-in>
+ </site>
+ <site url="lsr09663.eib.electrabel.be">
+  <compat-mode>Default</compat-mode>
+  <open-in>IE11</open-in>
+ </site>
+ <site url="lsr09664.eib.electrabel.be">
+  <compat-mode>Default</compat-mode>
+  <open-in>IE11</open-in>
+ </site>
+ <site url="luc2-preprod.storengy.net/aquacalc">
+  <compat-mode>Default</compat-mode>
+  <open-in>IE11</open-in>
+ </site>
+ <site url="luc2.storengy.net/aquacalc">
+  <compat-mode>Default</compat-mode>
+  <open-in>IE11</open-in>
+ </site>
+ <site url="lumiweb.net">
+  <compat-mode>IE7</compat-mode>
+  <open-in>IE11</open-in>
+ </site>
+ <site url="lumiweb1">
+  <compat-mode>IE7</compat-mode>
+  <open-in>IE11</open-in>
+ </site>
+ <site url="magali-dev.electrabel.be">
+  <compat-mode>Default</compat-mode>
+  <open-in>IE11</open-in>
+ </site>
+ <site url="magali.electrabel.be">
+  <compat-mode>Default</compat-mode>
+  <open-in>IE11</open-in>
+ </site>
+ <site url="manage.eu.unigy360.com">
+  <compat-mode>Default</compat-mode>
+  <open-in>IE11</open-in>
+ </site>
+ <site url="matchpoint.laborelec.infra.com">
+  <compat-mode>Default</compat-mode>
+  <open-in>IE11</open-in>
+ </site>
+ <site url="maximo75dev">
+  <compat-mode>IE8Enterprise</compat-mode>
+  <open-in>IE11</open-in>
+ </site>
+ <site url="maximo75prd">
+  <compat-mode>IE8Enterprise</compat-mode>
+  <open-in>IE11</open-in>
+ </site>
+ <site url="maximo75tst">
+  <compat-mode>IE8Enterprise</compat-mode>
+  <open-in>IE11</open-in>
+ </site>
+ <site url="maximo75uat">
+  <compat-mode>IE8Enterprise</compat-mode>
+  <open-in>IE11</open-in>
+ </site>
+ <site url="medisis.fr">
+  <compat-mode>Default</compat-mode>
+  <open-in>IE11</open-in>
+ </site>
+ <site url="ms-ca-lab-01.oskar.infra.com">
+  <compat-mode>Default</compat-mode>
+  <open-in>IE11</open-in>
+ </site>
+ <site url="ms-ca-prd-01.oskar.infra.com">
+  <compat-mode>Default</compat-mode>
+  <open-in>IE11</open-in>
+ </site>
+ <site url="myhorizon.gdfsuez.net">
+  <compat-mode>IE8Enterprise</compat-mode>
+  <open-in>IE11</open-in>
+ </site>
+ <site url="netcracker-nco.prd.apps.telenet.be">
+  <compat-mode>IE8Enterprise</compat-mode>
+  <open-in>IE11</open-in>
+ </site>
+ <site url="newolimp.gdfsuez.net">
+  <compat-mode>IE10</compat-mode>
+  <open-in>IE11</open-in>
+ </site>
+ <site url="nousvrsiw01.d83.tes.local">
+  <compat-mode>Default</compat-mode>
+  <open-in allow-redirect="true">IE11</open-in>
+ </site>
+ <site url="nousvrsiw01.d83.tes.local:8080/systemi_ax">
+  <compat-mode>Default</compat-mode>
+  <open-in allow-redirect="true">IE11</open-in>
+ </site>
+ <site url="oktasso.myengie.com">
+  <compat-mode>Default</compat-mode>
+  <open-in>NEUTRAL</open-in>
+ </site>
+ <site url="p6.electrabel.be">
+  <compat-mode>Default</compat-mode>
+  <open-in>IE11</open-in>
+ </site>
+ <site url="performancemanager.successfactors.eu">
+  <compat-mode>Default</compat-mode>
+  <open-in>IE11</open-in>
+ </site>
+ <site url="pki.symauth.com">
+  <compat-mode>Default</compat-mode>
+  <open-in>IE11</open-in>
+ </site>
+ <site url="pol-emea.fdnet.com/fluor">
+  <compat-mode>Default</compat-mode>
+  <open-in>IE11</open-in>
+ </site>
+ <site url="portailpaie.rfn.fr">
+  <compat-mode>Default</compat-mode>
+  <open-in>IE11</open-in>
+ </site>
+ <site url="portalbenelux">
+  <compat-mode>Default</compat-mode>
+  <open-in>IE11</open-in>
+ </site>
+ <site url="portalbenelux/mailstore">
+  <compat-mode>IE8Enterprise</compat-mode>
+  <open-in>IE11</open-in>
+ </site>
+ <site url="portalbenelux/mailstore/default.asp">
+  <compat-mode>IE8Enterprise</compat-mode>
+  <open-in>IE11</open-in>
+ </site>
+ <site url="portalbenelux/mailstore/mailstore.asp">
+  <compat-mode>IE8Enterprise</compat-mode>
+  <open-in>IE11</open-in>
+ </site>
+ <site url="precmapplicationcatalog.skynote.gdfsuez.net">
+  <compat-mode>Default</compat-mode>
+  <open-in>IE11</open-in>
+ </site>
+ <site url="proxy.ld4.eu.inet.unigy360.com">
+  <compat-mode>Default</compat-mode>
+  <open-in>IE11</open-in>
+ </site>
+ <site url="qc-nonprd.alm.bnl-ms.myengie.com/qcbin">
+  <compat-mode>Default</compat-mode>
+  <open-in>IE11</open-in>
+ </site>
+ <site url="qc.alm.bnl-ms.myengie.com/qcbin">
+  <compat-mode>Default</compat-mode>
+  <open-in>IE11</open-in>
+ </site>
+ <site url="rapsodie-nr-ci.myengie.com">
+  <compat-mode>Default</compat-mode>
+  <open-in>IE11</open-in>
+ </site>
+ <site url="rapsodie-nr-rec.myengie.com">
+  <compat-mode>Default</compat-mode>
+  <open-in>IE11</open-in>
+ </site>
+ <site url="replay-3sapanrbeums6rjv-client26.eu.unigy360.com">
+  <compat-mode>Default</compat-mode>
+  <open-in>IE11</open-in>
+ </site>
+ <site url="rto.gdfsuez.net/stone">
+  <compat-mode>Default</compat-mode>
+  <open-in>IE11</open-in>
+ </site>
+ <site url="rto.gem.myengie.com/stone">
+  <compat-mode>Default</compat-mode>
+  <open-in>IE11</open-in>
+ </site>
+ <site url="s32013075">
+  <compat-mode>Default</compat-mode>
+  <open-in>IE11</open-in>
+ </site>
+ <site url="s32013075/reportserver">
+  <compat-mode>IE8Enterprise</compat-mode>
+  <open-in>IE11</open-in>
+ </site>
+ <site url="sapcrm-symphonie.gdfsuez.net">
+  <compat-mode>Default</compat-mode>
+  <open-in>MSEdge</open-in>
+ </site>
+ <site url="saphyr-dgp-bac.myengie.com">
+  <compat-mode>Default</compat-mode>
+  <open-in>IE11</open-in>
+ </site>
+ <site url="saphyr-dgp-form.myengie.com">
+  <compat-mode>Default</compat-mode>
+  <open-in>IE11</open-in>
+ </site>
+ <site url="saphyr-dgp-rec.myengie.com">
+  <compat-mode>Default</compat-mode>
+  <open-in>IE11</open-in>
+ </site>
+ <site url="saphyr-dgp.myengie.com/isps">
+  <compat-mode>Default</compat-mode>
+  <open-in>IE11</open-in>
+ </site>
+ <site url="saphyr-rec.gdfsuez.net">
+  <compat-mode>Default</compat-mode>
+  <open-in>IE11</open-in>
+ </site>
+ <site url="saphyr.gdfsuez.net">
+  <compat-mode>Default</compat-mode>
+  <open-in>IE11</open-in>
+ </site>
+ <site url="sapisu-symphonie.gdfsuez.net">
+  <compat-mode>Default</compat-mode>
+  <open-in>MSEdge</open-in>
+ </site>
+ <site url="sara2000.kcd.electrabel.be">
+  <compat-mode>Default</compat-mode>
+  <open-in>IE11</open-in>
+ </site>
+ <site url="sd79apark201.d79.tes.local">
+  <compat-mode>IE8Enterprise</compat-mode>
+  <open-in>IE11</open-in>
+ </site>
+ <site url="sd79apark202.d79.tes.local">
+  <compat-mode>IE8Enterprise</compat-mode>
+  <open-in>IE11</open-in>
+ </site>
+ <site url="sd79apdnk601.d79.tes.local">
+  <compat-mode>IE8Enterprise</compat-mode>
+  <open-in>IE11</open-in>
+ </site>
+ <site url="sd79prbik201.d79.tes.local">
+  <compat-mode>IE8Enterprise</compat-mode>
+  <open-in>IE11</open-in>
+ </site>
+ <site url="sd79rebik202.d79.tes.local">
+  <compat-mode>IE8Enterprise</compat-mode>
+  <open-in>IE11</open-in>
+ </site>
+ <site url="sdsv143-vm.solairedirect.lan/kerweb2">
+  <compat-mode>Default</compat-mode>
+  <open-in>IE11</open-in>
+ </site>
+ <site url="sdsv162-vm.solairedirect.lan">
+  <compat-mode>Default</compat-mode>
+  <open-in>IE11</open-in>
+ </site>
+ <site url="services.gst.gov.in/services">
+  <compat-mode>Default</compat-mode>
+  <open-in>IE11</open-in>
+ </site>
+ <site url="sfraadlx01.france.local">
+  <compat-mode>IE8Enterprise</compat-mode>
+  <open-in>IE11</open-in>
+ </site>
+ <site url="sfraaslx.france.local">
+  <compat-mode>IE8Enterprise</compat-mode>
+  <open-in>IE11</open-in>
+ </site>
+ <site url="sfraaslxp.france.local">
+  <compat-mode>IE8Enterprise</compat-mode>
+  <open-in>IE11</open-in>
+ </site>
+ <site url="sfraasmilx01.france.local">
+  <compat-mode>IE8Enterprise</compat-mode>
+  <open-in>IE11</open-in>
+ </site>
+ <site url="sfraasmilx02.france.local">
+  <compat-mode>IE8Enterprise</compat-mode>
+  <open-in>IE11</open-in>
+ </site>
+ <site url="sfraasmilx03.france.local">
+  <compat-mode>IE8Enterprise</compat-mode>
+  <open-in>IE11</open-in>
+ </site>
+ <site url="sfraasmolx01.france.local">
+  <compat-mode>IE8Enterprise</compat-mode>
+  <open-in>IE11</open-in>
+ </site>
+ <site url="sfraasmolx02.france.local">
+  <compat-mode>IE8Enterprise</compat-mode>
+  <open-in>IE11</open-in>
+ </site>
+ <site url="sfracglx01.france.local">
+  <compat-mode>IE8Enterprise</compat-mode>
+  <open-in>IE11</open-in>
+ </site>
+ <site url="sfraprbik801.france.local">
+  <compat-mode>IE8Enterprise</compat-mode>
+  <open-in>IE11</open-in>
+ </site>
+ <site url="sh-fileserver.d84.tes.local">
+  <compat-mode>IE8</compat-mode>
+  <open-in>IE11</open-in>
+ </site>
+ <site url="shem-iso.sixense-scanprint.com/ims">
+  <compat-mode>IE7</compat-mode>
+  <open-in>IE11</open-in>
+ </site>
+ <site url="shem-prod.sixense-scanprint.com/ims">
+  <compat-mode>IE7</compat-mode>
+  <open-in>IE11</open-in>
+ </site>
+ <site url="signage-kcd.electrabel.be">
+  <compat-mode>Default</compat-mode>
+  <open-in>IE11</open-in>
+ </site>
+ <site url="sikapa.enedis.fr">
+  <compat-mode>Default</compat-mode>
+  <open-in>IE11</open-in>
+ </site>
+ <site url="siwprdall01.d20.tes.local">
+  <compat-mode>Default</compat-mode>
+  <open-in>IE11</open-in>
+ </site>
+ <site url="siwqasall01.d20.tes.local">
+  <compat-mode>Default</compat-mode>
+  <open-in>IE11</open-in>
+ </site>
+ <site url="smart.gdfsuez.net">
+  <compat-mode>IE8Enterprise</compat-mode>
+  <open-in>IE11</open-in>
+ </site>
+ <site url="socirecok602.d79.tes.local">
+  <compat-mode>Unknown</compat-mode>
+  <open-in>IE11</open-in>
+ </site>
+ <site url="staffhub.office.com">
+  <compat-mode>Default</compat-mode>
+  <open-in>IE11</open-in>
+ </site>
+ <site url="stomofsb3.d84.tes.local">
+  <compat-mode>IE8</compat-mode>
+  <open-in>IE11</open-in>
+ </site>
+ <site url="supervision.climespace.net/climespace">
+  <compat-mode>Default</compat-mode>
+  <open-in>IE11</open-in>
+ </site>
+ <site url="supervision.ps12-cou.solairedirect.fr">
+  <compat-mode>Default</compat-mode>
+  <open-in>IE11</open-in>
+ </site>
+ <site url="supervision.ps13-jus.solairedirect.fr">
+  <compat-mode>Default</compat-mode>
+  <open-in>IE11</open-in>
+ </site>
+ <site url="supervision.ps5-esp1.solairedirect.fr">
+  <compat-mode>Default</compat-mode>
+  <open-in>IE11</open-in>
+ </site>
+ <site url="supervision.ps6-esp2.solairedirect.fr">
+  <compat-mode>Default</compat-mode>
+  <open-in>IE11</open-in>
+ </site>
+ <site url="supervision.ps7-var1.solairedirect.fr">
+  <compat-mode>Default</compat-mode>
+  <open-in>IE11</open-in>
+ </site>
+ <site url="supervision.ps8-var2.solairedirect.fr">
+  <compat-mode>Default</compat-mode>
+  <open-in>IE11</open-in>
+ </site>
+ <site url="surveys.engie.com/runet/client">
+  <compat-mode>IE11</compat-mode>
+  <open-in>IE11</open-in>
+ </site>
+ <site url="swift.com">
+  <compat-mode>Default</compat-mode>
+  <open-in>MSEdge</open-in>
+ </site>
+ <site url="symkr2a01.symphonie.gdfsuez.net">
+  <compat-mode>Default</compat-mode>
+  <open-in>MSEdge</open-in>
+ </site>
+ <site url="symkrcrm-symphonie.gdfsuez.net">
+  <compat-mode>Default</compat-mode>
+  <open-in>MSEdge</open-in>
+ </site>
+ <site url="symkrisu-symphonie.gdfsuez.net">
+  <compat-mode>Default</compat-mode>
+  <open-in>MSEdge</open-in>
+ </site>
+ <site url="symkrjava-symphonie.gdfsuez.net">
+  <compat-mode>Default</compat-mode>
+  <open-in>MSEdge</open-in>
+ </site>
+ <site url="symmd2.symphonie.gdfsuez.net">
+  <compat-mode>IE7</compat-mode>
+  <open-in>IE11</open-in>
+ </site>
+ <site url="symmdcrm-symphonie.gdfsuez.net">
+  <compat-mode>Default</compat-mode>
+  <open-in>MSEdge</open-in>
+ </site>
+ <site url="symmdisu-symphonie.gdfsuez.net">
+  <compat-mode>Default</compat-mode>
+  <open-in>MSEdge</open-in>
+ </site>
+ <site url="symmdjava-symphonie.gdfsuez.net">
+  <compat-mode>Default</compat-mode>
+  <open-in>IE11</open-in>
+ </site>
+ <site url="symms2.symphonie.gdfsuez.net">
+  <compat-mode>Default</compat-mode>
+  <open-in>MSEdge</open-in>
+ </site>
+ <site url="symmscrm-symphonie.gdfsuez.net">
+  <compat-mode>Default</compat-mode>
+  <open-in>MSEdge</open-in>
+ </site>
+ <site url="symmsisu-symphonie.gdfsuez.net">
+  <compat-mode>Default</compat-mode>
+  <open-in>MSEdge</open-in>
+ </site>
+ <site url="symmsjava-symphonie.gdfsuez.net">
+  <compat-mode>Default</compat-mode>
+  <open-in>MSEdge</open-in>
+ </site>
+ <site url="symmt2.symphonie.gdfsuez.net">
+  <compat-mode>Default</compat-mode>
+  <open-in>IE11</open-in>
+ </site>
+ <site url="symmtcrm-symphonie.gdfsuez.net">
+  <compat-mode>Default</compat-mode>
+  <open-in>MSEdge</open-in>
+ </site>
+ <site url="symmtisu-symphonie.gdfsuez.net">
+  <compat-mode>Default</compat-mode>
+  <open-in>MSEdge</open-in>
+ </site>
+ <site url="symmtjava-symphonie.gdfsuez.net">
+  <compat-mode>Default</compat-mode>
+  <open-in>IE11</open-in>
+ </site>
+ <site url="tchat.engie-cofely.fr">
+  <compat-mode>IE11</compat-mode>
+  <open-in>IE11</open-in>
+ </site>
+ <site url="telelink.ing.be">
+  <compat-mode>Default</compat-mode>
+  <open-in>IE11</open-in>
+ </site>
+ <site url="tl0taaac.tractebel.suez">
+  <compat-mode>IE8Enterprise</compat-mode>
+  <open-in>IE11</open-in>
+ </site>
+ <site url="tl0tabac.tractebel.suez">
+  <compat-mode>Default</compat-mode>
+  <open-in>IE11</open-in>
+ </site>
+ <site url="tl0tajac.tractebel.suez">
+  <compat-mode>IE11</compat-mode>
+  <open-in>IE11</open-in>
+ </site>
+ <site url="tl0tdadc.tractebel.suez">
+  <compat-mode>IE8Enterprise</compat-mode>
+  <open-in>IE11</open-in>
+ </site>
+ <site url="tl0tdbdc.tractebel.suez">
+  <compat-mode>IE8Enterprise</compat-mode>
+  <open-in>IE11</open-in>
+ </site>
+ <site url="tl0tpapc.tractebel.suez">
+  <compat-mode>IE8Enterprise</compat-mode>
+  <open-in>IE11</open-in>
+ </site>
+ <site url="tl0tpbpc.tractebel.suez">
+  <compat-mode>Default</compat-mode>
+  <open-in>IE11</open-in>
+ </site>
+ <site url="tl0tpjpc.tractebel.suez">
+  <compat-mode>IE11</compat-mode>
+  <open-in>IE11</open-in>
+ </site>
+ <site url="tm1.d79.tes.local">
+  <compat-mode>IE8Enterprise</compat-mode>
+  <open-in>IE11</open-in>
+ </site>
+ <site url="tm1dev.d79.tes.local">
+  <compat-mode>IE8Enterprise</compat-mode>
+  <open-in>IE11</open-in>
+ </site>
+ <site url="tm1web.d79.tes.local">
+  <compat-mode>IE8Enterprise</compat-mode>
+  <open-in>IE11</open-in>
+ </site>
+ <site url="totem-acc.myengie.com">
+  <compat-mode>Default</compat-mode>
+  <open-in>IE11</open-in>
+ </site>
+ <site url="totem.myengie.com">
+  <compat-mode>Default</compat-mode>
+  <open-in>IE11</open-in>
+ </site>
+ <site url="u31phsccm101">
+  <compat-mode>Default</compat-mode>
+  <open-in>IE11</open-in>
+ </site>
+ <site url="u31rhsccm101">
+  <compat-mode>Default</compat-mode>
+  <open-in>IE11</open-in>
+ </site>
+ <site url="u41phsccm111">
+  <compat-mode>Default</compat-mode>
+  <open-in>IE11</open-in>
+ </site>
+ <site url="u41rhsccm111">
+  <compat-mode>Default</compat-mode>
+  <open-in>IE11</open-in>
+ </site>
+ <site url="unka3.eib.electrabel.be">
+  <compat-mode>Default</compat-mode>
+  <open-in>IE11</open-in>
+ </site>
+ <site url="unka4.eib.electrabel.be">
+  <compat-mode>Default</compat-mode>
+  <open-in>IE11</open-in>
+ </site>
+ <site url="unka5.eib.electrabel.be">
+  <compat-mode>Default</compat-mode>
+  <open-in>IE11</open-in>
+ </site>
+ <site url="unkd3.eib.electrabel.be">
+  <compat-mode>Default</compat-mode>
+  <open-in>IE11</open-in>
+ </site>
+ <site url="unkd4.eib.electrabel.be">
+  <compat-mode>Default</compat-mode>
+  <open-in>IE11</open-in>
+ </site>
+ <site url="unki3.eib.electrabel.be">
+  <compat-mode>Default</compat-mode>
+  <open-in>IE11</open-in>
+ </site>
+ <site url="unki4.eib.electrabel.be">
+  <compat-mode>Default</compat-mode>
+  <open-in>IE11</open-in>
+ </site>
+ <site url="unkp1app01.eib.electrabel.be">
+  <compat-mode>Default</compat-mode>
+  <open-in>IE11</open-in>
+ </site>
+ <site url="unkp1app02.eib.electrabel.be">
+  <compat-mode>Default</compat-mode>
+  <open-in>IE11</open-in>
+ </site>
+ <site url="unkp1app03.eib.electrabel.be">
+  <compat-mode>Default</compat-mode>
+  <open-in>IE11</open-in>
+ </site>
+ <site url="unkp1z.eib.electrabel.be">
+  <compat-mode>Default</compat-mode>
+  <open-in>IE11</open-in>
+ </site>
+ <site url="unkp4.eib.electrabel.be">
+  <compat-mode>Default</compat-mode>
+  <open-in>IE11</open-in>
+ </site>
+ <site url="unkp4z.eib.electrabel.be">
+  <compat-mode>Default</compat-mode>
+  <open-in>IE11</open-in>
+ </site>
+ <site url="unkt1.eib.electrabel.be">
+  <compat-mode>Default</compat-mode>
+  <open-in>IE11</open-in>
+ </site>
+ <site url="unla2.eib.electrabel.be">
+  <compat-mode>Default</compat-mode>
+  <open-in>IE11</open-in>
+ </site>
+ <site url="unla2app01.eib.electrabel.be">
+  <compat-mode>Default</compat-mode>
+  <open-in>IE11</open-in>
+ </site>
+ <site url="unla4.eib.electrabel.be">
+  <compat-mode>Default</compat-mode>
+  <open-in>IE11</open-in>
+ </site>
+ <site url="unla4app01.eib.electrabel.be">
+  <compat-mode>Default</compat-mode>
+  <open-in>IE11</open-in>
+ </site>
+ <site url="unla5.eib.electrabel.be">
+  <compat-mode>Default</compat-mode>
+  <open-in>IE11</open-in>
+ </site>
+ <site url="unld2.eib.electrabel.be">
+  <compat-mode>Default</compat-mode>
+  <open-in>IE11</open-in>
+ </site>
+ <site url="unld4.eib.electrabel.be">
+  <compat-mode>Default</compat-mode>
+  <open-in>IE11</open-in>
+ </site>
+ <site url="unld5.eib.electrabel.be">
+  <compat-mode>Default</compat-mode>
+  <open-in>IE11</open-in>
+ </site>
+ <site url="unlp2s.eib.electrabel.be">
+  <compat-mode>Default</compat-mode>
+  <open-in>IE11</open-in>
+ </site>
+ <site url="unlp3.eib.electrabel.be">
+  <compat-mode>Default</compat-mode>
+  <open-in>IE11</open-in>
+ </site>
+ <site url="unlp3s.eib.electrabel.be">
+  <compat-mode>Default</compat-mode>
+  <open-in>IE11</open-in>
+ </site>
+ <site url="unlr2.eib.electrabel.be">
+  <compat-mode>Default</compat-mode>
+  <open-in>IE11</open-in>
+ </site>
+ <site url="unlt2.eib.electrabel.be">
+  <compat-mode>Default</compat-mode>
+  <open-in>IE11</open-in>
+ </site>
+ <site url="unna5.eib.electrabel.be">
+  <compat-mode>Default</compat-mode>
+  <open-in>IE11</open-in>
+ </site>
+ <site url="uvusvrsiw01.d83.tes.local">
+  <compat-mode>Default</compat-mode>
+  <open-in allow-redirect="true">IE11</open-in>
+ </site>
+ <site url="uvusvrsiw01.d83.tes.local:8080/systemi_ax">
+  <compat-mode>Default</compat-mode>
+  <open-in allow-redirect="true">IE11</open-in>
+ </site>
+ <site url="v32020072.d30.tes.local">
+  <compat-mode>IE8Enterprise</compat-mode>
+  <open-in>IE11</open-in>
+ </site>
+ <site url="v32020072.d30.tes.local/wfc/logon">
+  <compat-mode>IE8Enterprise</compat-mode>
+  <open-in>IE11</open-in>
+ </site>
+ <site url="v32020072.d30.tes.local/wfc/navigator/logon">
+  <compat-mode>IE8Enterprise</compat-mode>
+  <open-in>IE11</open-in>
+ </site>
+ <site url="v32020073.d30.tes.local">
+  <compat-mode>IE8Enterprise</compat-mode>
+  <open-in>IE11</open-in>
+ </site>
+ <site url="v32020073.d30.tes.local/wfc/applications/suitenav/navigation.do">
+  <compat-mode>IE8Enterprise</compat-mode>
+  <open-in>IE11</open-in>
+ </site>
+ <site url="v32020073.d30.tes.local/wfc/navigator/logon">
+  <compat-mode>IE8Enterprise</compat-mode>
+  <open-in>IE11</open-in>
+ </site>
+ <site url="v32030123">
+  <compat-mode>IE10</compat-mode>
+  <open-in>IE11</open-in>
+ </site>
+ <site url="v32030123.d30.tes.local">
+  <compat-mode>IE10</compat-mode>
+  <open-in>IE11</open-in>
+ </site>
+ <site url="v32030129.d30.tes.local">
+  <compat-mode>IE8Enterprise</compat-mode>
+  <open-in>IE11</open-in>
+ </site>
+ <site url="v32030129.d30.tes.local/wfc/logon">
+  <compat-mode>IE8Enterprise</compat-mode>
+  <open-in>IE11</open-in>
+ </site>
+ <site url="v32030129.d30.tes.local/wfc/navigator/logon">
+  <compat-mode>IE8Enterprise</compat-mode>
+  <open-in>IE11</open-in>
+ </site>
+ <site url="v32030130.d30.tes.local">
+  <compat-mode>IE8Enterprise</compat-mode>
+  <open-in>IE11</open-in>
+ </site>
+ <site url="v32030130.d30.tes.local/wfc/logon">
+  <compat-mode>IE8Enterprise</compat-mode>
+  <open-in>IE11</open-in>
+ </site>
+ <site url="v32030130.d30.tes.local/wfc/navigator/logon">
+  <compat-mode>IE8Enterprise</compat-mode>
+  <open-in>IE11</open-in>
+ </site>
+ <site url="v32030131.d30.tes.local">
+  <compat-mode>IE8Enterprise</compat-mode>
+  <open-in>IE11</open-in>
+ </site>
+ <site url="v32030131.d30.tes.local/wfc/logon">
+  <compat-mode>IE8Enterprise</compat-mode>
+  <open-in>IE11</open-in>
+ </site>
+ <site url="v32030131.d30.tes.local/wfc/navigator/logon">
+  <compat-mode>IE8Enterprise</compat-mode>
+  <open-in>IE11</open-in>
+ </site>
+ <site url="v32030132.d30.tes.local">
+  <compat-mode>IE8Enterprise</compat-mode>
+  <open-in>IE11</open-in>
+ </site>
+ <site url="v32030132.d30.tes.local/wfc/logon">
+  <compat-mode>IE8Enterprise</compat-mode>
+  <open-in>IE11</open-in>
+ </site>
+ <site url="v32030132.d30.tes.local/wfc/navigator/logon">
+  <compat-mode>IE8Enterprise</compat-mode>
+  <open-in>IE11</open-in>
+ </site>
+ <site url="v32030133.d30.tes.local">
+  <compat-mode>IE8Enterprise</compat-mode>
+  <open-in>IE11</open-in>
+ </site>
+ <site url="v32030133.d30.tes.local/wfc/logon">
+  <compat-mode>IE8Enterprise</compat-mode>
+  <open-in>IE11</open-in>
+ </site>
+ <site url="v32030133.d30.tes.local/wfc/navigator/logon">
+  <compat-mode>IE8Enterprise</compat-mode>
+  <open-in>IE11</open-in>
+ </site>
+ <site url="v32030134.d30.tes.local">
+  <compat-mode>IE8Enterprise</compat-mode>
+  <open-in>IE11</open-in>
+ </site>
+ <site url="v32030134.d30.tes.local/wfc/logon">
+  <compat-mode>IE8Enterprise</compat-mode>
+  <open-in>IE11</open-in>
+ </site>
+ <site url="v32030134.d30.tes.local/wfc/navigator/logon">
+  <compat-mode>IE8Enterprise</compat-mode>
+  <open-in>IE11</open-in>
+ </site>
+ <site url="v32030315">
+  <compat-mode>Default</compat-mode>
+  <open-in>IE11</open-in>
+ </site>
+ <site url="v32030315/reports">
+  <compat-mode>IE8Enterprise</compat-mode>
+  <open-in>IE11</open-in>
+ </site>
+ <site url="v32030315/reports/pages/folder.aspx">
+  <compat-mode>IE8Enterprise</compat-mode>
+  <open-in>IE11</open-in>
+ </site>
+ <site url="v32030335.d30.tes.local">
+  <compat-mode>IE8Enterprise</compat-mode>
+  <open-in>IE11</open-in>
+ </site>
+ <site url="v32030335.d30.tes.local/wfc/logon">
+  <compat-mode>IE8Enterprise</compat-mode>
+  <open-in>IE11</open-in>
+ </site>
+ <site url="v32030336.d30.tes.local">
+  <compat-mode>IE8Enterprise</compat-mode>
+  <open-in>IE11</open-in>
+ </site>
+ <site url="v32030336.d30.tes.local/wfc/logon">
+  <compat-mode>IE8Enterprise</compat-mode>
+  <open-in>IE11</open-in>
+ </site>
+ <site url="v32030393.d30.tes.local">
+  <compat-mode>IE8Enterprise</compat-mode>
+  <open-in>IE11</open-in>
+ </site>
+ <site url="v32030393.d30.tes.local/wfc/logon">
+  <compat-mode>IE8Enterprise</compat-mode>
+  <open-in>IE11</open-in>
+ </site>
+ <site url="v32030399.d30.tes.local">
+  <compat-mode>IE8Enterprise</compat-mode>
+  <open-in>IE11</open-in>
+ </site>
+ <site url="v32030399.d30.tes.local/wfc/logon">
+  <compat-mode>IE8Enterprise</compat-mode>
+  <open-in>IE11</open-in>
+ </site>
+ <site url="v32030400.d30.tes.local">
+  <compat-mode>IE8Enterprise</compat-mode>
+  <open-in>IE11</open-in>
+ </site>
+ <site url="v32030400.d30.tes.local/wfc/logon">
+  <compat-mode>IE8Enterprise</compat-mode>
+  <open-in>IE11</open-in>
+ </site>
+ <site url="v32030401.d30.tes.local">
+  <compat-mode>IE8Enterprise</compat-mode>
+  <open-in>IE11</open-in>
+ </site>
+ <site url="v32030401.d30.tes.local/wfc/logon">
+  <compat-mode>IE8Enterprise</compat-mode>
+  <open-in>IE11</open-in>
+ </site>
+ <site url="v32030402.d30.tes.local">
+  <compat-mode>IE8Enterprise</compat-mode>
+  <open-in>IE11</open-in>
+ </site>
+ <site url="v32030402.d30.tes.local/wfc/logon">
+  <compat-mode>IE8Enterprise</compat-mode>
+  <open-in>IE11</open-in>
+ </site>
+ <site url="v32030474.d30.tes.local/forms">
+  <compat-mode>Default</compat-mode>
+  <open-in>IE11</open-in>
+ </site>
+ <site url="validatie">
+  <compat-mode>Default</compat-mode>
+  <open-in>IE11</open-in>
+ </site>
+ <site url="validatie-acc.myengie.com">
+  <compat-mode>Default</compat-mode>
+  <open-in>IE11</open-in>
+ </site>
+ <site url="virements.online.fr">
+  <compat-mode>Default</compat-mode>
+  <open-in>MSEdge</open-in>
+ </site>
+ <site url="visualplanning.d30.tes.local/vplanning">
+  <compat-mode>Default</compat-mode>
+  <open-in>IE11</open-in>
+ </site>
+ <site url="wf-invoiceapproval">
+  <compat-mode>IE10</compat-mode>
+  <open-in>IE11</open-in>
+ </site>
+ <site url="wlsrmdmngdvip.prd.corp.telenet.be">
+  <compat-mode>IE9</compat-mode>
+  <open-in>IE11</open-in>
+ </site>
+ <site url="www.defproc.gov.in/nicgep">
+  <compat-mode>Default</compat-mode>
+  <open-in>IE11</open-in>
+ </site>
+ <site url="www.microsoft.com/getsilverlight/get-started/install/default">
+  <compat-mode>Default</compat-mode>
+  <open-in>IE11</open-in>
+ </site>
+ <site url="www.pagesjaunes.fr">
+  <compat-mode>Default</compat-mode>
+  <open-in>MSEdge</open-in>
+ </site>
+ <site url="xs004837">
+  <compat-mode>IE10</compat-mode>
+  <open-in>IE11</open-in>
+ </site>
+ <site url="xs007121">
+  <compat-mode>IE10</compat-mode>
+  <open-in>IE11</open-in>
+ </site>
+ <site url="xs007139">
+  <compat-mode>IE10</compat-mode>
+  <open-in>IE11</open-in>
+ </site>
+ <site url="xs129370.tes.local/dfsroot/05_0002/12_pzn/25_exploitatiebeheer/01_uitbating/documentatie">
+  <compat-mode>IE8Enterprise</compat-mode>
+  <open-in>IE11</open-in>
+ </site>
+ <site url="zombo.com">
+  <compat-mode>Default</compat-mode>
+  <open-in>MSEdge</open-in>
+ </site>
+ <site url="file://lbe015/lbe015/sharedoc%202">
+  <compat-mode>IE9</compat-mode>
+  <open-in>IE11</open-in>
+ </site>
+ <site url="http://10.68.1.123">
+  <compat-mode>Default</compat-mode>
+  <open-in>IE11</open-in>
+ </site>
+ <site url="http://192.168.8.211">
+  <compat-mode>Default</compat-mode>
+  <open-in>IE11</open-in>
+ </site>
+ <site url="http://app.creditrisk.pdm.gem.myengie.com/adaptiv">
+  <compat-mode>Default</compat-mode>
+  <open-in>IE11</open-in>
+ </site>
+ <site url="http://appformspro.tractebelenergia.com.br">
+  <compat-mode>Default</compat-mode>
+  <open-in>IE11</open-in>
+ </site>
+ <site url="http://dtcahomada09w.prod.par.gaselys.com/adaptiv">
+  <compat-mode>Default</compat-mode>
+  <open-in>IE11</open-in>
+ </site>
+ <site url="http://dtcahomada10w.prod.par.gaselys.com/adaptiv">
+  <compat-mode>Default</compat-mode>
+  <open-in>IE11</open-in>
+ </site>
+ <site url="http://dtcaprdada16w.prod.par.gaselys.com/adaptiv">
+  <compat-mode>Default</compat-mode>
+  <open-in>IE11</open-in>
+ </site>
+ <site url="http://dtcbdrpada10.prod.par.gaselys.com/adaptiv">
+  <compat-mode>Default</compat-mode>
+  <open-in>IE11</open-in>
+ </site>
+ <site url="http://gedt-opidis.myengie.com">
+  <compat-mode>Default</compat-mode>
+  <open-in>IE11</open-in>
+ </site>
+ <site url="http://gedt-opidis.myengie.com:8080">
+  <compat-mode>Default</compat-mode>
+  <open-in>IE11</open-in>
+ </site>
+ <site url="http://genesis.cofely-fr.gdfsuez.net">
+  <compat-mode>Default</compat-mode>
+  <open-in>IE11</open-in>
+ </site>
+ <site url="http://idse.imss.gob.mx">
+  <compat-mode>Default</compat-mode>
+  <open-in>IE11</open-in>
+ </site>
+ <site url="http://idse.imss.gob.mx/certificacion/validausuariorenovacion.idse">
+  <compat-mode>Default</compat-mode>
+  <open-in>IE11</open-in>
+ </site>
+ <site url="http://incidencias.imss.gob.mx">
+  <compat-mode>Default</compat-mode>
+  <open-in>IE11</open-in>
+ </site>
+ <site url="http://meridian.engieenergia.com.br/meridian/start">
+  <compat-mode>Default</compat-mode>
+  <open-in>IE11</open-in>
+ </site>
+ <site url="http://phou1iris01">
+  <compat-mode>Default</compat-mode>
+  <open-in>IE11</open-in>
+ </site>
+ <site url="http://phou1iris01.d90.tes.local">
+  <compat-mode>IE11</compat-mode>
+  <open-in>IE11</open-in>
+ </site>
+ <site url="http://phou1iris02">
+  <compat-mode>Default</compat-mode>
+  <open-in>IE11</open-in>
+ </site>
+ <site url="http://phou1iris02.d90.tes.local">
+  <compat-mode>IE11</compat-mode>
+  <open-in>IE11</open-in>
+ </site>
+ <site url="http://sipress.imss.gob.mx">
+  <compat-mode>Default</compat-mode>
+  <open-in>IE11</open-in>
+ </site>
+ <site url="http://srv-qc12-b.distrigazsud.ro:8080">
+  <compat-mode>Default</compat-mode>
+  <open-in>IE11</open-in>
+ </site>
+ <site url="http://stomonisoft/alrusail">
+  <compat-mode>Default</compat-mode>
+  <open-in>IE11</open-in>
+ </site>
+ <site url="http://stomonisoft/barka-2">
+  <compat-mode>Default</compat-mode>
+  <open-in>IE11</open-in>
+ </site>
+ <site url="http://stomonisoft/barka-3">
+  <compat-mode>Default</compat-mode>
+  <open-in>IE11</open-in>
+ </site>
+ <site url="http://stomonisoft/sohar-1">
+  <compat-mode>Default</compat-mode>
+  <open-in>IE11</open-in>
+ </site>
+ <site url="http://stomonisoft/sohar-2">
+  <compat-mode>Default</compat-mode>
+  <open-in>IE11</open-in>
+ </site>
+ <site url="http://xs4011251.dc.infra.com">
+  <compat-mode>Default</compat-mode>
+  <open-in>IE11</open-in>
+ </site>
+ <site url="http://xs4011251.dc.infra.com:8080">
+  <compat-mode>Default</compat-mode>
+  <open-in>IE11</open-in>
+ </site>
+ <site url="https://10.68.29.30">
+  <compat-mode>Default</compat-mode>
+  <open-in>IE11</open-in>
+ </site>
+ <site url="https://app-hrapi-dev.scm.ase-dev.ncd.infrasys16.com">
+  <compat-mode>Default</compat-mode>
+  <open-in>IE11</open-in>
+ </site>
+ <site url="https://artifactory.gem.myengie.com">
+  <compat-mode>Default</compat-mode>
+  <open-in>IE11</open-in>
+ </site>
+ <site url="https://correciondigital.imss.gob.mx">
+  <compat-mode>Default</compat-mode>
+  <open-in>IE11</open-in>
+ </site>
+ <site url="https://ecc.dev.rapsodie.myengie.com">
+  <compat-mode>Default</compat-mode>
+  <open-in>IE11</open-in>
+ </site>
+ <site url="https://ecc.ppd.rapsodie.myengie.com">
+  <compat-mode>Default</compat-mode>
+  <open-in>IE11</open-in>
+ </site>
+ <site url="https://ecc.rapsodie.myengie.com">
+  <compat-mode>Default</compat-mode>
+  <open-in>IE11</open-in>
+ </site>
+ <site url="https://ecc.rec.rapsodie.myengie.com">
+  <compat-mode>Default</compat-mode>
+  <open-in>IE11</open-in>
+ </site>
+ <site url="https://enco-dev.gem.myengie.com">
+  <compat-mode>Default</compat-mode>
+  <open-in>IE11</open-in>
+ </site>
+ <site url="https://engie-test.kitryehs.net/kitry-ehs">
+  <compat-mode>IE11</compat-mode>
+  <open-in>IE11</open-in>
+ </site>
+ <site url="https://engie.kitryehs.net/kitry-ehs">
+  <compat-mode>IE11</compat-mode>
+  <open-in>IE11</open-in>
+ </site>
+ <site url="https://gazelle-preprod.ehscloud-fra.france.local">
+  <compat-mode>Default</compat-mode>
+  <open-in allow-redirect="true">MSEdge</open-in>
+ </site>
+ <site url="https://gedt-opidis.myengie.com">
+  <compat-mode>Default</compat-mode>
+  <open-in>IE11</open-in>
+ </site>
+ <site url="https://gedt-opidis.myengie.com/ocm/component/main">
+  <compat-mode>Default</compat-mode>
+  <open-in>IE11</open-in>
+ </site>
+ <site url="https://genco-acc.gem.myengie.com">
+  <compat-mode>Default</compat-mode>
+  <open-in>IE11</open-in>
+ </site>
+ <site url="https://genco-dev.gem.myengie.com">
+  <compat-mode>Default</compat-mode>
+  <open-in>IE11</open-in>
+ </site>
+ <site url="https://genco.gem.myengie.com">
+  <compat-mode>Default</compat-mode>
+  <open-in>IE11</open-in>
+ </site>
+ <site url="https://github.tools.digital.engie.com/gempy">
+  <compat-mode>Default</compat-mode>
+  <open-in>IE11</open-in>
+ </site>
+ <site url="https://online.sekrondigital.com.br">
+  <compat-mode>Default</compat-mode>
+  <open-in>IE11</open-in>
+ </site>
+ <site url="https://sc5.distrigazsud-retele.ro">
+  <compat-mode>Default</compat-mode>
+  <open-in>IE11</open-in>
+ </site>
+ <site url="https://scd.distrigazsud-retele.ro">
+  <compat-mode>Default</compat-mode>
+  <open-in>IE11</open-in>
+ </site>
+ <site url="https://www.ipex.it">
+  <compat-mode>Default</compat-mode>
+  <open-in>IE11</open-in>
+ </site>
+ <site url="https://www.nprocure.com">
+  <compat-mode>Default</compat-mode>
+  <open-in>IE11</open-in>
+ </site>
+ <site url="https://xrtprd.deepxrtbr.com.br">
+  <compat-mode>Default</compat-mode>
+  <open-in>IE11</open-in>
+ </site>
+</site-list>
