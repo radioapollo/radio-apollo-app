@@ -190,3 +190,8 @@ coverage/
 .dart_tool/hooks_runner/shared/objective_c/.lock
 build/8730b13ca0249799964d0a71255a8f3b.cache.dill.track.dill
 build/native_hooks/.last_build_id
+.flutter-plugins-dependencies
+build/
+.dart_tool/
+.metadata/
+flutter_application_1.iml
