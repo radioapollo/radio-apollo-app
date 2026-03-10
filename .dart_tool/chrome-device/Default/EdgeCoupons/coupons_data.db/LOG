@@ -1,17 +1,33 @@
-2026/03/05-14:07:11.681 3dac Reusing MANIFEST C:\Users\XD6696\AppData\Local\Temp\flutter_tools.59828c82\flutter_tools_chrome_device.971f51cd\Default\EdgeCoupons/coupons_data.db/MANIFEST-000001
-2026/03/05-14:07:11.683 3dac Recovering log #26
-2026/03/05-14:07:11.684 3dac Reusing old log C:\Users\XD6696\AppData\Local\Temp\flutter_tools.59828c82\flutter_tools_chrome_device.971f51cd\Default\EdgeCoupons/coupons_data.db/000026.log 
-2026/03/05-14:07:11.687 3dac Delete type=0 #4
-2026/03/05-14:07:11.687 3dac Delete type=0 #7
-2026/03/05-14:07:11.687 3dac Delete type=2 #8
-2026/03/05-14:07:11.688 3dac Delete type=0 #10
-2026/03/05-14:07:11.688 3dac Delete type=2 #11
-2026/03/05-14:07:11.688 3dac Delete type=0 #13
-2026/03/05-14:07:11.688 3dac Delete type=2 #14
-2026/03/05-14:07:11.688 3dac Delete type=0 #16
-2026/03/05-14:07:11.689 3dac Delete type=2 #17
-2026/03/05-14:07:11.689 3dac Delete type=0 #19
-2026/03/05-14:07:11.708 3dac Delete type=0 #23
-2026/03/05-14:07:11.913 4634 Level-0 table #30: started
-2026/03/05-14:07:11.921 4634 Level-0 table #30: 681700 bytes OK
-2026/03/05-14:07:11.923 4634 Delete type=0 #26
+2026/03/10-15:31:43.416 43b4 Reusing MANIFEST C:\Users\Raf\AppData\Local\Temp\flutter_tools.69f9140b\flutter_tools_chrome_device.e0275182\Default\EdgeCoupons/coupons_data.db/MANIFEST-000001
+2026/03/10-15:31:43.417 43b4 Recovering log #52
+2026/03/10-15:31:43.418 43b4 Reusing old log C:\Users\Raf\AppData\Local\Temp\flutter_tools.69f9140b\flutter_tools_chrome_device.e0275182\Default\EdgeCoupons/coupons_data.db/000052.log 
+2026/03/10-15:31:43.419 43b4 Delete type=0 #4
+2026/03/10-15:31:43.419 43b4 Delete type=0 #7
+2026/03/10-15:31:43.419 43b4 Delete type=2 #8
+2026/03/10-15:31:43.419 43b4 Delete type=0 #10
+2026/03/10-15:31:43.419 43b4 Delete type=2 #11
+2026/03/10-15:31:43.419 43b4 Delete type=0 #13
+2026/03/10-15:31:43.420 43b4 Delete type=2 #14
+2026/03/10-15:31:43.420 43b4 Delete type=0 #16
+2026/03/10-15:31:43.419 43b4 Delete type=2 #17
+2026/03/10-15:31:43.419 43b4 Delete type=0 #19
+2026/03/10-15:31:43.419 43b4 Delete type=2 #21
+2026/03/10-15:31:43.419 43b4 Delete type=0 #23
+2026/03/10-15:31:43.419 43b4 Delete type=2 #24
+2026/03/10-15:31:43.420 43b4 Delete type=0 #26
+2026/03/10-15:31:43.420 43b4 Delete type=2 #27
+2026/03/10-15:31:43.420 43b4 Delete type=0 #29
+2026/03/10-15:31:43.420 43b4 Delete type=2 #30
+2026/03/10-15:31:43.420 43b4 Delete type=0 #32
+2026/03/10-15:31:43.421 43b4 Delete type=2 #34
+2026/03/10-15:31:43.421 43b4 Delete type=0 #36
+2026/03/10-15:31:43.421 43b4 Delete type=2 #37
+2026/03/10-15:31:43.421 43b4 Delete type=0 #39
+2026/03/10-15:31:43.421 43b4 Delete type=2 #40
+2026/03/10-15:31:43.421 43b4 Delete type=0 #42
+2026/03/10-15:31:43.421 43b4 Delete type=2 #43
+2026/03/10-15:31:43.421 43b4 Delete type=0 #45
+2026/03/10-15:31:43.422 43b4 Delete type=0 #49
+2026/03/10-15:31:43.483 ea8 Level-0 table #56: started
+2026/03/10-15:31:43.490 ea8 Level-0 table #56: 681704 bytes OK
+2026/03/10-15:31:43.492 ea8 Delete type=0 #52

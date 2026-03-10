@@ -9,7 +9,7 @@
 
 import 'package:flutter/material.dart';
 
-class DaySelector extends StatelessWidget {
+class DaySelector extends StatefulWidget {
   final List<String> days;
   final int selectedIndex;
   final Function(int) onDaySelected;
@@ -22,35 +22,75 @@ class DaySelector extends StatelessWidget {
   });
 
   @override
+  State<DaySelector> createState() => _DaySelectorState();
+}
+
+class _DaySelectorState extends State<DaySelector> {
+  final ScrollController _scrollController = ScrollController();
+
+  @override
+  void initState() {
+    super.initState();
+
+    // Wait until UI is built before scrolling
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _scrollToSelected();
+    });
+  }
+
+  @override
+  void didUpdateWidget(covariant DaySelector oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    _scrollToSelected();
+  }
+
+  void _scrollToSelected() {
+    const itemWidth = 110.0;
+    const spacing = 12.0;
+
+    final screenWidth = MediaQuery.of(context).size.width;
+
+    final offset =
+        (widget.selectedIndex * (itemWidth + spacing)) -
+        (screenWidth / 2) +
+        (itemWidth / 2);
+
+    _scrollController.animateTo(
+      offset < 0 ? 0 : offset,
+      duration: const Duration(milliseconds: 300),
+      curve: Curves.easeOut,
+    );
+  }
+
+  @override
   Widget build(BuildContext context) {
     return SizedBox(
-      height: 55,
-      child: ListView.separated(
+      height: 50,
+      child: ListView.builder(
+        controller: _scrollController,
         scrollDirection: Axis.horizontal,
-        itemCount: days.length,
-        separatorBuilder: (_, __) => const SizedBox(width: 14),
+        itemCount: widget.days.length,
         itemBuilder: (context, index) {
-          final active = index == selectedIndex;
-          return GestureDetector(
-            onTap: () => onDaySelected(index),
-            child: AnimatedContainer(
-              duration: const Duration(milliseconds: 200),
-              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-              decoration: BoxDecoration(
-                color: active ? Colors.white : Colors.white12,
-                borderRadius: BorderRadius.circular(50),
-                border: Border.all(
-                  color: active ? Colors.white : Colors.white30,
-                  width: 1.2,
+          final isSelected = index == widget.selectedIndex;
+
+          return Padding(
+            padding: const EdgeInsets.only(right: 12),
+            child: GestureDetector(
+              onTap: () => widget.onDaySelected(index),
+              child: Container(
+                width: 110,
+                alignment: Alignment.center,
+                decoration: BoxDecoration(
+                  color: isSelected
+                      ? const Color(0xFF3A5F8A)
+                      : const Color(0xFF2C4A6A),
+                  borderRadius: BorderRadius.circular(30),
                 ),
-              ),
-              child: Center(
                 child: Text(
-                  days[index],
-                  style: TextStyle(
-                    color: active ? Colors.black : Colors.white,
-                    fontWeight: active ? FontWeight.bold : FontWeight.w400,
-                    fontSize: 15,
+                  widget.days[index],
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontWeight: FontWeight.w600,
                   ),
                 ),
               ),

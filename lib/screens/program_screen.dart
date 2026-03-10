@@ -34,6 +34,9 @@ class _ProgramScreenState extends State<ProgramScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final selectedDay = _days[_selectedIndex];
+    final weekday = ProgramService.getWeekdayFromName(selectedDay);
+    final programs = ProgramService.getProgramsForDay(weekday);
     return PageWithHeader(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -53,11 +56,11 @@ class _ProgramScreenState extends State<ProgramScreen> {
             onDaySelected: _onDaySelected,
           ),
           const SizedBox(height: 25),
-          ..._programService.programs.map((program) => ProgramCard(
-                time: program.time,
-                title: program.title,
-                subtitle: program.subtitle,
-              )),
+          ...programs.map((program) => ProgramCard(
+              time: program["time"]!,
+              title: program["title"]!,
+              subtitle: program["desc"]!,
+          )),
         ],
       ),
     );
