@@ -14,17 +14,14 @@ class AudioService {
   late AudioPlayer _player;
   bool _isPlaying = false;
   
-  // Stream for UI to listen to play state changes
   Stream<bool> get playStateStream => _player.playerStateStream.map((state) => state.playing);
   
-  // Current state getter
   bool get isPlaying => _isPlaying;
 
   AudioService() {
     _player = AudioPlayer();
     _initAudio();
     
-    // Update internal state
     _player.playerStateStream.listen((state) {
       _isPlaying = state.playing;
     });
