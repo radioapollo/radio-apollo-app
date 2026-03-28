@@ -78,8 +78,8 @@ class _ChatScreenState extends State<ChatScreen> {
   Widget _buildHeader() {
     return Column(
       children: [
-        Container(
-          padding: const EdgeInsets.fromLTRB(20, 20, 20, 12),
+        GestureDetector(
+          onLongPress: _showAdminLogin,
           child: const Text(
             "RADIO APOLLO",
             style: TextStyle(
@@ -98,6 +98,18 @@ class _ChatScreenState extends State<ChatScreen> {
               color: Colors.white,
               fontSize: 22,
               fontWeight: FontWeight.w700,
+            ),
+          ),
+        ),
+        if (_chatService.currentRole == "admin")
+        const Padding(
+          padding: EdgeInsets.only(top: 6),
+          child: Text(
+            "ADMIN MODE",
+            style: TextStyle(
+              color: Colors.orangeAccent,
+              fontSize: 12,
+              fontWeight: FontWeight.bold,
             ),
           ),
         ),
@@ -151,6 +163,34 @@ class _ChatScreenState extends State<ChatScreen> {
           GestureDetector(
             onTap: _sendMessage,
             child: const Icon(Icons.send, color: Colors.white, size: 26),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showAdminLogin() {
+    final passwordController = TextEditingController();
+
+    showDialog(
+      context: context,
+      builder: (_) => AlertDialog(
+        title: const Text("Admin Login"),
+        content: TextField(
+          controller: passwordController,
+          obscureText: true,
+          decoration: const InputDecoration(
+            hintText: "Enter password",
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () {
+              _chatService.loginAsAdmin(passwordController.text);
+              setState(() {}); // refresh UI
+              Navigator.pop(context);
+            },
+            child: const Text("Login"),
           ),
         ],
       ),

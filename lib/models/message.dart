@@ -8,12 +8,12 @@
 */
 
 class Message {
-  final bool fromUser;
+  final String role;
   final String text;
   final String time;
 
   Message({
-    required this.fromUser,
+    required this.role,
     required this.text,
     required this.time,
   });
