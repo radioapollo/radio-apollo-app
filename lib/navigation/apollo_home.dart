@@ -12,6 +12,7 @@
 
 import 'package:flutter/material.dart';
 import '../screens/home_screen.dart';
+import '../screens/event_screen.dart';
 import '../screens/program_screen.dart';
 import '../screens/info_screen.dart';
 import '../screens/chat_screen.dart';
@@ -35,6 +36,7 @@ class _ApolloHomeState extends State<ApolloHome> {
       HomeScreen(onNavigate: _switchTab),
       const ProgramScreen(),
       InfoScreen(),
+      const EventScreen(), 
       const ChatScreen(),
     ];
   }
@@ -63,15 +65,16 @@ class _ApolloHomeState extends State<ApolloHome> {
       child: BottomNavigationBar(
         currentIndex: _index,
         onTap: _switchTab,
-        backgroundColor: Colors.transparent,
+        backgroundColor: Colors.white,
         elevation: 0,
         selectedItemColor: const Color(0xFF0A3D91),
         unselectedItemColor: Colors.grey,
         type: BottomNavigationBarType.fixed,
         items: const [
           BottomNavigationBarItem(icon: Icon(Icons.home), label: "Home"),
-          BottomNavigationBarItem(icon: Icon(Icons.calendar_month), label: "Programma"),
+          BottomNavigationBarItem(icon: Icon(Icons.calendar_month), label: "Zending"),
           BottomNavigationBarItem(icon: Icon(Icons.info), label: "Info"),
+          BottomNavigationBarItem(icon: Icon(Icons.event), label: "Event"),
           BottomNavigationBarItem(icon: Icon(Icons.chat), label: "Chat"),
         ],
       ),

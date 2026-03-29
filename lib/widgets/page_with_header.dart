@@ -4,7 +4,8 @@
    used across multiple screens.
 
    It includes:
-   - the "Radio Apollo" header
+   - the Radio Apollo logo header
+   - background image
    - spacing and padding
 */
 
@@ -17,24 +18,31 @@ class PageWithHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return SafeArea(
-      child: SingleChildScrollView(
-        padding: const EdgeInsets.fromLTRB(20, 20, 20, 30),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const Text(
-              "RADIO APOLLO",
-              style: TextStyle(
-                fontSize: 28,
-                fontWeight: FontWeight.w900,
-                color: Colors.white,
-                letterSpacing: 1.2,
-              ),
+    return SizedBox.expand(
+      child: Container(
+        decoration: const BoxDecoration(
+          image: DecorationImage(
+            image: AssetImage('../lib/assets/images/Background/Watermerk.JPG'),
+            fit: BoxFit.cover,
+            alignment: Alignment.topCenter,
+          ),
+        ),
+        child: SafeArea(
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.fromLTRB(20, 20, 20, 30),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Image.asset(
+                  '../lib/assets/images/Logo/transparant.png',
+                  height: 60,
+                  fit: BoxFit.contain,
+                ),
+                const SizedBox(height: 10),
+                child,
+              ],
             ),
-            const SizedBox(height: 25),
-            child,
-          ],
+          ),
         ),
       ),
     );

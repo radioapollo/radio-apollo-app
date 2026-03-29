@@ -24,6 +24,7 @@ class ApolloCard extends StatelessWidget {
   final bool darkText;
   final VoidCallback? onTap;
   final CardLayout layout;
+  final Border? border;
 
   const ApolloCard({
     super.key,
@@ -35,6 +36,7 @@ class ApolloCard extends StatelessWidget {
     this.darkText = false,
     this.onTap,
     this.layout = CardLayout.horizontal,
+    this.border,
   });
 
   @override
@@ -44,11 +46,11 @@ class ApolloCard extends StatelessWidget {
     return GestureDetector(
       onTap: onTap,
       child: Container(
-        height: layout == CardLayout.vertical ? 160 : (big ? 120 : 140),
         padding: const EdgeInsets.all(18),
         decoration: BoxDecoration(
           color: color,
           borderRadius: BorderRadius.circular(22),
+          border: border,
         ),
         child: layout == CardLayout.vertical
             ? _buildVerticalLayout(textColor)
@@ -59,23 +61,30 @@ class ApolloCard extends StatelessWidget {
 
   Widget _buildVerticalLayout(Color textColor) {
     return Column(
-      mainAxisAlignment: MainAxisAlignment.center,
+      mainAxisSize: MainAxisSize.min,
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(title,
-            style: TextStyle(
-                color: textColor, fontSize: 18, fontWeight: FontWeight.w800)),
+        Text(
+          title,
+          style: TextStyle(
+            color: textColor,
+            fontSize: 18,
+            fontWeight: FontWeight.w800,
+          ),
+        ),
         const SizedBox(height: 12),
         Icon(icon, size: 36, color: textColor),
         const SizedBox(height: 12),
-        Text(subtitle,
-            maxLines: 2,
-            overflow: TextOverflow.ellipsis,
-            style: TextStyle(
-              color: textColor,
-              fontSize: 14,
-              height: 1.3,
-            )),
+        Text(
+          subtitle,
+          maxLines: 2,
+          overflow: TextOverflow.ellipsis,
+          style: TextStyle(
+            color: textColor,
+            fontSize: 14,
+            height: 1.3,
+          ),
+        ),
       ],
     );
   }

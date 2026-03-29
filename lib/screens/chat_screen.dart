@@ -63,57 +63,76 @@ class _ChatScreenState extends State<ChatScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return SafeArea(
-      child: Column(
-        children: [
-          _buildHeader(),
-          const SizedBox(height: 10),
-          _buildChatList(),
-          _buildInputField(),
-        ],
+    return SizedBox.expand(
+      child: Container(
+        decoration: const BoxDecoration(
+          image: DecorationImage(
+            image: AssetImage('../lib/assets/images/Background/Watermerk.JPG'),
+            fit: BoxFit.cover,
+            alignment: Alignment.topCenter,
+          ),
+        ),
+        child: SafeArea(
+          child: Column(
+            children: [
+              _buildHeader(),
+              const SizedBox(height: 10),
+              _buildChatTitle(),
+              const SizedBox(height: 10),
+              _buildChatList(),
+              _buildInputField(),
+            ],
+          ),
+        ),
       ),
     );
   }
 
   Widget _buildHeader() {
-    return Column(
-      children: [
-        GestureDetector(
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(20, 20, 20, 0),
+      child: Align(
+        alignment: Alignment.centerLeft,
+        child: GestureDetector(
           onLongPress: _showAdminLogin,
-          child: const Text(
-            "RADIO APOLLO",
-            style: TextStyle(
-              fontSize: 28,
-              fontWeight: FontWeight.w900,
-              color: Colors.white,
-              letterSpacing: 1.2,
-            ),
+          child: Image.asset(
+            '../lib/assets/images/Logo/transparant.png',
+            height: 60,
+            fit: BoxFit.contain,
           ),
         ),
-        const Padding(
-          padding: EdgeInsets.symmetric(horizontal: 20),
-          child: Text(
+      ),
+    );
+  }
+
+  Widget _buildChatTitle() {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 20),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text(
             "Chat met de Studio",
             style: TextStyle(
-              color: Colors.white,
+              color: Colors.black,
               fontSize: 22,
               fontWeight: FontWeight.w700,
             ),
           ),
-        ),
-        if (_chatService.currentRole == "admin")
-        const Padding(
-          padding: EdgeInsets.only(top: 6),
-          child: Text(
-            "ADMIN MODE",
-            style: TextStyle(
-              color: Colors.orangeAccent,
-              fontSize: 12,
-              fontWeight: FontWeight.bold,
+          if (_chatService.currentRole == "admin")
+            const Padding(
+              padding: EdgeInsets.only(top: 6),
+              child: Text(
+                "ADMIN MODE",
+                style: TextStyle(
+                  color: Colors.orangeAccent,
+                  fontSize: 12,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
             ),
-          ),
-        ),
-      ],
+        ],
+      ),
     );
   }
 
@@ -125,6 +144,7 @@ class _ChatScreenState extends State<ChatScreen> {
         decoration: BoxDecoration(
           color: const Color(0xFF18375A),
           borderRadius: BorderRadius.circular(20),
+          border: Border.all(color: Colors.white12, width: 1.5),
         ),
         child: ListView.builder(
           controller: _scrollController,
@@ -146,6 +166,7 @@ class _ChatScreenState extends State<ChatScreen> {
       decoration: BoxDecoration(
         color: const Color(0xFF102F52),
         borderRadius: BorderRadius.circular(18),
+        border: Border.all(color: Colors.white12, width: 1.5),
       ),
       child: Row(
         children: [
@@ -187,7 +208,7 @@ class _ChatScreenState extends State<ChatScreen> {
           TextButton(
             onPressed: () {
               _chatService.loginAsAdmin(passwordController.text);
-              setState(() {}); // refresh UI
+              setState(() {});
               Navigator.pop(context);
             },
             child: const Text("Login"),

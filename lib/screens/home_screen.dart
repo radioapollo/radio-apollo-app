@@ -10,7 +10,7 @@
 
 import 'package:flutter/material.dart';
 import 'package:audio_service/audio_service.dart';
-import '../main.dart'; // import the global audioHandler
+import '../main.dart';
 import '../widgets/page_with_header.dart';
 import '../widgets/apollo_card.dart';
 import '../widgets/live_player_card.dart';
@@ -39,7 +39,7 @@ class HomeScreen extends StatelessWidget {
           const SizedBox(height: 30),
           _buildNavigationRow(),
           const SizedBox(height: 16),
-          _buildChatCard(),
+          _buildBottomRow(),
         ],
       ),
     );
@@ -56,6 +56,7 @@ class HomeScreen extends StatelessWidget {
             subtitle: "Bekijk ons weekoverzicht",
             onTap: () => onNavigate(1),
             layout: CardLayout.vertical,
+            border: Border.all(color: Colors.black12, width: 1.5),
           ),
         ),
         const SizedBox(width: 16),
@@ -64,25 +65,44 @@ class HomeScreen extends StatelessWidget {
             color: const Color(0xFF185ADB),
             icon: Icons.campaign,
             title: "Info",
-            subtitle: "Nieuwtjes, evenementen en reclame",
+            subtitle: "Wie zijn wij en onze adverteerders",
             darkText: true,
             onTap: () => onNavigate(2),
             layout: CardLayout.vertical,
+            border: Border.all(color: Colors.black12, width: 1.5),
           ),
         ),
       ],
     );
   }
 
-  Widget _buildChatCard() {
-    return ApolloCard(
-      color: const Color(0xFFCDE7FF),
-      icon: Icons.chat_bubble,
-      title: "Chat",
-      subtitle: "Stuur een bericht naar de studio",
-      big: true,
-      onTap: () => onNavigate(3),
-      layout: CardLayout.horizontal,
+  Widget _buildBottomRow() {
+    return Row(
+      children: [
+        Expanded(
+          child: ApolloCard(
+            color: const Color(0xFFCBF0D8),
+            icon: Icons.event,
+            title: "Evenementen",
+            subtitle: "Bekijk onze evenementen",
+            onTap: () => onNavigate(3),
+            layout: CardLayout.vertical,
+            border: Border.all(color: Colors.black12, width: 1.5),
+          ),
+        ),
+        const SizedBox(width: 16),
+        Expanded(
+          child: ApolloCard(
+            color: const Color(0xFFCDE7FF),
+            icon: Icons.chat_bubble,
+            title: "Chat",
+            subtitle: "Stuur een bericht naar de studio",
+            onTap: () => onNavigate(4),
+            layout: CardLayout.vertical,
+            border: Border.all(color: Colors.black12, width: 1.5),
+          ),
+        ),
+      ],
     );
   }
 }

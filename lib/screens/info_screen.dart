@@ -10,16 +10,16 @@
 
 import 'package:flutter/material.dart';
 import '../models/sponsor.dart';
-import '../services/info_services.dart'; 
+import '../services/info_services.dart';
 import '../widgets/page_with_header.dart';
 
 class InfoScreen extends StatelessWidget {
-  const InfoScreen({super.key});  
+  const InfoScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
-    final infoService = InfoService();  
-    
+    final infoService = InfoService();
+
     return PageWithHeader(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -27,7 +27,7 @@ class InfoScreen extends StatelessWidget {
           const Text(
             "Over Radio Apollo",
             style: TextStyle(
-              color: Colors.white,
+              color: Colors.black,
               fontSize: 26,
               fontWeight: FontWeight.w800,
             ),
@@ -38,13 +38,13 @@ class InfoScreen extends StatelessWidget {
           const Text(
             "Sponsors",
             style: TextStyle(
-              color: Colors.white,
+              color: Colors.black,
               fontSize: 24,
               fontWeight: FontWeight.w700,
             ),
           ),
           const SizedBox(height: 15),
-          ...infoService.sponsors.map((s) => _buildSponsorCard(s)), 
+          ...infoService.sponsors.map((s) => _buildSponsorCard(s)),
         ],
       ),
     );
@@ -56,6 +56,7 @@ class InfoScreen extends StatelessWidget {
       decoration: BoxDecoration(
         color: const Color(0xFF102F52),
         borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: Colors.white12, width: 1.5),
       ),
       child: const Text(
         "Radio Apollo staat voor feel-good muziek, lokale verbondenheid en een warme sfeer. "
@@ -73,6 +74,7 @@ class InfoScreen extends StatelessWidget {
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(18),
+        border: Border.all(color: Colors.black12, width: 1.5),
       ),
       child: Row(
         children: [
@@ -89,15 +91,23 @@ class InfoScreen extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(sponsor.title,
-                    style: const TextStyle(
-                        color: Colors.black87,
-                        fontSize: 16,
-                        fontWeight: FontWeight.w700)),
+                Text(
+                  sponsor.title,
+                  style: const TextStyle(
+                    color: Colors.black87,
+                    fontSize: 16,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
                 const SizedBox(height: 4),
-                Text(sponsor.description,
-                    style: const TextStyle(
-                        color: Colors.black54, height: 1.3, fontSize: 13)),
+                Text(
+                  sponsor.description,
+                  style: const TextStyle(
+                    color: Colors.black54,
+                    height: 1.3,
+                    fontSize: 13,
+                  ),
+                ),
               ],
             ),
           ),

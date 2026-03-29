@@ -29,10 +29,10 @@ class ApolloApp extends StatelessWidget {
       title: 'Radio Apollo',
       theme: ThemeData(
         fontFamily: 'Sans',
-        scaffoldBackgroundColor: const Color(0xFF0A2342),
+        scaffoldBackgroundColor: Colors.white,
         colorScheme: ColorScheme.fromSeed(
           seedColor: const Color(0xFF0A2342),
-          brightness: Brightness.dark,
+          brightness: Brightness.light,
         ),
         useMaterial3: true,
       ),

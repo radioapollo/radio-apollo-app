@@ -15,12 +15,14 @@ class ProgramCard extends StatelessWidget {
   final String time;
   final String title;
   final String subtitle;
+  final Border? border;
 
   const ProgramCard({
     super.key,
     required this.time,
     required this.title,
     required this.subtitle,
+    this.border,
   });
 
   @override
@@ -31,6 +33,7 @@ class ProgramCard extends StatelessWidget {
       decoration: BoxDecoration(
         color: const Color(0xFF102F52),
         borderRadius: BorderRadius.circular(22),
+        border: border,
       ),
       child: Row(
         children: [

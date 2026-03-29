@@ -44,7 +44,7 @@ class _ProgramScreenState extends State<ProgramScreen> {
           const Text(
             "Programma",
             style: TextStyle(
-              color: Colors.white,
+              color: Colors.black,
               fontSize: 26,
               fontWeight: FontWeight.w800,
             ),
@@ -57,10 +57,11 @@ class _ProgramScreenState extends State<ProgramScreen> {
           ),
           const SizedBox(height: 25),
           ...programs.map((program) => ProgramCard(
-              time: program["time"]!,
-              title: program["title"]!,
-              subtitle: program["desc"]!,
-          )),
+                time: program["time"]!,
+                title: program["title"]!,
+                subtitle: program["desc"]!,
+                border: Border.all(color: Colors.white24, width: 1.5),
+              )),
         ],
       ),
     );
