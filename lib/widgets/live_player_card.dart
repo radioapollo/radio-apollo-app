@@ -1,14 +1,3 @@
-/* Live Player Card
-
-   This widget displays the live radio player.
-
-   It includes:
-   - a play/pause button
-   - a live indicator
-   - the current program information
-   - the currently playing song fetched from Shoutcast
-*/
-
 import 'dart:async';
 import 'dart:convert';
 import 'package:flutter/material.dart';
@@ -29,14 +18,18 @@ class LivePlayerCard extends StatefulWidget {
 }
 
 class _LivePlayerCardState extends State<LivePlayerCard> {
-  String _currentSong = "Nu te beluisteren";
+  String _currentSong = "Live radio speelt...";
   Timer? _timer;
 
   @override
   void initState() {
     super.initState();
     _fetchCurrentSong();
-    _timer = Timer.periodic(const Duration(seconds: 10), (_) => _fetchCurrentSong());
+
+    _timer = Timer.periodic(
+      const Duration(seconds: 5),
+      (_) => _fetchCurrentSong(),
+    );
   }
 
   @override
@@ -48,22 +41,34 @@ class _LivePlayerCardState extends State<LivePlayerCard> {
   Future<void> _fetchCurrentSong() async {
     try {
       final response = await http.get(
-        Uri.parse('http://radioapollo.beheerstream.nl:8004/stats?json=1'),
+        Uri.parse('http://radioapollo.beheerstream.nl:8006/stats?json=1'),
       );
+
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
-        final song = data['songtitle'] ?? '';
-        if (mounted && song.isNotEmpty) {
-          setState(() => _currentSong = song);
-        }
+
+        final song = (data['songtitle'] ?? '').toString().trim();
+
+        if (!mounted) return;
+
+        setState(() {
+          _currentSong = song.isNotEmpty
+              ? song
+              : "Onbekend nummer";
+        });
       }
-    } catch (_) {
-      // keep showing last known song on error
+    } catch (e) {
+      // optional debug
+      // print("Metadata error: $e");
     }
   }
 
   @override
   Widget build(BuildContext context) {
+    final parts = _currentSong.split(" - ");
+    final artist = parts.length > 1 ? parts[0] : "";
+    final title = parts.length > 1 ? parts[1] : _currentSong;
+
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
@@ -75,7 +80,9 @@ class _LivePlayerCardState extends State<LivePlayerCard> {
           GestureDetector(
             onTap: widget.onTap,
             child: Icon(
-              widget.isPlaying ? Icons.pause_circle_filled : Icons.play_circle_fill,
+              widget.isPlaying
+                  ? Icons.pause_circle_filled
+                  : Icons.play_circle_fill,
               color: Colors.white,
               size: 70,
             ),
@@ -86,7 +93,8 @@ class _LivePlayerCardState extends State<LivePlayerCard> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                  padding: const EdgeInsets.symmetric(
+                      horizontal: 10, vertical: 4),
                   decoration: BoxDecoration(
                     color: Colors.red,
                     borderRadius: BorderRadius.circular(50),
@@ -110,11 +118,28 @@ class _LivePlayerCardState extends State<LivePlayerCard> {
                     fontWeight: FontWeight.w800,
                   ),
                 ),
-                const SizedBox(height: 4),
+                const SizedBox(height: 6),
+
+                // 🎵 SONG INFO
+                if (artist.isNotEmpty)
+                  Text(
+                    artist,
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 13,
+                      fontWeight: FontWeight.bold,
+                    ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+
                 Text(
-                  _currentSong,
-                  style: const TextStyle(color: Colors.white70, fontSize: 13),
-                  maxLines: 2,
+                  title,
+                  style: const TextStyle(
+                    color: Colors.white70,
+                    fontSize: 13,
+                  ),
+                  maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                 ),
               ],
