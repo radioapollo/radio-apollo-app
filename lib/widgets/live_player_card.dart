@@ -25,11 +25,18 @@ class _LivePlayerCardState extends State<LivePlayerCard> {
   void initState() {
     super.initState();
     _fetchCurrentSong();
-
     _timer = Timer.periodic(
       const Duration(seconds: 5),
       (_) => _fetchCurrentSong(),
     );
+  }
+
+  @override
+  void didUpdateWidget(covariant LivePlayerCard oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (widget.isPlaying && !oldWidget.isPlaying) {
+      _fetchCurrentSong();
+    }
   }
 
   @override
@@ -39,6 +46,8 @@ class _LivePlayerCardState extends State<LivePlayerCard> {
   }
 
   Future<void> _fetchCurrentSong() async {
+    if (!widget.isPlaying) return;
+
     try {
       final response = await http.get(
         Uri.parse('http://radioapollo.beheerstream.nl:8006/stats?json=1'),
@@ -46,21 +55,15 @@ class _LivePlayerCardState extends State<LivePlayerCard> {
 
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
-
         final song = (data['songtitle'] ?? '').toString().trim();
 
         if (!mounted) return;
 
         setState(() {
-          _currentSong = song.isNotEmpty
-              ? song
-              : "Onbekend nummer";
+          _currentSong = song.isNotEmpty ? song : "Onbekend nummer";
         });
       }
-    } catch (e) {
-      // optional debug
-      // print("Metadata error: $e");
-    }
+    } catch (_) {}
   }
 
   @override
@@ -93,8 +96,7 @@ class _LivePlayerCardState extends State<LivePlayerCard> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Container(
-                  padding: const EdgeInsets.symmetric(
-                      horizontal: 10, vertical: 4),
+                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                   decoration: BoxDecoration(
                     color: Colors.red,
                     borderRadius: BorderRadius.circular(50),
@@ -119,8 +121,6 @@ class _LivePlayerCardState extends State<LivePlayerCard> {
                   ),
                 ),
                 const SizedBox(height: 6),
-
-                // 🎵 SONG INFO
                 if (artist.isNotEmpty)
                   Text(
                     artist,
@@ -132,7 +132,6 @@ class _LivePlayerCardState extends State<LivePlayerCard> {
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                   ),
-
                 Text(
                   title,
                   style: const TextStyle(

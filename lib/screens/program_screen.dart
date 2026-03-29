@@ -1,12 +1,3 @@
-/* Program Schedule Screen
-
-  This screen displays the radio station's program schedule.
-
-   Users can:
-   - view the programs for different days
-   - scroll through the list of shows
-*/
-
 import 'package:flutter/material.dart';
 import '../services/program_service.dart';
 import '../widgets/page_with_header.dart';
@@ -37,6 +28,7 @@ class _ProgramScreenState extends State<ProgramScreen> {
     final selectedDay = _days[_selectedIndex];
     final weekday = ProgramService.getWeekdayFromName(selectedDay);
     final programs = ProgramService.getProgramsForDay(weekday);
+
     return PageWithHeader(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -56,12 +48,20 @@ class _ProgramScreenState extends State<ProgramScreen> {
             onDaySelected: _onDaySelected,
           ),
           const SizedBox(height: 25),
-          ...programs.map((program) => ProgramCard(
+          ListView.builder(
+            shrinkWrap: true,
+            physics: const NeverScrollableScrollPhysics(),
+            itemCount: programs.length,
+            itemBuilder: (context, index) {
+              final program = programs[index];
+              return ProgramCard(
                 time: program["time"]!,
                 title: program["title"]!,
                 subtitle: program["desc"]!,
                 border: Border.all(color: Colors.white24, width: 1.5),
-              )),
+              );
+            },
+          ),
         ],
       ),
     );

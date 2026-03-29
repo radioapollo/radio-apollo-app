@@ -1,5 +1,7 @@
 import 'package:audio_service/audio_service.dart';
+import 'package:flutter/foundation.dart';
 import 'package:just_audio/just_audio.dart';
+import 'dart:io';
 
 class RadioAudioHandler extends BaseAudioHandler {
   final AudioPlayer _player = AudioPlayer();
@@ -15,7 +17,9 @@ class RadioAudioHandler extends BaseAudioHandler {
       );
     });
 
-    _player.setAutomaticallyWaitsToMinimizeStalling(false);
+    if (!kIsWeb && Platform.isIOS) {
+      _player.setAutomaticallyWaitsToMinimizeStalling(false);
+    }
   }
 
   AudioProcessingState _mapState(ProcessingState state) {
@@ -48,10 +52,13 @@ class RadioAudioHandler extends BaseAudioHandler {
 
   Future<void> toggle() async {
     if (_player.playing) {
-      await pause(); // pause normally
+      await _player.pause();
     } else {
-      await _player.stop(); // reset to live
-      await _player.setUrl(_streamUrl);
+      final state = _player.processingState;
+      if (state == ProcessingState.idle ||
+          state == ProcessingState.completed) {
+        await _player.setUrl(_streamUrl);
+      }
       await _player.play();
     }
   }

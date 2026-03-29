@@ -1,21 +1,10 @@
-/*  Main navigation Controller
-
-   This file controls the main navigation of the application.
-
-   It manages the Bottom Navigation Bar and switches between
-   the different screens of the app:
-   - Home
-   - Program Schedule
-   - Info
-   - Chat
-*/
-
 import 'package:flutter/material.dart';
 import '../screens/home_screen.dart';
 import '../screens/event_screen.dart';
 import '../screens/program_screen.dart';
 import '../screens/info_screen.dart';
 import '../screens/chat_screen.dart';
+import '../services/chat_service.dart';
 
 class ApolloHome extends StatefulWidget {
   const ApolloHome({super.key});
@@ -26,6 +15,7 @@ class ApolloHome extends StatefulWidget {
 
 class _ApolloHomeState extends State<ApolloHome> {
   int _index = 0;
+  final ChatService _chatService = ChatService();
 
   late final List<Widget> _screens;
 
@@ -35,9 +25,9 @@ class _ApolloHomeState extends State<ApolloHome> {
     _screens = [
       HomeScreen(onNavigate: _switchTab),
       const ProgramScreen(),
-      InfoScreen(),
-      const EventScreen(), 
-      const ChatScreen(),
+      const InfoScreen(),
+      const EventScreen(),
+      ChatScreen(chatService: _chatService),
     ];
   }
 

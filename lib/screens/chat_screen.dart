@@ -1,35 +1,21 @@
-/* Chat Screen
-
-   This screen allows users to interact with the radio station
-   through a chat interface.
-
-   Features include:
-   - viewing messages from the studio
-   - sending messages to the radio station
-   - displaying messages in chat bubbles
-*/
-
 import 'package:flutter/material.dart';
 import '../services/chat_service.dart';
 import '../widgets/message_bubble.dart';
 
 class ChatScreen extends StatefulWidget {
-  const ChatScreen({super.key});
+  final ChatService chatService;
+
+  const ChatScreen({super.key, required this.chatService});
 
   @override
   State<ChatScreen> createState() => _ChatScreenState();
 }
 
 class _ChatScreenState extends State<ChatScreen> {
-  late final ChatService _chatService;
   final TextEditingController _controller = TextEditingController();
   final ScrollController _scrollController = ScrollController();
 
-  @override
-  void initState() {
-    super.initState();
-    _chatService = ChatService();
-  }
+  ChatService get _chatService => widget.chatService;
 
   @override
   void dispose() {
