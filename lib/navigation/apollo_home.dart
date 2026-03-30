@@ -25,7 +25,7 @@ class _ApolloHomeState extends State<ApolloHome> {
     _screens = [
       HomeScreen(onNavigate: _switchTab),
       const ProgramScreen(),
-      const InfoScreen(),
+      InfoScreen(),
       const EventScreen(),
       ChatScreen(chatService: _chatService),
     ];

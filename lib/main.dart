@@ -2,11 +2,17 @@ import 'package:flutter/material.dart';
 import 'package:audio_service/audio_service.dart';
 import 'navigation/apollo_home.dart';
 import 'services/audio_handler.dart';
+import 'package:firebase_core/firebase_core.dart';
+import 'firebase_options.dart';
 
 late final RadioAudioHandler audioHandler;
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
+
+  await Firebase.initializeApp(
+    options: DefaultFirebaseOptions.currentPlatform,
+  );
 
   audioHandler = await AudioService.init(
     builder: () => RadioAudioHandler(),

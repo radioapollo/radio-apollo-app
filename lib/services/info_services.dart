@@ -9,13 +9,20 @@
 */
 
 import '../models/sponsor.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 
 class InfoService {
-  final List<Sponsor> sponsors = const [
-    Sponsor(title: "Café De Brug", description: "De gezelligste plek voor een pintje"),
-    Sponsor(title: "Garage Peeters", description: "Onderhoud, herstellingen & topservice"),
-    Sponsor(title: "Bakkerij Rose", description: "Elke dag vers brood en gebak"),
-  ];
+  final _db = FirebaseFirestore.instance;
+
+  Stream<List<Sponsor>> get sponsorsStream => _db
+      .collection('sponsors')
+      .snapshots()
+      .map((snapshot) => snapshot.docs
+          .map((doc) => Sponsor(
+                title: doc['title'] ?? '',
+                description: doc['description'] ?? '',
+              ))
+          .toList());
 
   final String aboutText = 
     "Radio Apollo staat voor feel-good muziek, lokale verbondenheid en een warme sfeer. "

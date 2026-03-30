@@ -14,12 +14,12 @@ import '../services/info_services.dart';
 import '../widgets/page_with_header.dart';
 
 class InfoScreen extends StatelessWidget {
-  const InfoScreen({super.key});
+  InfoScreen({super.key});
+
+  final InfoService _infoService = InfoService();
 
   @override
   Widget build(BuildContext context) {
-    final infoService = InfoService();
-
     return PageWithHeader(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -44,7 +44,33 @@ class InfoScreen extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 15),
-          ...infoService.sponsors.map((s) => _buildSponsorCard(s)),
+          StreamBuilder<List<Sponsor>>(
+            stream: _infoService.sponsorsStream,
+            builder: (context, snapshot) {
+              if (snapshot.connectionState == ConnectionState.waiting) {
+                return const Center(
+                  child: CircularProgressIndicator(color: Color(0xFF102F52)),
+                );
+              }
+              if (snapshot.hasError) {
+                return const Text(
+                  "Fout bij het laden van sponsors.",
+                  style: TextStyle(color: Colors.black54),
+                );
+              }
+              if (!snapshot.hasData || snapshot.data!.isEmpty) {
+                return const Text(
+                  "Geen sponsors gevonden.",
+                  style: TextStyle(color: Colors.black54),
+                );
+              }
+              return Column(
+                children: snapshot.data!
+                    .map((s) => _buildSponsorCard(s))
+                    .toList(),
+              );
+            },
+          ),
         ],
       ),
     );
