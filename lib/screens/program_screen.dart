@@ -1,3 +1,12 @@
+/* Program Screen
+
+   This screen shows the weekly radio program schedule.
+
+   It includes:
+   - a day selector to switch between days
+   - a list of programs for the selected day
+*/
+
 import 'package:flutter/material.dart';
 import '../services/program_service.dart';
 import '../widgets/page_with_header.dart';
@@ -12,21 +21,19 @@ class ProgramScreen extends StatefulWidget {
 }
 
 class _ProgramScreenState extends State<ProgramScreen> {
-  late final ProgramService _programService;
+  final _programService = ProgramService();
   late List<String> _days;
   int _selectedIndex = 3;
 
   @override
   void initState() {
     super.initState();
-    _programService = ProgramService();
     _days = _programService.getShiftedDays(_selectedIndex);
   }
 
   @override
   Widget build(BuildContext context) {
-    final selectedDay = _days[_selectedIndex];
-    final weekday = ProgramService.getWeekdayFromName(selectedDay);
+    final weekday = ProgramService.getWeekdayFromName(_days[_selectedIndex]);
     final programs = ProgramService.getProgramsForDay(weekday);
 
     return PageWithHeader(
@@ -34,18 +41,15 @@ class _ProgramScreenState extends State<ProgramScreen> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           const Text(
-            "Programma",
+            'Programma',
             style: TextStyle(
-              color: Colors.black,
-              fontSize: 26,
-              fontWeight: FontWeight.w800,
-            ),
+                color: Colors.black, fontSize: 26, fontWeight: FontWeight.w800),
           ),
           const SizedBox(height: 20),
           DaySelector(
             days: _days,
             selectedIndex: _selectedIndex,
-            onDaySelected: _onDaySelected,
+            onDaySelected: (i) => setState(() => _selectedIndex = i),
           ),
           const SizedBox(height: 25),
           ListView.builder(
@@ -53,11 +57,11 @@ class _ProgramScreenState extends State<ProgramScreen> {
             physics: const NeverScrollableScrollPhysics(),
             itemCount: programs.length,
             itemBuilder: (context, index) {
-              final program = programs[index];
+              final p = programs[index];
               return ProgramCard(
-                time: program["time"]!,
-                title: program["title"]!,
-                subtitle: program["desc"]!,
+                time: p['time']!,
+                title: p['title']!,
+                subtitle: p['desc']!,
                 border: Border.all(color: Colors.white24, width: 1.5),
               );
             },
@@ -65,11 +69,5 @@ class _ProgramScreenState extends State<ProgramScreen> {
         ],
       ),
     );
-  }
-
-  void _onDaySelected(int index) {
-    setState(() {
-      _selectedIndex = index;
-    });
   }
 }

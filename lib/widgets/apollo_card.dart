@@ -7,8 +7,8 @@
    - a title
    - a short description
 
-   These cards are used on the home screen to navigate
-   to different sections of the app.
+   Supports both vertical and horizontal layouts, and is
+   used on the home screen to navigate to different sections.
 */
 
 import 'package:flutter/material.dart';
@@ -20,7 +20,6 @@ class ApolloCard extends StatelessWidget {
   final IconData icon;
   final String title;
   final String subtitle;
-  final bool big;
   final bool darkText;
   final VoidCallback? onTap;
   final CardLayout layout;
@@ -32,7 +31,6 @@ class ApolloCard extends StatelessWidget {
     required this.icon,
     required this.title,
     required this.subtitle,
-    this.big = false,
     this.darkText = false,
     this.onTap,
     this.layout = CardLayout.horizontal,
@@ -53,59 +51,45 @@ class ApolloCard extends StatelessWidget {
           border: border,
         ),
         child: layout == CardLayout.vertical
-            ? _buildVerticalLayout(textColor)
-            : _buildHorizontalLayout(textColor),
+            ? _buildVertical(textColor)
+            : _buildHorizontal(textColor),
       ),
     );
   }
 
-  Widget _buildVerticalLayout(Color textColor) {
-    return Column(
-      mainAxisSize: MainAxisSize.min,
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          title,
-          style: TextStyle(
-            color: textColor,
-            fontSize: 18,
-            fontWeight: FontWeight.w800,
-          ),
-        ),
-        const SizedBox(height: 12),
-        Icon(icon, size: 36, color: textColor),
-        const SizedBox(height: 12),
-        Text(
-          subtitle,
-          maxLines: 2,
-          overflow: TextOverflow.ellipsis,
-          style: TextStyle(
-            color: textColor,
-            fontSize: 14,
-            height: 1.3,
-          ),
-        ),
-      ],
-    );
-  }
+  Widget _buildVertical(Color textColor) => Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(title,
+              style: TextStyle(
+                  color: textColor,
+                  fontSize: 18,
+                  fontWeight: FontWeight.w800)),
+          const SizedBox(height: 12),
+          Icon(icon, size: 36, color: textColor),
+          const SizedBox(height: 12),
+          Text(subtitle,
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+              style: TextStyle(color: textColor, fontSize: 14, height: 1.3)),
+        ],
+      );
 
-  Widget _buildHorizontalLayout(Color textColor) {
-    return Row(
-      children: [
-        Icon(icon, size: 42, color: textColor),
-        const SizedBox(width: 14),
-        Expanded(
-          child: Text(
-            "$title\n$subtitle",
-            style: TextStyle(
-              color: textColor,
-              fontSize: 15,
-              height: 1.3,
-              fontWeight: FontWeight.w600,
+  Widget _buildHorizontal(Color textColor) => Row(
+        children: [
+          Icon(icon, size: 42, color: textColor),
+          const SizedBox(width: 14),
+          Expanded(
+            child: Text(
+              '$title\n$subtitle',
+              style: TextStyle(
+                  color: textColor,
+                  fontSize: 15,
+                  height: 1.3,
+                  fontWeight: FontWeight.w600),
             ),
           ),
-        ),
-      ],
-    );
-  }
+        ],
+      );
 }

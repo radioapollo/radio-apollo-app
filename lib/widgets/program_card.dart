@@ -1,7 +1,6 @@
 /* Program Card Widget
 
-   This widget displays a single radio program
-   in the schedule.
+   This widget displays a single radio program in the schedule.
 
    It shows:
    - the broadcast time

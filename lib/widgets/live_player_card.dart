@@ -1,3 +1,13 @@
+/* Live Player Card Widget
+
+   This widget displays the live radio player on the home screen.
+
+   It shows:
+   - a play/pause button that controls the audio stream
+   - the LIVE indicator and station name
+   - the currently playing song, fetched every 5 seconds
+*/
+
 import 'dart:async';
 import 'dart:convert';
 import 'package:flutter/material.dart';
@@ -18,25 +28,20 @@ class LivePlayerCard extends StatefulWidget {
 }
 
 class _LivePlayerCardState extends State<LivePlayerCard> {
-  String _currentSong = "Live radio speelt...";
+  String _currentSong = 'Live radio speelt...';
   Timer? _timer;
 
   @override
   void initState() {
     super.initState();
     _fetchCurrentSong();
-    _timer = Timer.periodic(
-      const Duration(seconds: 5),
-      (_) => _fetchCurrentSong(),
-    );
+    _timer = Timer.periodic(const Duration(seconds: 5), (_) => _fetchCurrentSong());
   }
 
   @override
   void didUpdateWidget(covariant LivePlayerCard oldWidget) {
     super.didUpdateWidget(oldWidget);
-    if (widget.isPlaying && !oldWidget.isPlaying) {
-      _fetchCurrentSong();
-    }
+    if (widget.isPlaying && !oldWidget.isPlaying) _fetchCurrentSong();
   }
 
   @override
@@ -47,29 +52,21 @@ class _LivePlayerCardState extends State<LivePlayerCard> {
 
   Future<void> _fetchCurrentSong() async {
     if (!widget.isPlaying) return;
-
     try {
       final response = await http.get(
         Uri.parse('http://radioapollo.beheerstream.nl:8006/stats?json=1'),
       );
-
-      if (response.statusCode == 200) {
-        final data = jsonDecode(response.body);
-        final song = (data['songtitle'] ?? '').toString().trim();
-
-        if (!mounted) return;
-
-        setState(() {
-          _currentSong = song.isNotEmpty ? song : "Onbekend nummer";
-        });
+      if (response.statusCode == 200 && mounted) {
+        final song = (jsonDecode(response.body)['songtitle'] ?? '').toString().trim();
+        setState(() => _currentSong = song.isNotEmpty ? song : 'Onbekend nummer');
       }
     } catch (_) {}
   }
 
   @override
   Widget build(BuildContext context) {
-    final parts = _currentSong.split(" - ");
-    final artist = parts.length > 1 ? parts[0] : "";
+    final parts = _currentSong.split(' - ');
+    final artist = parts.length > 1 ? parts[0] : '';
     final title = parts.length > 1 ? parts[1] : _currentSong;
 
     return Container(
@@ -102,45 +99,35 @@ class _LivePlayerCardState extends State<LivePlayerCard> {
                     borderRadius: BorderRadius.circular(50),
                   ),
                   child: const Text(
-                    "● LIVE",
+                    '● LIVE',
                     style: TextStyle(
-                      color: Colors.white,
-                      fontSize: 12,
-                      fontWeight: FontWeight.bold,
-                    ),
+                        color: Colors.white,
+                        fontSize: 12,
+                        fontWeight: FontWeight.bold),
                   ),
                 ),
                 const SizedBox(height: 6),
                 const Text(
-                  "RADIO APOLLO",
+                  'RADIO APOLLO',
                   style: TextStyle(
-                    color: Colors.white,
-                    fontSize: 22,
-                    height: 1.2,
-                    fontWeight: FontWeight.w800,
-                  ),
+                      color: Colors.white,
+                      fontSize: 22,
+                      height: 1.2,
+                      fontWeight: FontWeight.w800),
                 ),
                 const SizedBox(height: 6),
                 if (artist.isNotEmpty)
-                  Text(
-                    artist,
-                    style: const TextStyle(
-                      color: Colors.white,
-                      fontSize: 13,
-                      fontWeight: FontWeight.bold,
-                    ),
+                  Text(artist,
+                      style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 13,
+                          fontWeight: FontWeight.bold),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis),
+                Text(title,
+                    style: const TextStyle(color: Colors.white70, fontSize: 13),
                     maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                Text(
-                  title,
-                  style: const TextStyle(
-                    color: Colors.white70,
-                    fontSize: 13,
-                  ),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                ),
+                    overflow: TextOverflow.ellipsis),
               ],
             ),
           ),

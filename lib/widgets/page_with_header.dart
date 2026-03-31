@@ -5,8 +5,8 @@
 
    It includes:
    - the Radio Apollo logo header
-   - background image
-   - spacing and padding
+   - a background watermark image
+   - consistent padding and scrolling behaviour
 */
 
 import 'package:flutter/material.dart';

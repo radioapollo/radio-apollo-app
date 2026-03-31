@@ -1,10 +1,11 @@
 /* Day Selector Widget
 
-   This widget displays a horizontal list of days
+   This widget displays a horizontal scrollable list of days
    used in the program schedule screen.
 
    Users can select a day to view the radio programs
-   scheduled for that specific day.
+   scheduled for that specific day. The selected day is
+   automatically scrolled into the center of the screen.
 */
 
 import 'package:flutter/material.dart';
@@ -26,16 +27,15 @@ class DaySelector extends StatefulWidget {
 }
 
 class _DaySelectorState extends State<DaySelector> {
-  final ScrollController _scrollController = ScrollController();
+  final _scrollController = ScrollController();
+
+  static const _itemWidth = 110.0;
+  static const _spacing = 12.0;
 
   @override
   void initState() {
     super.initState();
-
-    // Wait until UI is built before scrolling
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      _scrollToSelected();
-    });
+    WidgetsBinding.instance.addPostFrameCallback((_) => _scrollToSelected());
   }
 
   @override
@@ -45,18 +45,13 @@ class _DaySelectorState extends State<DaySelector> {
   }
 
   void _scrollToSelected() {
-    const itemWidth = 110.0;
-    const spacing = 12.0;
-
     final screenWidth = MediaQuery.of(context).size.width;
-
-    final offset =
-        (widget.selectedIndex * (itemWidth + spacing)) -
-        (screenWidth / 2) +
-        (itemWidth / 2);
+    final offset = (widget.selectedIndex * (_itemWidth + _spacing))
+        - (screenWidth / 2)
+        + (_itemWidth / 2);
 
     _scrollController.animateTo(
-      offset < 0 ? 0 : offset,
+      offset.clamp(0, double.infinity),
       duration: const Duration(milliseconds: 300),
       curve: Curves.easeOut,
     );
@@ -72,13 +67,12 @@ class _DaySelectorState extends State<DaySelector> {
         itemCount: widget.days.length,
         itemBuilder: (context, index) {
           final isSelected = index == widget.selectedIndex;
-
           return Padding(
-            padding: const EdgeInsets.only(right: 12),
+            padding: const EdgeInsets.only(right: _spacing),
             child: GestureDetector(
               onTap: () => widget.onDaySelected(index),
               child: Container(
-                width: 110,
+                width: _itemWidth,
                 alignment: Alignment.center,
                 decoration: BoxDecoration(
                   color: isSelected
