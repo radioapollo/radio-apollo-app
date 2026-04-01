@@ -10,6 +10,7 @@
 */
 
 import 'package:flutter/material.dart';
+import '../theme/app_theme.dart';
 
 class PageWithHeader extends StatelessWidget {
   final Widget child;
@@ -21,24 +22,25 @@ class PageWithHeader extends StatelessWidget {
     return SizedBox.expand(
       child: Container(
         decoration: const BoxDecoration(
-          image: DecorationImage(
-            image: AssetImage('../lib/assets/images/Background/Watermerk.JPG'),
-            fit: BoxFit.cover,
-            alignment: Alignment.topCenter,
-          ),
+          image: AppDecorations.backgroundWatermark,
         ),
         child: SafeArea(
           child: SingleChildScrollView(
-            padding: const EdgeInsets.fromLTRB(20, 20, 20, 30),
+            padding: const EdgeInsets.fromLTRB(
+              AppDimensions.paddingXLarge,
+              AppDimensions.paddingXLarge,
+              AppDimensions.paddingXLarge,
+              30,
+            ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Image.asset(
                   '../lib/assets/images/Logo/transparant.png',
-                  height: 60,
+                  height: AppDimensions.logoHeight,
                   fit: BoxFit.contain,
                 ),
-                const SizedBox(height: 10),
+                const SizedBox(height: AppDimensions.spaceMedium),
                 child,
               ],
             ),

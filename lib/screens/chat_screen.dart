@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../services/chat_service.dart';
 import '../widgets/message_bubble.dart';
+import '../theme/app_theme.dart';
 
 class ChatScreen extends StatefulWidget {
   final ChatService chatService;
@@ -12,8 +13,8 @@ class ChatScreen extends StatefulWidget {
 }
 
 class _ChatScreenState extends State<ChatScreen> {
-  final TextEditingController _controller = TextEditingController();
-  final ScrollController _scrollController = ScrollController();
+  final TextEditingController _controller     = TextEditingController();
+  final ScrollController       _scrollController = ScrollController();
 
   ChatService get _chatService => widget.chatService;
 
@@ -26,12 +27,10 @@ class _ChatScreenState extends State<ChatScreen> {
 
   void _sendMessage() {
     if (_controller.text.trim().isEmpty) return;
-
     setState(() {
       _chatService.sendMessage(_controller.text);
       _controller.clear();
     });
-
     _scrollToBottom();
   }
 
@@ -52,19 +51,15 @@ class _ChatScreenState extends State<ChatScreen> {
     return SizedBox.expand(
       child: Container(
         decoration: const BoxDecoration(
-          image: DecorationImage(
-            image: AssetImage('../lib/assets/images/Background/Watermerk.JPG'),
-            fit: BoxFit.cover,
-            alignment: Alignment.topCenter,
-          ),
+          image: AppDecorations.backgroundWatermark,
         ),
         child: SafeArea(
           child: Column(
             children: [
               _buildHeader(),
-              const SizedBox(height: 10),
+              const SizedBox(height: AppDimensions.spaceMedium),
               _buildChatTitle(),
-              const SizedBox(height: 10),
+              const SizedBox(height: AppDimensions.spaceMedium),
               _buildChatList(),
               _buildInputField(),
             ],
@@ -76,14 +71,19 @@ class _ChatScreenState extends State<ChatScreen> {
 
   Widget _buildHeader() {
     return Padding(
-      padding: const EdgeInsets.fromLTRB(20, 20, 20, 0),
+      padding: const EdgeInsets.fromLTRB(
+        AppDimensions.paddingXLarge,
+        AppDimensions.paddingXLarge,
+        AppDimensions.paddingXLarge,
+        0,
+      ),
       child: Align(
         alignment: Alignment.centerLeft,
         child: GestureDetector(
           onLongPress: _showAdminLogin,
           child: Image.asset(
             '../lib/assets/images/Logo/transparant.png',
-            height: 60,
+            height: AppDimensions.logoHeight,
             fit: BoxFit.contain,
           ),
         ),
@@ -93,29 +93,17 @@ class _ChatScreenState extends State<ChatScreen> {
 
   Widget _buildChatTitle() {
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 20),
+      padding: const EdgeInsets.symmetric(
+          horizontal: AppDimensions.paddingXLarge),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text(
-            "Chat met de Studio",
-            style: TextStyle(
-              color: Colors.black,
-              fontSize: 22,
-              fontWeight: FontWeight.w700,
-            ),
-          ),
-          if (_chatService.currentRole == "admin")
+          const Text('Chat met de Studio', style: AppTextStyles.chatTitle),
+          if (_chatService.currentRole == 'admin')
             const Padding(
-              padding: EdgeInsets.only(top: 6),
-              child: Text(
-                "ADMIN MODE",
-                style: TextStyle(
-                  color: Colors.orangeAccent,
-                  fontSize: 12,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
+              padding:
+                  EdgeInsets.only(top: AppDimensions.spaceSmall),
+              child: Text('ADMIN MODE', style: AppTextStyles.adminBadge),
             ),
         ],
       ),
@@ -125,20 +113,17 @@ class _ChatScreenState extends State<ChatScreen> {
   Widget _buildChatList() {
     return Expanded(
       child: Container(
-        margin: const EdgeInsets.symmetric(horizontal: 20),
-        padding: const EdgeInsets.all(12),
-        decoration: BoxDecoration(
-          color: const Color(0xFF18375A),
-          borderRadius: BorderRadius.circular(20),
-          border: Border.all(color: Colors.white12, width: 1.5),
-        ),
+        margin: const EdgeInsets.symmetric(
+            horizontal: AppDimensions.paddingXLarge),
+        padding: const EdgeInsets.all(AppDimensions.paddingSmall),
+        decoration: AppDecorations.chatList(),
         child: ListView.builder(
           controller: _scrollController,
           itemCount: _chatService.messages.length,
-          padding: const EdgeInsets.only(bottom: 10),
+          padding:
+              const EdgeInsets.only(bottom: AppDimensions.spaceMedium),
           itemBuilder: (context, index) {
-            final message = _chatService.messages[index];
-            return MessageBubble(message: message);
+            return MessageBubble(message: _chatService.messages[index]);
           },
         ),
       ),
@@ -147,29 +132,34 @@ class _ChatScreenState extends State<ChatScreen> {
 
   Widget _buildInputField() {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-      margin: const EdgeInsets.fromLTRB(20, 10, 20, 20),
-      decoration: BoxDecoration(
-        color: const Color(0xFF102F52),
-        borderRadius: BorderRadius.circular(18),
-        border: Border.all(color: Colors.white12, width: 1.5),
+      padding: const EdgeInsets.symmetric(
+        horizontal: AppDimensions.paddingMedium,
+        vertical: AppDimensions.paddingSmall,
       ),
+      margin: const EdgeInsets.fromLTRB(
+        AppDimensions.paddingXLarge,
+        AppDimensions.spaceMedium,
+        AppDimensions.paddingXLarge,
+        AppDimensions.paddingXLarge,
+      ),
+      decoration: AppDecorations.chatInputFull(),
       child: Row(
         children: [
           Expanded(
             child: TextField(
               controller: _controller,
-              style: const TextStyle(color: Colors.white),
+              style: AppTextStyles.inputText,
               decoration: const InputDecoration(
-                hintText: "Typ een bericht...",
-                hintStyle: TextStyle(color: Colors.white54),
+                hintText: 'Typ een bericht...',
+                hintStyle: AppTextStyles.inputHint,
                 border: InputBorder.none,
               ),
             ),
           ),
           GestureDetector(
             onTap: _sendMessage,
-            child: const Icon(Icons.send, color: Colors.white, size: 26),
+            child: const Icon(Icons.send,
+                color: Colors.white, size: AppDimensions.iconLarge),
           ),
         ],
       ),
@@ -178,17 +168,14 @@ class _ChatScreenState extends State<ChatScreen> {
 
   void _showAdminLogin() {
     final passwordController = TextEditingController();
-
     showDialog(
       context: context,
       builder: (_) => AlertDialog(
-        title: const Text("Admin Login"),
+        title: const Text('Admin Login'),
         content: TextField(
           controller: passwordController,
           obscureText: true,
-          decoration: const InputDecoration(
-            hintText: "Enter password",
-          ),
+          decoration: const InputDecoration(hintText: 'Enter password'),
         ),
         actions: [
           TextButton(
@@ -197,7 +184,7 @@ class _ChatScreenState extends State<ChatScreen> {
               setState(() {});
               Navigator.pop(context);
             },
-            child: const Text("Login"),
+            child: const Text('Login'),
           ),
         ],
       ),

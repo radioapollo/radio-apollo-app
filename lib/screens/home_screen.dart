@@ -13,6 +13,7 @@ import '../main.dart';
 import '../widgets/page_with_header.dart';
 import '../widgets/apollo_card.dart';
 import '../widgets/live_player_card.dart';
+import '../theme/app_theme.dart';
 
 class HomeScreen extends StatelessWidget {
   final Function(int) onNavigate;
@@ -31,20 +32,40 @@ class HomeScreen extends StatelessWidget {
               onTap: audioHandler.toggle,
             ),
           ),
-          const SizedBox(height: 30),
+          const SizedBox(height: AppDimensions.space30),
           _buildRow([
-            _card(color: const Color(0xFFFFF4CE), icon: Icons.calendar_month,
-                title: "Programma's", subtitle: 'Bekijk ons weekoverzicht', index: 1),
-            _card(color: const Color(0xFF185ADB), icon: Icons.campaign,
-                title: 'Info', subtitle: 'Wie zijn wij en onze adverteerders',
-                darkText: true, index: 2),
+            _card(
+              color: AppColors.cardYellow,
+              icon: Icons.calendar_month,
+              title: "Programma's",
+              subtitle: 'Bekijk ons weekoverzicht',
+              index: 1,
+            ),
+            _card(
+              color: AppColors.primaryLight,
+              icon: Icons.campaign,
+              title: 'Info',
+              subtitle: 'Wie zijn wij en onze adverteerders',
+              darkText: true,
+              index: 2,
+            ),
           ]),
-          const SizedBox(height: 16),
+          const SizedBox(height: AppDimensions.spaceXLarge),
           _buildRow([
-            _card(color: const Color(0xFFCBF0D8), icon: Icons.event,
-                title: 'Evenementen', subtitle: 'Bekijk onze evenementen', index: 3),
-            _card(color: const Color(0xFFCDE7FF), icon: Icons.chat_bubble,
-                title: 'Chat', subtitle: 'Stuur een bericht naar de studio', index: 4),
+            _card(
+              color: AppColors.cardGreen,
+              icon: Icons.event,
+              title: 'Evenementen',
+              subtitle: 'Bekijk onze evenementen',
+              index: 3,
+            ),
+            _card(
+              color: AppColors.cardBlue,
+              icon: Icons.chat_bubble,
+              title: 'Chat',
+              subtitle: 'Stuur een bericht naar de studio',
+              index: 4,
+            ),
           ]),
         ],
       ),
@@ -54,7 +75,7 @@ class HomeScreen extends StatelessWidget {
   Widget _buildRow(List<Widget> children) => Row(
         children: [
           Expanded(child: children[0]),
-          const SizedBox(width: 16),
+          const SizedBox(width: AppDimensions.spaceXLarge),
           Expanded(child: children[1]),
         ],
       );
@@ -75,6 +96,7 @@ class HomeScreen extends StatelessWidget {
         darkText: darkText,
         onTap: () => onNavigate(index),
         layout: CardLayout.vertical,
-        border: Border.all(color: Colors.black12, width: 1.5),
+        border: Border.all(
+            color: AppColors.divider, width: AppDimensions.borderThin),
       );
 }

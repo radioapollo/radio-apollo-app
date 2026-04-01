@@ -12,6 +12,7 @@ import 'dart:async';
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
+import '../theme/app_theme.dart';
 
 class LivePlayerCard extends StatefulWidget {
   final bool isPlaying;
@@ -35,7 +36,8 @@ class _LivePlayerCardState extends State<LivePlayerCard> {
   void initState() {
     super.initState();
     _fetchCurrentSong();
-    _timer = Timer.periodic(const Duration(seconds: 5), (_) => _fetchCurrentSong());
+    _timer = Timer.periodic(
+        const Duration(seconds: 5), (_) => _fetchCurrentSong());
   }
 
   @override
@@ -57,24 +59,23 @@ class _LivePlayerCardState extends State<LivePlayerCard> {
         Uri.parse('http://radioapollo.beheerstream.nl:8006/stats?json=1'),
       );
       if (response.statusCode == 200 && mounted) {
-        final song = (jsonDecode(response.body)['songtitle'] ?? '').toString().trim();
-        setState(() => _currentSong = song.isNotEmpty ? song : 'Onbekend nummer');
+        final song =
+            (jsonDecode(response.body)['songtitle'] ?? '').toString().trim();
+        setState(() =>
+            _currentSong = song.isNotEmpty ? song : 'Onbekend nummer');
       }
     } catch (_) {}
   }
 
   @override
   Widget build(BuildContext context) {
-    final parts = _currentSong.split(' - ');
+    final parts  = _currentSong.split(' - ');
     final artist = parts.length > 1 ? parts[0] : '';
-    final title = parts.length > 1 ? parts[1] : _currentSong;
+    final title  = parts.length > 1 ? parts[1] : _currentSong;
 
     return Container(
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        color: const Color(0xFF0D2F59),
-        borderRadius: BorderRadius.circular(24),
-      ),
+      padding: const EdgeInsets.all(AppDimensions.paddingXLarge),
+      decoration: AppDecorations.livePlayerCard(),
       child: Row(
         children: [
           GestureDetector(
@@ -84,48 +85,29 @@ class _LivePlayerCardState extends State<LivePlayerCard> {
                   ? Icons.pause_circle_filled
                   : Icons.play_circle_fill,
               color: Colors.white,
-              size: 70,
+              size: AppDimensions.iconPlayPause,
             ),
           ),
-          const SizedBox(width: 18),
+          const SizedBox(width: AppDimensions.paddingLarge),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                  decoration: BoxDecoration(
-                    color: Colors.red,
-                    borderRadius: BorderRadius.circular(50),
-                  ),
-                  child: const Text(
-                    '● LIVE',
-                    style: TextStyle(
-                        color: Colors.white,
-                        fontSize: 12,
-                        fontWeight: FontWeight.bold),
-                  ),
+                  decoration: AppDecorations.liveBadge(),
+                  child: const Text('● LIVE', style: AppTextStyles.liveLabel),
                 ),
-                const SizedBox(height: 6),
-                const Text(
-                  'RADIO APOLLO',
-                  style: TextStyle(
-                      color: Colors.white,
-                      fontSize: 22,
-                      height: 1.2,
-                      fontWeight: FontWeight.w800),
-                ),
-                const SizedBox(height: 6),
+                const SizedBox(height: AppDimensions.spaceSmall),
+                const Text('RADIO APOLLO', style: AppTextStyles.stationName),
+                const SizedBox(height: AppDimensions.spaceSmall),
                 if (artist.isNotEmpty)
                   Text(artist,
-                      style: const TextStyle(
-                          color: Colors.white,
-                          fontSize: 13,
-                          fontWeight: FontWeight.bold),
+                      style: AppTextStyles.playerArtist,
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis),
                 Text(title,
-                    style: const TextStyle(color: Colors.white70, fontSize: 13),
+                    style: AppTextStyles.playerSong,
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis),
               ],

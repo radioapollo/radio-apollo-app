@@ -9,6 +9,7 @@
 */
 
 import 'package:flutter/material.dart';
+import '../theme/app_theme.dart';
 
 class ProgramCard extends StatelessWidget {
   final String time;
@@ -27,40 +28,27 @@ class ProgramCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      margin: const EdgeInsets.only(bottom: 18),
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        color: const Color(0xFF102F52),
-        borderRadius: BorderRadius.circular(22),
-        border: border,
-      ),
+      margin: const EdgeInsets.only(bottom: AppDimensions.paddingLarge),
+      padding: const EdgeInsets.all(AppDimensions.paddingXLarge),
+      decoration: AppDecorations.darkCard(radius: AppDimensions.radiusXLarge),
       child: Row(
         children: [
           Container(
-            padding: const EdgeInsets.all(14),
-            decoration: BoxDecoration(
-              color: Colors.white12,
-              borderRadius: BorderRadius.circular(16),
-            ),
-            child: const Icon(Icons.radio, color: Colors.white, size: 32),
+            padding: const EdgeInsets.all(AppDimensions.paddingSmall),
+            decoration: AppDecorations.programIconBg,
+            child: const Icon(Icons.radio,
+                color: Colors.white, size: AppDimensions.iconXLarge),
           ),
-          const SizedBox(width: 18),
+          const SizedBox(width: AppDimensions.paddingLarge),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(time,
-                    style: const TextStyle(color: Colors.white54, fontSize: 13)),
-                const SizedBox(height: 4),
-                Text(title,
-                    style: const TextStyle(
-                        color: Colors.white,
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold)),
-                const SizedBox(height: 4),
-                Text(subtitle,
-                    style: const TextStyle(
-                        color: Colors.white70, fontSize: 14, height: 1.3)),
+                Text(time, style: AppTextStyles.darkCardTime),
+                const SizedBox(height: AppDimensions.spaceXSmall),
+                Text(title, style: AppTextStyles.darkCardTitle),
+                const SizedBox(height: AppDimensions.spaceXSmall),
+                Text(subtitle, style: AppTextStyles.darkCardSubtitle),
               ],
             ),
           ),

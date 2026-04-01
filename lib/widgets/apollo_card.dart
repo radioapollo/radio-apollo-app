@@ -12,6 +12,7 @@
 */
 
 import 'package:flutter/material.dart';
+import '../theme/app_theme.dart';
 
 enum CardLayout { horizontal, vertical }
 
@@ -44,12 +45,8 @@ class ApolloCard extends StatelessWidget {
     return GestureDetector(
       onTap: onTap,
       child: Container(
-        padding: const EdgeInsets.all(18),
-        decoration: BoxDecoration(
-          color: color,
-          borderRadius: BorderRadius.circular(22),
-          border: border,
-        ),
+        padding: const EdgeInsets.all(AppDimensions.paddingLarge),
+        decoration: AppDecorations.colorCard(color: color, border: border),
         child: layout == CardLayout.vertical
             ? _buildVertical(textColor)
             : _buildHorizontal(textColor),
@@ -62,32 +59,25 @@ class ApolloCard extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(title,
-              style: TextStyle(
-                  color: textColor,
-                  fontSize: 18,
-                  fontWeight: FontWeight.w800)),
-          const SizedBox(height: 12),
-          Icon(icon, size: 36, color: textColor),
-          const SizedBox(height: 12),
+              style: AppTextStyles.apolloCardTitle.copyWith(color: textColor)),
+          const SizedBox(height: AppDimensions.paddingSmall),
+          Icon(icon, size: AppDimensions.iconXXLarge, color: textColor),
+          const SizedBox(height: AppDimensions.paddingSmall),
           Text(subtitle,
               maxLines: 2,
               overflow: TextOverflow.ellipsis,
-              style: TextStyle(color: textColor, fontSize: 14, height: 1.3)),
+              style: AppTextStyles.cardSubtitle.copyWith(color: textColor)),
         ],
       );
 
   Widget _buildHorizontal(Color textColor) => Row(
         children: [
-          Icon(icon, size: 42, color: textColor),
-          const SizedBox(width: 14),
+          Icon(icon, size: AppDimensions.iconPlayer, color: textColor),
+          const SizedBox(width: AppDimensions.paddingSmall),
           Expanded(
             child: Text(
               '$title\n$subtitle',
-              style: TextStyle(
-                  color: textColor,
-                  fontSize: 15,
-                  height: 1.3,
-                  fontWeight: FontWeight.w600),
+              style: AppTextStyles.apolloCardSubtitle.copyWith(color: textColor),
             ),
           ),
         ],

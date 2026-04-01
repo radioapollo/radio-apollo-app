@@ -5,6 +5,7 @@ import '../screens/program_screen.dart';
 import '../screens/info_screen.dart';
 import '../screens/chat_screen.dart';
 import '../services/chat_service.dart';
+import '../theme/app_theme.dart';
 
 class ApolloHome extends StatefulWidget {
   const ApolloHome({super.key});
@@ -31,9 +32,7 @@ class _ApolloHomeState extends State<ApolloHome> {
     ];
   }
 
-  void _switchTab(int newIndex) {
-    setState(() => _index = newIndex);
-  }
+  void _switchTab(int newIndex) => setState(() => _index = newIndex);
 
   @override
   Widget build(BuildContext context) {
@@ -45,27 +44,21 @@ class _ApolloHomeState extends State<ApolloHome> {
 
   Widget _buildBottomNav() {
     return Container(
-      decoration: const BoxDecoration(
-        color: Color(0xFFF8FAFF),
-        borderRadius: BorderRadius.only(
-          topLeft: Radius.circular(22),
-          topRight: Radius.circular(22),
-        ),
-      ),
+      decoration: AppDecorations.bottomNav,
       child: BottomNavigationBar(
         currentIndex: _index,
         onTap: _switchTab,
-        backgroundColor: Colors.white,
+        backgroundColor: AppColors.white,
         elevation: 0,
-        selectedItemColor: const Color(0xFF0A3D91),
+        selectedItemColor: AppColors.primaryMid,
         unselectedItemColor: Colors.grey,
         type: BottomNavigationBarType.fixed,
         items: const [
-          BottomNavigationBarItem(icon: Icon(Icons.home), label: "Home"),
-          BottomNavigationBarItem(icon: Icon(Icons.calendar_month), label: "Zending"),
-          BottomNavigationBarItem(icon: Icon(Icons.info), label: "Info"),
-          BottomNavigationBarItem(icon: Icon(Icons.event), label: "Event"),
-          BottomNavigationBarItem(icon: Icon(Icons.chat), label: "Chat"),
+          BottomNavigationBarItem(icon: Icon(Icons.home),           label: 'Home'),
+          BottomNavigationBarItem(icon: Icon(Icons.calendar_month), label: 'Zending'),
+          BottomNavigationBarItem(icon: Icon(Icons.info),           label: 'Info'),
+          BottomNavigationBarItem(icon: Icon(Icons.event),          label: 'Event'),
+          BottomNavigationBarItem(icon: Icon(Icons.chat),           label: 'Chat'),
         ],
       ),
     );

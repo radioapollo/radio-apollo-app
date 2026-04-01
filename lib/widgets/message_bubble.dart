@@ -10,6 +10,7 @@
 
 import 'package:flutter/material.dart';
 import '../models/message.dart';
+import '../theme/app_theme.dart';
 
 class MessageBubble extends StatelessWidget {
   final Message message;
@@ -18,12 +19,13 @@ class MessageBubble extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final isUser = message.role == 'user';
+    final isUser  = message.role == 'user';
     final isAdmin = message.role == 'admin';
 
     return Container(
       margin: EdgeInsets.only(
-        top: 6, bottom: 6,
+        top: AppDimensions.spaceSmall,
+        bottom: AppDimensions.spaceSmall,
         left: isUser ? 80 : 0,
         right: isUser ? 0 : 80,
       ),
@@ -32,40 +34,32 @@ class MessageBubble extends StatelessWidget {
             isUser ? CrossAxisAlignment.end : CrossAxisAlignment.start,
         children: [
           Container(
-            padding: const EdgeInsets.all(14),
-            decoration: BoxDecoration(
-              color: isAdmin
-                  ? Colors.orangeAccent
-                  : isUser
-                      ? const Color(0xFF185ADB)
-                      : Colors.white,
-              borderRadius: BorderRadius.circular(18),
-            ),
+            padding: const EdgeInsets.all(AppDimensions.paddingSmall),
+            decoration: AppDecorations.chatBubble(
+                isAdmin: isAdmin, isUser: isUser),
             child: Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 if (isAdmin)
                   const Padding(
                     padding: EdgeInsets.only(right: 8, top: 2),
-                    child: Icon(Icons.radio, color: Colors.black54, size: 18),
+                    child: Icon(Icons.radio,
+                        color: Colors.black54,
+                        size: AppDimensions.iconMedium),
                   ),
                 Expanded(
                   child: Text(
                     message.text,
-                    style: TextStyle(
+                    style: AppTextStyles.bubbleText.copyWith(
                       color: isUser ? Colors.white : Colors.black87,
-                      fontSize: 15,
                     ),
                   ),
                 ),
               ],
             ),
           ),
-          const SizedBox(height: 4),
-          Text(
-            message.time,
-            style: const TextStyle(color: Colors.white54, fontSize: 11),
-          ),
+          const SizedBox(height: AppDimensions.spaceXSmall),
+          Text(message.time, style: AppTextStyles.bubbleTime),
         ],
       ),
     );

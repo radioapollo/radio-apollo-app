@@ -12,6 +12,7 @@ import '../services/program_service.dart';
 import '../widgets/page_with_header.dart';
 import '../widgets/program_card.dart';
 import '../widgets/day_selector.dart';
+import '../theme/app_theme.dart';
 
 class ProgramScreen extends StatefulWidget {
   const ProgramScreen({super.key});
@@ -33,25 +34,21 @@ class _ProgramScreenState extends State<ProgramScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final weekday = ProgramService.getWeekdayFromName(_days[_selectedIndex]);
+    final weekday  = ProgramService.getWeekdayFromName(_days[_selectedIndex]);
     final programs = ProgramService.getProgramsForDay(weekday);
 
     return PageWithHeader(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text(
-            'Programma',
-            style: TextStyle(
-                color: Colors.black, fontSize: 26, fontWeight: FontWeight.w800),
-          ),
-          const SizedBox(height: 20),
+          const Text('Programma', style: AppTextStyles.screenTitle),
+          const SizedBox(height: AppDimensions.paddingXLarge),
           DaySelector(
             days: _days,
             selectedIndex: _selectedIndex,
             onDaySelected: (i) => setState(() => _selectedIndex = i),
           ),
-          const SizedBox(height: 25),
+          const SizedBox(height: AppDimensions.space25),
           ListView.builder(
             shrinkWrap: true,
             physics: const NeverScrollableScrollPhysics(),
@@ -62,7 +59,9 @@ class _ProgramScreenState extends State<ProgramScreen> {
                 time: p['time']!,
                 title: p['title']!,
                 subtitle: p['desc']!,
-                border: Border.all(color: Colors.white24, width: 1.5),
+                border: Border.all(
+                    color: Colors.white24,
+                    width: AppDimensions.borderThin),
               );
             },
           ),

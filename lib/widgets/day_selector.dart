@@ -9,6 +9,7 @@
 */
 
 import 'package:flutter/material.dart';
+import '../theme/app_theme.dart';
 
 class DaySelector extends StatefulWidget {
   final List<String> days;
@@ -29,9 +30,6 @@ class DaySelector extends StatefulWidget {
 class _DaySelectorState extends State<DaySelector> {
   final _scrollController = ScrollController();
 
-  static const _itemWidth = 110.0;
-  static const _spacing = 12.0;
-
   @override
   void initState() {
     super.initState();
@@ -46,9 +44,12 @@ class _DaySelectorState extends State<DaySelector> {
 
   void _scrollToSelected() {
     final screenWidth = MediaQuery.of(context).size.width;
-    final offset = (widget.selectedIndex * (_itemWidth + _spacing))
-        - (screenWidth / 2)
-        + (_itemWidth / 2);
+    final offset =
+        (widget.selectedIndex *
+                (AppDimensions.daySelectorItemWidth +
+                    AppDimensions.daySelectorSpacing)) -
+            (screenWidth / 2) +
+            (AppDimensions.daySelectorItemWidth / 2);
 
     _scrollController.animateTo(
       offset.clamp(0, double.infinity),
@@ -60,7 +61,7 @@ class _DaySelectorState extends State<DaySelector> {
   @override
   Widget build(BuildContext context) {
     return SizedBox(
-      height: 50,
+      height: AppDimensions.daySelectorHeight,
       child: ListView.builder(
         controller: _scrollController,
         scrollDirection: Axis.horizontal,
@@ -68,25 +69,22 @@ class _DaySelectorState extends State<DaySelector> {
         itemBuilder: (context, index) {
           final isSelected = index == widget.selectedIndex;
           return Padding(
-            padding: const EdgeInsets.only(right: _spacing),
+            padding: const EdgeInsets.only(
+                right: AppDimensions.daySelectorSpacing),
             child: GestureDetector(
               onTap: () => widget.onDaySelected(index),
               child: Container(
-                width: _itemWidth,
+                width: AppDimensions.daySelectorItemWidth,
                 alignment: Alignment.center,
                 decoration: BoxDecoration(
                   color: isSelected
-                      ? const Color(0xFF3A5F8A)
-                      : const Color(0xFF2C4A6A),
-                  borderRadius: BorderRadius.circular(30),
+                      ? AppColors.steelLight
+                      : AppColors.steelMedium,
+                  borderRadius:
+                      BorderRadius.circular(AppDimensions.radiusPill),
                 ),
-                child: Text(
-                  widget.days[index],
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
+                child: Text(widget.days[index],
+                    style: AppTextStyles.dayLabel),
               ),
             ),
           );
