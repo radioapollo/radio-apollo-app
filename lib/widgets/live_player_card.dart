@@ -13,6 +13,7 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import '../theme/app_theme.dart';
+import '../constants/constants.dart';
 
 class LivePlayerCard extends StatefulWidget {
   final bool isPlaying;
@@ -56,7 +57,7 @@ class _LivePlayerCardState extends State<LivePlayerCard> {
     if (!widget.isPlaying) return;
     try {
       final response = await http.get(
-        Uri.parse('http://radioapollo.beheerstream.nl:8006/stats?json=1'),
+        Uri.parse(AppConstants.statsUrl),
       );
       if (response.statusCode == 200 && mounted) {
         final song =

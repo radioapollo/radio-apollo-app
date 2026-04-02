@@ -5,14 +5,19 @@
    It handles:
    - storing and retrieving messages
    - sending new messages
-   - admin login and logout
+
+   Authentication is delegated to AuthService.
 */
 
 import '../models/message.dart';
 import '../utils/date_utils.dart';
+import 'auth_service.dart';
 
 class ChatService {
-  String currentRole = 'user';
+  final AuthService authService;
+
+  ChatService({required this.authService});
+
   final List<Message> _messages = [
     const Message(role: 'admin', text: 'Welkom bij Radio Apollo! 🎙️', time: '09:12'),
     const Message(role: 'admin', text: 'Wat kan ik voor je doen?', time: '09:12'),
@@ -24,15 +29,9 @@ class ChatService {
   void sendMessage(String text) {
     if (text.trim().isEmpty) return;
     _messages.add(Message(
-      role: currentRole,
+      role: authService.currentRole,
       text: text.trim(),
       time: AppDateUtils.getCurrentTime(),
     ));
   }
-
-  void loginAsAdmin(String password) {
-    if (password == 'apollo123') currentRole = 'admin';
-  }
-
-  void logout() => currentRole = 'user';
 }

@@ -1,22 +1,30 @@
 import 'package:flutter/material.dart';
 import '../services/chat_service.dart';
+import '../services/auth_service.dart';
 import '../widgets/message_bubble.dart';
 import '../theme/app_theme.dart';
+import '../constants/constants.dart';
 
 class ChatScreen extends StatefulWidget {
   final ChatService chatService;
+  final AuthService authService;
 
-  const ChatScreen({super.key, required this.chatService});
+  const ChatScreen({
+    super.key,
+    required this.chatService,
+    required this.authService,
+  });
 
   @override
   State<ChatScreen> createState() => _ChatScreenState();
 }
 
 class _ChatScreenState extends State<ChatScreen> {
-  final TextEditingController _controller     = TextEditingController();
+  final TextEditingController _controller      = TextEditingController();
   final ScrollController       _scrollController = ScrollController();
 
   ChatService get _chatService => widget.chatService;
+  AuthService get _authService => widget.authService;
 
   @override
   void dispose() {
@@ -50,8 +58,12 @@ class _ChatScreenState extends State<ChatScreen> {
   Widget build(BuildContext context) {
     return SizedBox.expand(
       child: Container(
-        decoration: const BoxDecoration(
-          image: AppDecorations.backgroundWatermark,
+        decoration: BoxDecoration(
+          image: DecorationImage(
+            image: AssetImage(AppAssets.watermark),
+            fit: BoxFit.cover,
+            alignment: Alignment.topCenter,
+          ),
         ),
         child: SafeArea(
           child: Column(
@@ -82,7 +94,7 @@ class _ChatScreenState extends State<ChatScreen> {
         child: GestureDetector(
           onLongPress: _showAdminLogin,
           child: Image.asset(
-            '../lib/assets/images/Logo/transparant.png',
+            AppAssets.logo,
             height: AppDimensions.logoHeight,
             fit: BoxFit.contain,
           ),
@@ -99,10 +111,9 @@ class _ChatScreenState extends State<ChatScreen> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           const Text('Chat met de Studio', style: AppTextStyles.chatTitle),
-          if (_chatService.currentRole == 'admin')
+          if (_authService.isAdmin)
             const Padding(
-              padding:
-                  EdgeInsets.only(top: AppDimensions.spaceSmall),
+              padding: EdgeInsets.only(top: AppDimensions.spaceSmall),
               child: Text('ADMIN MODE', style: AppTextStyles.adminBadge),
             ),
         ],
@@ -180,7 +191,7 @@ class _ChatScreenState extends State<ChatScreen> {
         actions: [
           TextButton(
             onPressed: () {
-              _chatService.loginAsAdmin(passwordController.text);
+              _authService.login(passwordController.text);
               setState(() {});
               Navigator.pop(context);
             },

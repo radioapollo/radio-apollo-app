@@ -12,10 +12,10 @@ import 'dart:io';
 import 'package:audio_service/audio_service.dart';
 import 'package:flutter/foundation.dart';
 import 'package:just_audio/just_audio.dart';
+import '../constants/constants.dart';
 
 class RadioAudioHandler extends BaseAudioHandler {
   final _player = AudioPlayer();
-  static const _streamUrl = 'http://radioapollo.beheerstream.nl:8004/stream';
 
   RadioAudioHandler() {
     _player.playerStateStream.listen((state) {
@@ -42,7 +42,9 @@ class RadioAudioHandler extends BaseAudioHandler {
 
   @override
   Future<void> play() async {
-    if (_player.audioSource == null) await _player.setUrl(_streamUrl);
+    if (_player.audioSource == null) {
+      await _player.setUrl(AppConstants.streamUrl);
+    }
     await _player.play();
   }
 
@@ -55,7 +57,7 @@ class RadioAudioHandler extends BaseAudioHandler {
     } else {
       if (_player.processingState == ProcessingState.idle ||
           _player.processingState == ProcessingState.completed) {
-        await _player.setUrl(_streamUrl);
+        await _player.setUrl(AppConstants.streamUrl);
       }
       await _player.play();
     }

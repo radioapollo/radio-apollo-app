@@ -4,6 +4,7 @@ import 'navigation/apollo_home.dart';
 import 'services/audio_handler.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'firebase_options.dart';
+import 'constants/constants.dart';
 
 late final RadioAudioHandler audioHandler;
 
@@ -17,8 +18,8 @@ Future<void> main() async {
   audioHandler = await AudioService.init(
     builder: () => RadioAudioHandler(),
     config: const AudioServiceConfig(
-      androidNotificationChannelId: 'nl.radioapollo.channel.audio',
-      androidNotificationChannelName: 'Radio Apollo',
+      androidNotificationChannelId: AppConstants.notificationChannelId,
+      androidNotificationChannelName: AppConstants.notificationChannelName,
       androidNotificationOngoing: true,
     ),
   );

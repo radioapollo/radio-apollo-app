@@ -11,6 +11,7 @@
 
 import 'package:flutter/material.dart';
 import '../theme/app_theme.dart';
+import '../constants/constants.dart';
 
 class PageWithHeader extends StatelessWidget {
   final Widget child;
@@ -21,8 +22,12 @@ class PageWithHeader extends StatelessWidget {
   Widget build(BuildContext context) {
     return SizedBox.expand(
       child: Container(
-        decoration: const BoxDecoration(
-          image: AppDecorations.backgroundWatermark,
+        decoration: BoxDecoration(
+          image: DecorationImage(
+            image: AssetImage(AppAssets.watermark),
+            fit: BoxFit.cover,
+            alignment: Alignment.topCenter,
+          ),
         ),
         child: SafeArea(
           child: SingleChildScrollView(
@@ -36,7 +41,7 @@ class PageWithHeader extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Image.asset(
-                  '../lib/assets/images/Logo/transparant.png',
+                  AppAssets.logo,
                   height: AppDimensions.logoHeight,
                   fit: BoxFit.contain,
                 ),
