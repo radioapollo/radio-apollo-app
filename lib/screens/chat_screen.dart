@@ -20,7 +20,7 @@ class ChatScreen extends StatefulWidget {
 }
 
 class _ChatScreenState extends State<ChatScreen> {
-  final TextEditingController _controller      = TextEditingController();
+  final TextEditingController _controller       = TextEditingController();
   final ScrollController       _scrollController = ScrollController();
 
   ChatService get _chatService => widget.chatService;
@@ -35,10 +35,9 @@ class _ChatScreenState extends State<ChatScreen> {
 
   void _sendMessage() {
     if (_controller.text.trim().isEmpty) return;
-    setState(() {
-      _chatService.sendMessage(_controller.text);
-      _controller.clear();
-    });
+    _chatService.sendMessage(_controller.text);
+    _controller.clear();
+    setState(() {});
     _scrollToBottom();
   }
 
@@ -92,7 +91,7 @@ class _ChatScreenState extends State<ChatScreen> {
       child: Align(
         alignment: Alignment.centerLeft,
         child: GestureDetector(
-          onLongPress: _showAdminLogin,
+          onLongPress: _authService.isAdmin ? null : _showAdminLogin,
           child: Image.asset(
             AppAssets.logo,
             height: AppDimensions.logoHeight,
@@ -107,14 +106,29 @@ class _ChatScreenState extends State<ChatScreen> {
     return Padding(
       padding: const EdgeInsets.symmetric(
           horizontal: AppDimensions.paddingXLarge),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+      child: Row(
         children: [
-          const Text('Chat met de Studio', style: AppTextStyles.chatTitle),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text('Chat met de Studio', style: AppTextStyles.chatTitle),
+                if (_authService.isAdmin)
+                  const Padding(
+                    padding: EdgeInsets.only(top: AppDimensions.spaceSmall),
+                    child: Text('ADMIN MODE', style: AppTextStyles.adminBadge),
+                  ),
+              ],
+            ),
+          ),
           if (_authService.isAdmin)
-            const Padding(
-              padding: EdgeInsets.only(top: AppDimensions.spaceSmall),
-              child: Text('ADMIN MODE', style: AppTextStyles.adminBadge),
+            TextButton.icon(
+              onPressed: _logout,
+              icon: const Icon(Icons.logout, size: 18, color: Colors.black54),
+              label: const Text(
+                'Uitloggen',
+                style: TextStyle(color: Colors.black54, fontSize: 13),
+              ),
             ),
         ],
       ),
@@ -165,6 +179,7 @@ class _ChatScreenState extends State<ChatScreen> {
                 hintStyle: AppTextStyles.inputHint,
                 border: InputBorder.none,
               ),
+              onSubmitted: (_) => _sendMessage(),
             ),
           ),
           GestureDetector(
@@ -177,6 +192,11 @@ class _ChatScreenState extends State<ChatScreen> {
     );
   }
 
+  void _logout() {
+    _authService.logout();
+    setState(() {});
+  }
+
   void _showAdminLogin() {
     final passwordController = TextEditingController();
     showDialog(
@@ -186,9 +206,18 @@ class _ChatScreenState extends State<ChatScreen> {
         content: TextField(
           controller: passwordController,
           obscureText: true,
-          decoration: const InputDecoration(hintText: 'Enter password'),
+          decoration: const InputDecoration(hintText: 'Wachtwoord'),
+          onSubmitted: (_) {
+            _authService.login(passwordController.text);
+            setState(() {});
+            Navigator.pop(context);
+          },
         ),
         actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Annuleren'),
+          ),
           TextButton(
             onPressed: () {
               _authService.login(passwordController.text);

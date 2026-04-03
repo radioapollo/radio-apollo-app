@@ -21,10 +21,7 @@ class DefaultFirebaseOptions {
     }
     switch (defaultTargetPlatform) {
       case TargetPlatform.android:
-        throw UnsupportedError(
-          'DefaultFirebaseOptions have not been configured for android - '
-          'you can reconfigure this by running the FlutterFire CLI again.',
-        );
+        return android;
       case TargetPlatform.iOS:
         throw UnsupportedError(
           'DefaultFirebaseOptions have not been configured for ios - '
@@ -72,4 +69,13 @@ class DefaultFirebaseOptions {
     authDomain: 'radio-apollo-ca2ee.firebaseapp.com',
     storageBucket: 'radio-apollo-ca2ee.firebasestorage.app',
   );
+
+  static const FirebaseOptions android = FirebaseOptions(
+    apiKey: 'AIzaSyBjGPjR9ggVhxaR0ZhrwVFc3y_8yZdlNjI',
+    appId: '1:524210502074:android:a6fe3eb34e497b082b8583',
+    messagingSenderId: '524210502074',
+    projectId: 'radio-apollo-ca2ee',
+    storageBucket: 'radio-apollo-ca2ee.firebasestorage.app',
+  );
+
 }

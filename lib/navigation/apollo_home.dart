@@ -39,7 +39,13 @@ class _ApolloHomeState extends State<ApolloHome> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: _screens[_index],
+      // IndexedStack keeps all screens alive in the widget tree,
+      // so scroll positions, state, and controllers are preserved
+      // when switching tabs.
+      body: IndexedStack(
+        index: _index,
+        children: _screens,
+      ),
       bottomNavigationBar: _buildBottomNav(),
     );
   }

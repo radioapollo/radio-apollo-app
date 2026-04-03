@@ -45,6 +45,11 @@ class RadioAudioHandler extends BaseAudioHandler {
     if (_player.audioSource == null) {
       await _player.setUrl(AppConstants.streamUrl);
     }
+    mediaItem.add(const MediaItem(
+      id: AppConstants.streamUrl,
+      title: 'Radio Apollo',
+      artist: 'Live',
+    ));
     await _player.play();
   }
 

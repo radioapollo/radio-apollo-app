@@ -7,7 +7,7 @@ class AppAssets {
   AppAssets._();
 
   static const String logo =
-      'images/Logo/transparant.png';
+      'assets/images/Logo/transparant.png';
   static const String watermark =
-      'images/Background/Watermerk.JPG';
+      'assets/images/Background/Watermerk.JPG';
 }
