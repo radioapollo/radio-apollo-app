@@ -4,7 +4,7 @@
 
    It handles:
    - streaming sponsor information from Firestore
-   - providing the station's about text
+   - streaming the about text from Firestore
 */
 
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -23,4 +23,10 @@ class InfoService {
                 description: doc['description'] ?? '',
               ))
           .toList());
+
+  Stream<String> get aboutTextStream => _db
+      .collection('instellingen')
+      .doc('info')
+      .snapshots()
+      .map((doc) => doc.data()?['text'] as String? ?? '');
 }

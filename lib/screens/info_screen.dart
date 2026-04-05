@@ -3,68 +3,127 @@
    This screen provides general information about the radio station.
 
    It includes:
-   - a description of the station
-   - a list of sponsors loaded from Firestore
+   - a fixed header (logo + title)
+   - a scrollable content area with about text and sponsors
 */
 
 import 'package:flutter/material.dart';
 import '../models/sponsor.dart';
 import '../services/info_services.dart';
-import '../widgets/page_with_header.dart';
 import '../theme/app_theme.dart';
+import '../constants/constants.dart';
 
 class InfoScreen extends StatelessWidget {
   InfoScreen({super.key});
 
   final _infoService = InfoService();
 
-  static const _aboutText =
-      'Radio Apollo staat voor feel-good muziek, lokale verbondenheid en een warme sfeer. '
-      'We brengen een mix van classics, hedendaagse hits en lokale informatie.\n\n'
-      'Onze missie is om luisteraars plezier, nieuws en gezelligheid te brengen – altijd en overal.';
-
   @override
   Widget build(BuildContext context) {
-    return PageWithHeader(
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const Text('Over Radio Apollo', style: AppTextStyles.screenTitle),
-          const SizedBox(height: AppDimensions.spaceLarge - 1),
-          _buildInfoCard(),
-          const SizedBox(height: AppDimensions.space30),
-          const Text('Sponsors', style: AppTextStyles.screenTitleSmall),
-          const SizedBox(height: AppDimensions.spaceLarge - 1),
-          StreamBuilder<List<Sponsor>>(
-            stream: _infoService.sponsorsStream,
-            builder: (context, snapshot) {
-              if (snapshot.connectionState == ConnectionState.waiting) {
-                return const Center(
-                    child: CircularProgressIndicator(
-                        color: AppColors.navyMedium));
-              }
-              if (snapshot.hasError) {
-                return const Text('Fout bij het laden van sponsors.',
-                    style: AppTextStyles.noDataText);
-              }
-              if (!snapshot.hasData || snapshot.data!.isEmpty) {
-                return const Text('Geen sponsors gevonden.',
-                    style: AppTextStyles.noDataText);
-              }
-              return Column(
-                children: snapshot.data!.map(_buildSponsorCard).toList(),
-              );
-            },
+    return SizedBox.expand(
+      child: Container(
+        decoration: const BoxDecoration(
+          image: AppDecorations.backgroundWatermark,
+        ),
+        child: SafeArea(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Fixed header
+              Padding(
+                padding: const EdgeInsets.fromLTRB(
+                  AppDimensions.paddingXLarge,
+                  AppDimensions.paddingXLarge,
+                  AppDimensions.paddingXLarge,
+                  0,
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Image.asset(
+                      AppAssets.logo,
+                      height: AppDimensions.logoHeight,
+                      fit: BoxFit.contain,
+                    ),
+                    const SizedBox(height: AppDimensions.spaceMedium),
+                    const Text('Over Radio Apollo',
+                        style: AppTextStyles.screenTitle),
+                    const SizedBox(height: AppDimensions.spaceLarge),
+                  ],
+                ),
+              ),
+
+              // Scrollable content
+              Expanded(
+                child: ListView(
+                  padding: const EdgeInsets.fromLTRB(
+                    AppDimensions.paddingXLarge,
+                    0,
+                    AppDimensions.paddingXLarge,
+                    AppDimensions.paddingXLarge,
+                  ),
+                  children: [
+                    StreamBuilder<String>(
+                      stream: _infoService.aboutTextStream,
+                      builder: (context, snapshot) {
+                        if (snapshot.connectionState ==
+                            ConnectionState.waiting) {
+                          return const Center(
+                            child: CircularProgressIndicator(
+                                color: AppColors.navyMedium),
+                          );
+                        }
+                        if (snapshot.hasError ||
+                            !snapshot.hasData ||
+                            snapshot.data!.isEmpty) {
+                          return const SizedBox.shrink();
+                        }
+                        return _buildInfoCard(snapshot.data!);
+                      },
+                    ),
+                    const SizedBox(height: AppDimensions.space30),
+                    const Text('Sponsors',
+                        style: AppTextStyles.screenTitleSmall),
+                    const SizedBox(height: AppDimensions.spaceLarge - 1),
+                    StreamBuilder<List<Sponsor>>(
+                      stream: _infoService.sponsorsStream,
+                      builder: (context, snapshot) {
+                        if (snapshot.connectionState ==
+                            ConnectionState.waiting) {
+                          return const Center(
+                              child: CircularProgressIndicator(
+                                  color: AppColors.navyMedium));
+                        }
+                        if (snapshot.hasError) {
+                          return const Text(
+                              'Fout bij het laden van sponsors.',
+                              style: AppTextStyles.noDataText);
+                        }
+                        if (!snapshot.hasData || snapshot.data!.isEmpty) {
+                          return const Text('Geen sponsors gevonden.',
+                              style: AppTextStyles.noDataText);
+                        }
+                        return Column(
+                          children: snapshot.data!
+                              .map(_buildSponsorCard)
+                              .toList(),
+                        );
+                      },
+                    ),
+                  ],
+                ),
+              ),
+            ],
           ),
-        ],
+        ),
       ),
     );
   }
 
-  Widget _buildInfoCard() => Container(
+  Widget _buildInfoCard(String text) => Container(
         padding: const EdgeInsets.all(AppDimensions.paddingLarge),
         decoration: AppDecorations.darkCard(),
-        child: const Text(_aboutText, style: AppTextStyles.darkCardBody),
+        child: Text(text, style: AppTextStyles.darkCardBody),
       );
 
   Widget _buildSponsorCard(Sponsor sponsor) => Container(

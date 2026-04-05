@@ -124,7 +124,7 @@ class AppDecorations {
   // --- Sticky header background ---
 
   static BoxDecoration stickyHeader() => BoxDecoration(
-        color: Colors.white.withValues(alpha: 0.97),
+        color: Colors.white.withValues(alpha: 0.95),
       );
 
   // --- Bottom nav bar ---

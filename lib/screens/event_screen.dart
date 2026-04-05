@@ -3,14 +3,14 @@
    This screen displays upcoming events related to the radio station.
 
    It includes:
-   - a list of upcoming events
-   - date, location, and description per event
+   - a fixed header (logo + title)
+   - a scrollable list of upcoming events
 */
 
 import 'package:flutter/material.dart';
 import '../models/event.dart';
-import '../widgets/page_with_header.dart';
 import '../theme/app_theme.dart';
+import '../constants/constants.dart';
 
 class EventScreen extends StatelessWidget {
   const EventScreen({super.key});
@@ -40,14 +40,56 @@ class EventScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return PageWithHeader(
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const Text('Evenementen', style: AppTextStyles.screenTitle),
-          const SizedBox(height: AppDimensions.spaceLarge - 1),
-          ..._events.map(_buildEventCard),
-        ],
+    return SizedBox.expand(
+      child: Container(
+        decoration: const BoxDecoration(
+          image: AppDecorations.backgroundWatermark,
+        ),
+        child: SafeArea(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Fixed header
+              Padding(
+                padding: const EdgeInsets.fromLTRB(
+                  AppDimensions.paddingXLarge,
+                  AppDimensions.paddingXLarge,
+                  AppDimensions.paddingXLarge,
+                  0,
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Image.asset(
+                      AppAssets.logo,
+                      height: AppDimensions.logoHeight,
+                      fit: BoxFit.contain,
+                    ),
+                    const SizedBox(height: AppDimensions.spaceMedium),
+                    const Text('Evenementen',
+                        style: AppTextStyles.screenTitle),
+                    const SizedBox(height: AppDimensions.spaceLarge),
+                  ],
+                ),
+              ),
+
+              // Scrollable event list
+              Expanded(
+                child: ListView.builder(
+                  padding: const EdgeInsets.fromLTRB(
+                    AppDimensions.paddingXLarge,
+                    0,
+                    AppDimensions.paddingXLarge,
+                    AppDimensions.paddingXLarge,
+                  ),
+                  itemCount: _events.length,
+                  itemBuilder: (context, index) =>
+                      _buildEventCard(_events[index]),
+                ),
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }
@@ -65,7 +107,8 @@ class EventScreen extends StatelessWidget {
                   color: AppColors.cardBlue,
                   radius: AppDimensions.radiusSmall),
               child: const Icon(Icons.event,
-                  color: AppColors.primary, size: AppDimensions.iconLarge),
+                  color: AppColors.primary,
+                  size: AppDimensions.iconLarge),
             ),
             const SizedBox(width: AppDimensions.spaceLarge),
             Expanded(
@@ -88,7 +131,8 @@ class EventScreen extends StatelessWidget {
 
   Widget _iconRow(IconData icon, String label) => Row(
         children: [
-          Icon(icon, size: AppDimensions.iconSmall, color: Colors.black45),
+          Icon(icon,
+              size: AppDimensions.iconSmall, color: Colors.black45),
           const SizedBox(width: AppDimensions.spaceXSmall),
           Text(label, style: AppTextStyles.cardMeta),
         ],

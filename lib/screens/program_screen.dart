@@ -3,8 +3,8 @@
    This screen shows the weekly radio program schedule.
 
    It includes:
-   - a fully sticky header (logo + title + day selector)
-   - a list of programs for the selected day fetched from Firestore
+   - a fixed header (logo + title + day selector)
+   - a scrollable program list contained below the header
    - highlighting of the currently playing program
    - auto scroll to the current program
    - automatic refresh every minute to update the current program
@@ -112,89 +112,116 @@ class _ProgramScreenState extends State<ProgramScreen> {
           image: AppDecorations.backgroundWatermark,
         ),
         child: SafeArea(
-          child: CustomScrollView(
-            controller: _scrollController,
-            slivers: [
-              SliverPersistentHeader(
-                pinned: true,
-                delegate: _StickyHeaderDelegate(
-                  days: _days,
-                  selectedIndex: _selectedIndex,
-                  onDaySelected: (i) => setState(() {
-                    _selectedIndex = i;
-                    _hasScrolledToCurrent = false;
-                  }),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Fixed header
+              Padding(
+                padding: const EdgeInsets.fromLTRB(
+                  AppDimensions.paddingXLarge,
+                  AppDimensions.paddingXLarge,
+                  AppDimensions.paddingXLarge,
+                  0,
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Image.asset(
+                      AppAssets.logo,
+                      height: AppDimensions.logoHeight,
+                      fit: BoxFit.contain,
+                    ),
+                    const SizedBox(height: AppDimensions.spaceMedium),
+                    const Text('Programma',
+                        style: AppTextStyles.screenTitle),
+                    const SizedBox(height: AppDimensions.paddingXLarge),
+                    DaySelector(
+                      days: _days,
+                      selectedIndex: _selectedIndex,
+                      onDaySelected: (i) => setState(() {
+                        _selectedIndex = i;
+                        _hasScrolledToCurrent = false;
+                      }),
+                    ),
+                    const SizedBox(height: AppDimensions.spaceLarge),
+                  ],
                 ),
               ),
-              StreamBuilder<List<Map<String, String>>>(
-                stream: _programService.getProgramsForDay(selectedDay),
-                builder: (context, snapshot) {
-                  if (snapshot.connectionState == ConnectionState.waiting) {
-                    return const SliverToBoxAdapter(
-                      child: Padding(
-                        padding: EdgeInsets.only(top: 40),
-                        child: Center(
+
+              // Scrollable program list in contained area
+              Expanded(
+                child: Container(
+                  margin: const EdgeInsets.fromLTRB(
+                    AppDimensions.paddingXLarge,
+                    0,
+                    AppDimensions.paddingXLarge,
+                    AppDimensions.paddingXLarge,
+                  ),
+                  decoration: const BoxDecoration(
+                    color: Colors.transparent,
+                  ),
+                  child: StreamBuilder<List<Map<String, String>>>(
+                    stream: _programService.getProgramsForDay(selectedDay),
+                    builder: (context, snapshot) {
+                      if (snapshot.connectionState ==
+                          ConnectionState.waiting) {
+                        return const Center(
                           child: CircularProgressIndicator(
-                            color: AppColors.navyMedium,
+                            color: AppColors.steelLight,
                           ),
-                        ),
-                      ),
-                    );
-                  }
-                  if (snapshot.hasError) {
-                    return const SliverToBoxAdapter(
-                      child: Padding(
-                        padding: EdgeInsets.symmetric(
-                            horizontal: AppDimensions.paddingXLarge),
-                        child: Text(
-                          'Fout bij het laden van programma\'s.',
-                          style: AppTextStyles.noDataText,
-                        ),
-                      ),
-                    );
-                  }
-                  if (!snapshot.hasData || snapshot.data!.isEmpty) {
-                    return const SliverToBoxAdapter(
-                      child: Padding(
-                        padding: EdgeInsets.symmetric(
-                            horizontal: AppDimensions.paddingXLarge),
-                        child: Text(
-                          'Geen programma\'s gevonden.',
-                          style: AppTextStyles.noDataText,
-                        ),
-                      ),
-                    );
-                  }
+                        );
+                      }
+                      if (snapshot.hasError) {
+                        return const Center(
+                          child: Padding(
+                            padding: EdgeInsets.all(
+                                AppDimensions.paddingXLarge),
+                            child: Text(
+                              'Fout bij het laden van programma\'s.',
+                              style: AppTextStyles.noDataText,
+                            ),
+                          ),
+                        );
+                      }
+                      if (!snapshot.hasData || snapshot.data!.isEmpty) {
+                        return const Center(
+                          child: Padding(
+                            padding: EdgeInsets.all(
+                                AppDimensions.paddingXLarge),
+                            child: Text(
+                              'Geen programma\'s gevonden.',
+                              style: AppTextStyles.noDataText,
+                            ),
+                          ),
+                        );
+                      }
 
-                  final programs = snapshot.data!;
+                      final programs = snapshot.data!;
 
-                  int currentIndex = -1;
-                  if (isToday) {
-                    for (int i = 0; i < programs.length; i++) {
-                      final timeParts = programs[i]['time']!.split(' - ');
-                      if (timeParts.length == 2) {
-                        if (_isCurrent(
-                            timeParts[0], timeParts[1], isToday)) {
-                          currentIndex = i;
-                          break;
+                      int currentIndex = -1;
+                      if (isToday) {
+                        for (int i = 0; i < programs.length; i++) {
+                          final timeParts =
+                              programs[i]['time']!.split(' - ');
+                          if (timeParts.length == 2) {
+                            if (_isCurrent(
+                                timeParts[0], timeParts[1], isToday)) {
+                              currentIndex = i;
+                              break;
+                            }
+                          }
+                        }
+                        if (currentIndex >= 0) {
+                          _scrollToCurrent(currentIndex);
                         }
                       }
-                    }
-                    if (currentIndex >= 0) {
-                      _scrollToCurrent(currentIndex);
-                    }
-                  }
 
-                  return SliverPadding(
-                    padding: const EdgeInsets.fromLTRB(
-                      AppDimensions.paddingXLarge,
-                      AppDimensions.space25,
-                      AppDimensions.paddingXLarge,
-                      30,
-                    ),
-                    sliver: SliverList(
-                      delegate: SliverChildBuilderDelegate(
-                        (context, index) {
+                      return ListView.builder(
+                        controller: _scrollController,
+                        padding: const EdgeInsets.all(
+                            AppDimensions.paddingMedium),
+                        itemCount: programs.length,
+                        itemBuilder: (context, index) {
                           final p = programs[index];
                           final timeParts = p['time']!.split(' - ');
                           final displayTime = timeParts.length == 2
@@ -212,72 +239,15 @@ class _ProgramScreenState extends State<ProgramScreen> {
                             ),
                           );
                         },
-                        childCount: programs.length,
-                      ),
-                    ),
-                  );
-                },
+                      );
+                    },
+                  ),
+                ),
               ),
             ],
           ),
         ),
       ),
     );
-  }
-}
-
-class _StickyHeaderDelegate extends SliverPersistentHeaderDelegate {
-  final List<String> days;
-  final int selectedIndex;
-  final Function(int) onDaySelected;
-
-  _StickyHeaderDelegate({
-    required this.days,
-    required this.selectedIndex,
-    required this.onDaySelected,
-  });
-
-  @override
-  double get minExtent => AppDimensions.stickyHeaderHeight;
-
-  @override
-  double get maxExtent => AppDimensions.stickyHeaderHeight;
-
-  @override
-  Widget build(
-      BuildContext context, double shrinkOffset, bool overlapsContent) {
-    return Container(
-      decoration: AppDecorations.stickyHeader(),
-      padding: const EdgeInsets.fromLTRB(
-        AppDimensions.paddingXLarge,
-        AppDimensions.paddingXLarge,
-        AppDimensions.paddingXLarge,
-        AppDimensions.paddingSmall,
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Image.asset(
-            AppAssets.logo,
-            height: AppDimensions.logoHeight,
-            fit: BoxFit.contain,
-          ),
-          const SizedBox(height: AppDimensions.spaceMedium),
-          const Text('Programma', style: AppTextStyles.screenTitle),
-          const SizedBox(height: AppDimensions.spaceXLarge),
-          DaySelector(
-            days: days,
-            selectedIndex: selectedIndex,
-            onDaySelected: onDaySelected,
-          ),
-        ],
-      ),
-    );
-  }
-
-  @override
-  bool shouldRebuild(_StickyHeaderDelegate oldDelegate) {
-    return oldDelegate.selectedIndex != selectedIndex ||
-        oldDelegate.days != days;
   }
 }
