@@ -4,39 +4,19 @@
 
    It includes:
    - a fixed header (logo + title)
-   - a scrollable list of upcoming events
+   - a scrollable list of upcoming events loaded from Firestore
 */
 
 import 'package:flutter/material.dart';
 import '../models/event.dart';
+import '../services/event_service.dart';
 import '../theme/app_theme.dart';
 import '../constants/constants.dart';
 
 class EventScreen extends StatelessWidget {
-  const EventScreen({super.key});
+  EventScreen({super.key});
 
-  static final _events = [
-    Event(
-      title: 'Radio Apollo Zomerfeest',
-      date: '12 juli 2025',
-      location: 'Marktplein, Mechelen',
-      what: 'Kom gezellig mee vieren met live muziek, optredens en veel fun!',
-    ),
-    Event(
-      title: 'Open Studio Dag',
-      date: '3 augustus 2025',
-      location: 'Studio Apollo, Mechelen',
-      what:
-          'Kom een kijkje nemen achter de schermen van jouw favoriete radiostation.',
-    ),
-    Event(
-      title: 'Apollo Quiz Night',
-      date: '21 augustus 2025',
-      location: 'Café De Kroon, Mechelen',
-      what:
-          'Test je kennis in onze legendarische muziekquiz. Inschrijven via de website.',
-    ),
-  ];
+  final _eventService = EventService();
 
   @override
   Widget build(BuildContext context) {
@@ -75,16 +55,44 @@ class EventScreen extends StatelessWidget {
 
               // Scrollable event list
               Expanded(
-                child: ListView.builder(
-                  padding: const EdgeInsets.fromLTRB(
-                    AppDimensions.paddingXLarge,
-                    0,
-                    AppDimensions.paddingXLarge,
-                    AppDimensions.paddingXLarge,
-                  ),
-                  itemCount: _events.length,
-                  itemBuilder: (context, index) =>
-                      _buildEventCard(_events[index]),
+                child: StreamBuilder<List<Event>>(
+                  stream: _eventService.eventsStream,
+                  builder: (context, snapshot) {
+                    if (snapshot.connectionState == ConnectionState.waiting) {
+                      return const Center(
+                        child: CircularProgressIndicator(
+                            color: AppColors.navyMedium),
+                      );
+                    }
+                    if (snapshot.hasError) {
+                      return const Center(
+                        child: Text(
+                          'Fout bij het laden van evenementen.',
+                          style: AppTextStyles.noDataText,
+                        ),
+                      );
+                    }
+                    if (!snapshot.hasData || snapshot.data!.isEmpty) {
+                      return const Center(
+                        child: Text(
+                          'Geen evenementen gevonden.',
+                          style: AppTextStyles.noDataText,
+                        ),
+                      );
+                    }
+
+                    return ListView.builder(
+                      padding: const EdgeInsets.fromLTRB(
+                        AppDimensions.paddingXLarge,
+                        0,
+                        AppDimensions.paddingXLarge,
+                        AppDimensions.paddingXLarge,
+                      ),
+                      itemCount: snapshot.data!.length,
+                      itemBuilder: (context, index) =>
+                          _buildEventCard(snapshot.data![index]),
+                    );
+                  },
                 ),
               ),
             ],

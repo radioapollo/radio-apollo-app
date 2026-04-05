@@ -29,7 +29,7 @@ class _ApolloHomeState extends State<ApolloHome> {
       HomeScreen(onNavigate: _switchTab),
       const ProgramScreen(),
       InfoScreen(),
-      const EventScreen(),
+      EventScreen(),
       ChatScreen(chatService: _chatService, authService: _authService),
     ];
   }
