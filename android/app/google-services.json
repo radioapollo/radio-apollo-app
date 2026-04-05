@@ -1,13 +1,14 @@
 {
   "project_info": {
-    "project_number": "524210502074",
-    "project_id": "radio-apollo-ca2ee",
-    "storage_bucket": "radio-apollo-ca2ee.firebasestorage.app"
+    "project_number": "1086114344104",
+    "firebase_url": "https://radio-apollo-90693-default-rtdb.europe-west1.firebasedatabase.app",
+    "project_id": "radio-apollo-90693",
+    "storage_bucket": "radio-apollo-90693.firebasestorage.app"
   },
   "client": [
     {
       "client_info": {
-        "mobilesdk_app_id": "1:524210502074:android:a6fe3eb34e497b082b8583",
+        "mobilesdk_app_id": "1:1086114344104:android:302a3c8314c08a540e269d",
         "android_client_info": {
           "package_name": "com.example.flutter_application_1"
         }
@@ -15,7 +16,7 @@
       "oauth_client": [],
       "api_key": [
         {
-          "current_key": "AIzaSyBjGPjR9ggVhxaR0ZhrwVFc3y_8yZdlNjI"
+          "current_key": "AIzaSyD3HVP4-KLyWUGpuRbyy96KN--3A92lbCw"
         }
       ],
       "services": {

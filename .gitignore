@@ -195,3 +195,4 @@ build/
 .dart_tool/
 .metadata/
 flutter_application_1.iml
+serviceAccount.json

@@ -6,6 +6,7 @@
    - the broadcast time
    - the program title
    - a short description
+   - a "Nu bezig" badge if the program is currently playing
 */
 
 import 'package:flutter/material.dart';
@@ -16,6 +17,7 @@ class ProgramCard extends StatelessWidget {
   final String title;
   final String subtitle;
   final Border? border;
+  final bool isCurrent;
 
   const ProgramCard({
     super.key,
@@ -23,6 +25,7 @@ class ProgramCard extends StatelessWidget {
     required this.title,
     required this.subtitle,
     this.border,
+    this.isCurrent = false,
   });
 
   @override
@@ -30,7 +33,9 @@ class ProgramCard extends StatelessWidget {
     return Container(
       margin: const EdgeInsets.only(bottom: AppDimensions.paddingLarge),
       padding: const EdgeInsets.all(AppDimensions.paddingXLarge),
-      decoration: AppDecorations.darkCard(radius: AppDimensions.radiusXLarge),
+      decoration: isCurrent
+          ? AppDecorations.currentProgramCard()
+          : AppDecorations.darkCard(radius: AppDimensions.radiusXLarge),
       child: Row(
         children: [
           Container(
@@ -44,14 +49,37 @@ class ProgramCard extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
+                if (isCurrent) _buildNuBezigBadge(),
                 Text(time, style: AppTextStyles.darkCardTime),
                 const SizedBox(height: AppDimensions.spaceXSmall),
                 Text(title, style: AppTextStyles.darkCardTitle),
                 const SizedBox(height: AppDimensions.spaceXSmall),
-                Text(subtitle, style: AppTextStyles.darkCardSubtitle),
+                if (subtitle.isNotEmpty)
+                  Text(subtitle, style: AppTextStyles.darkCardSubtitle),
               ],
             ),
           ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildNuBezigBadge() {
+    return Container(
+      margin: const EdgeInsets.only(bottom: AppDimensions.spaceSmall),
+      padding: const EdgeInsets.symmetric(
+        horizontal: AppDimensions.nuBezigBadgePaddingH,
+        vertical: AppDimensions.nuBezigBadgePaddingV,
+      ),
+      decoration: AppDecorations.nuBezigBadge(),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          const Icon(Icons.circle,
+              color: Colors.redAccent,
+              size: AppDimensions.nuBezigIconSize),
+          const SizedBox(width: AppDimensions.nuBezigIconSpacing),
+          Text('NU BEZIG', style: AppTextStyles.nuBezigLabel),
         ],
       ),
     );

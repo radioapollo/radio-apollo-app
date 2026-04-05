@@ -23,10 +23,7 @@ class DefaultFirebaseOptions {
       case TargetPlatform.android:
         return android;
       case TargetPlatform.iOS:
-        throw UnsupportedError(
-          'DefaultFirebaseOptions have not been configured for ios - '
-          'you can reconfigure this by running the FlutterFire CLI again.',
-        );
+        return ios;
       case TargetPlatform.macOS:
         return macos;
       case TargetPlatform.windows:
@@ -44,38 +41,51 @@ class DefaultFirebaseOptions {
   }
 
   static const FirebaseOptions web = FirebaseOptions(
-    apiKey: 'AIzaSyD2nL8ohN0dwY7e25ZrV0mWPEswWRdQhPU',
-    appId: '1:524210502074:web:2d2f32ffaf23c2ad2b8583',
-    messagingSenderId: '524210502074',
-    projectId: 'radio-apollo-ca2ee',
-    authDomain: 'radio-apollo-ca2ee.firebaseapp.com',
-    storageBucket: 'radio-apollo-ca2ee.firebasestorage.app',
+    apiKey: 'AIzaSyBmJ4n2iQzNsRqMl62tu_DgSYTPX6ZiT6E',
+    appId: '1:1086114344104:web:1f406a563a042f0d0e269d',
+    messagingSenderId: '1086114344104',
+    projectId: 'radio-apollo-90693',
+    authDomain: 'radio-apollo-90693.firebaseapp.com',
+    databaseURL: 'https://radio-apollo-90693-default-rtdb.europe-west1.firebasedatabase.app',
+    storageBucket: 'radio-apollo-90693.firebasestorage.app',
+  );
+
+  static const FirebaseOptions android = FirebaseOptions(
+    apiKey: 'AIzaSyD3HVP4-KLyWUGpuRbyy96KN--3A92lbCw',
+    appId: '1:1086114344104:android:302a3c8314c08a540e269d',
+    messagingSenderId: '1086114344104',
+    projectId: 'radio-apollo-90693',
+    databaseURL: 'https://radio-apollo-90693-default-rtdb.europe-west1.firebasedatabase.app',
+    storageBucket: 'radio-apollo-90693.firebasestorage.app',
+  );
+
+  static const FirebaseOptions ios = FirebaseOptions(
+    apiKey: 'AIzaSyAFeyQIT0FlZDnLPz2ItIEIhpAZZmKR968',
+    appId: '1:1086114344104:ios:ac35dd4997b1245e0e269d',
+    messagingSenderId: '1086114344104',
+    projectId: 'radio-apollo-90693',
+    databaseURL: 'https://radio-apollo-90693-default-rtdb.europe-west1.firebasedatabase.app',
+    storageBucket: 'radio-apollo-90693.firebasestorage.app',
+    iosBundleId: 'com.example.flutterApplication1',
   );
 
   static const FirebaseOptions macos = FirebaseOptions(
-    apiKey: 'AIzaSyBxBGSAOkgne6_8mszBMqwiKMvSJ4-PDMI',
-    appId: '1:524210502074:ios:37b8a3c813745e412b8583',
-    messagingSenderId: '524210502074',
-    projectId: 'radio-apollo-ca2ee',
-    storageBucket: 'radio-apollo-ca2ee.firebasestorage.app',
+    apiKey: 'AIzaSyAFeyQIT0FlZDnLPz2ItIEIhpAZZmKR968',
+    appId: '1:1086114344104:ios:ac35dd4997b1245e0e269d',
+    messagingSenderId: '1086114344104',
+    projectId: 'radio-apollo-90693',
+    databaseURL: 'https://radio-apollo-90693-default-rtdb.europe-west1.firebasedatabase.app',
+    storageBucket: 'radio-apollo-90693.firebasestorage.app',
     iosBundleId: 'com.example.flutterApplication1',
   );
 
   static const FirebaseOptions windows = FirebaseOptions(
-    apiKey: 'AIzaSyD2nL8ohN0dwY7e25ZrV0mWPEswWRdQhPU',
-    appId: '1:524210502074:web:7a37b5b73cefbb482b8583',
-    messagingSenderId: '524210502074',
-    projectId: 'radio-apollo-ca2ee',
-    authDomain: 'radio-apollo-ca2ee.firebaseapp.com',
-    storageBucket: 'radio-apollo-ca2ee.firebasestorage.app',
+    apiKey: 'AIzaSyBmJ4n2iQzNsRqMl62tu_DgSYTPX6ZiT6E',
+    appId: '1:1086114344104:web:20f11c9b0a9aaaef0e269d',
+    messagingSenderId: '1086114344104',
+    projectId: 'radio-apollo-90693',
+    authDomain: 'radio-apollo-90693.firebaseapp.com',
+    databaseURL: 'https://radio-apollo-90693-default-rtdb.europe-west1.firebasedatabase.app',
+    storageBucket: 'radio-apollo-90693.firebasestorage.app',
   );
-
-  static const FirebaseOptions android = FirebaseOptions(
-    apiKey: 'AIzaSyBjGPjR9ggVhxaR0ZhrwVFc3y_8yZdlNjI',
-    appId: '1:524210502074:android:a6fe3eb34e497b082b8583',
-    messagingSenderId: '524210502074',
-    projectId: 'radio-apollo-ca2ee',
-    storageBucket: 'radio-apollo-ca2ee.firebasestorage.app',
-  );
-
 }

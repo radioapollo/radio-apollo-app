@@ -3,16 +3,20 @@
    This screen shows the weekly radio program schedule.
 
    It includes:
-   - a day selector to switch between days
-   - a list of programs for the selected day
+   - a fully sticky header (logo + title + day selector)
+   - a list of programs for the selected day fetched from Firestore
+   - highlighting of the currently playing program
+   - auto scroll to the current program
+   - automatic refresh every minute to update the current program
 */
 
+import 'dart:async';
 import 'package:flutter/material.dart';
 import '../services/program_service.dart';
-import '../widgets/page_with_header.dart';
 import '../widgets/program_card.dart';
 import '../widgets/day_selector.dart';
 import '../theme/app_theme.dart';
+import '../constants/constants.dart';
 
 class ProgramScreen extends StatefulWidget {
   const ProgramScreen({super.key});
@@ -23,50 +27,257 @@ class ProgramScreen extends StatefulWidget {
 
 class _ProgramScreenState extends State<ProgramScreen> {
   final _programService = ProgramService();
+  final _scrollController = ScrollController();
   late List<String> _days;
   int _selectedIndex = 3;
+  bool _hasScrolledToCurrent = false;
+  Timer? _timer;
 
   @override
   void initState() {
     super.initState();
     _days = _programService.getShiftedDays(_selectedIndex);
+    _timer = Timer.periodic(const Duration(minutes: 1), (_) {
+      setState(() {});
+    });
+  }
+
+  @override
+  void dispose() {
+    _timer?.cancel();
+    _scrollController.dispose();
+    super.dispose();
+  }
+
+  String _formatTime(String time) {
+    if (time == '24:00') return '00:00';
+    return time;
+  }
+
+  String _formatTimeRange(String start, String end) {
+    return '${_formatTime(start)} - ${_formatTime(end)}';
+  }
+
+  bool _isCurrent(String startTime, String endTime, bool isToday) {
+    if (!isToday) return false;
+
+    final now = DateTime.now();
+    final currentMinutes = now.hour * 60 + now.minute;
+
+    int parseTime(String time) {
+      final parts = time.split(':');
+      return int.parse(parts[0]) * 60 + int.parse(parts[1]);
+    }
+
+    final start = parseTime(startTime);
+    final end = parseTime(endTime);
+
+    if (end <= start) {
+      return currentMinutes >= start || currentMinutes < end;
+    }
+
+    return currentMinutes >= start && currentMinutes < end;
+  }
+
+  bool _isToday() {
+    final todayName = ProgramService.weekdays[DateTime.now().weekday - 1];
+    return _days[_selectedIndex] == todayName;
+  }
+
+  void _scrollToCurrent(int currentIndex) {
+    if (!_hasScrolledToCurrent) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (_scrollController.hasClients && currentIndex >= 0) {
+          final offset =
+              currentIndex * AppDimensions.programCardHeight;
+          _scrollController.animateTo(
+            offset.clamp(0, _scrollController.position.maxScrollExtent),
+            duration: const Duration(milliseconds: 500),
+            curve: Curves.easeOut,
+          );
+          _hasScrolledToCurrent = true;
+        }
+      });
+    }
   }
 
   @override
   Widget build(BuildContext context) {
-    final weekday  = ProgramService.getWeekdayFromName(_days[_selectedIndex]);
-    final programs = ProgramService.getProgramsForDay(weekday);
+    final selectedDay = _days[_selectedIndex];
+    final isToday = _isToday();
 
-    return PageWithHeader(
+    return SizedBox.expand(
+      child: Container(
+        decoration: const BoxDecoration(
+          image: AppDecorations.backgroundWatermark,
+        ),
+        child: SafeArea(
+          child: CustomScrollView(
+            controller: _scrollController,
+            slivers: [
+              SliverPersistentHeader(
+                pinned: true,
+                delegate: _StickyHeaderDelegate(
+                  days: _days,
+                  selectedIndex: _selectedIndex,
+                  onDaySelected: (i) => setState(() {
+                    _selectedIndex = i;
+                    _hasScrolledToCurrent = false;
+                  }),
+                ),
+              ),
+              StreamBuilder<List<Map<String, String>>>(
+                stream: _programService.getProgramsForDay(selectedDay),
+                builder: (context, snapshot) {
+                  if (snapshot.connectionState == ConnectionState.waiting) {
+                    return const SliverToBoxAdapter(
+                      child: Padding(
+                        padding: EdgeInsets.only(top: 40),
+                        child: Center(
+                          child: CircularProgressIndicator(
+                            color: AppColors.navyMedium,
+                          ),
+                        ),
+                      ),
+                    );
+                  }
+                  if (snapshot.hasError) {
+                    return const SliverToBoxAdapter(
+                      child: Padding(
+                        padding: EdgeInsets.symmetric(
+                            horizontal: AppDimensions.paddingXLarge),
+                        child: Text(
+                          'Fout bij het laden van programma\'s.',
+                          style: AppTextStyles.noDataText,
+                        ),
+                      ),
+                    );
+                  }
+                  if (!snapshot.hasData || snapshot.data!.isEmpty) {
+                    return const SliverToBoxAdapter(
+                      child: Padding(
+                        padding: EdgeInsets.symmetric(
+                            horizontal: AppDimensions.paddingXLarge),
+                        child: Text(
+                          'Geen programma\'s gevonden.',
+                          style: AppTextStyles.noDataText,
+                        ),
+                      ),
+                    );
+                  }
+
+                  final programs = snapshot.data!;
+
+                  int currentIndex = -1;
+                  if (isToday) {
+                    for (int i = 0; i < programs.length; i++) {
+                      final timeParts = programs[i]['time']!.split(' - ');
+                      if (timeParts.length == 2) {
+                        if (_isCurrent(
+                            timeParts[0], timeParts[1], isToday)) {
+                          currentIndex = i;
+                          break;
+                        }
+                      }
+                    }
+                    if (currentIndex >= 0) {
+                      _scrollToCurrent(currentIndex);
+                    }
+                  }
+
+                  return SliverPadding(
+                    padding: const EdgeInsets.fromLTRB(
+                      AppDimensions.paddingXLarge,
+                      AppDimensions.space25,
+                      AppDimensions.paddingXLarge,
+                      30,
+                    ),
+                    sliver: SliverList(
+                      delegate: SliverChildBuilderDelegate(
+                        (context, index) {
+                          final p = programs[index];
+                          final timeParts = p['time']!.split(' - ');
+                          final displayTime = timeParts.length == 2
+                              ? _formatTimeRange(
+                                  timeParts[0], timeParts[1])
+                              : p['time']!;
+                          return ProgramCard(
+                            time: displayTime,
+                            title: p['title']!,
+                            subtitle: p['desc']!,
+                            isCurrent: index == currentIndex,
+                            border: Border.all(
+                              color: Colors.white24,
+                              width: AppDimensions.borderThin,
+                            ),
+                          );
+                        },
+                        childCount: programs.length,
+                      ),
+                    ),
+                  );
+                },
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _StickyHeaderDelegate extends SliverPersistentHeaderDelegate {
+  final List<String> days;
+  final int selectedIndex;
+  final Function(int) onDaySelected;
+
+  _StickyHeaderDelegate({
+    required this.days,
+    required this.selectedIndex,
+    required this.onDaySelected,
+  });
+
+  @override
+  double get minExtent => AppDimensions.stickyHeaderHeight;
+
+  @override
+  double get maxExtent => AppDimensions.stickyHeaderHeight;
+
+  @override
+  Widget build(
+      BuildContext context, double shrinkOffset, bool overlapsContent) {
+    return Container(
+      decoration: AppDecorations.stickyHeader(),
+      padding: const EdgeInsets.fromLTRB(
+        AppDimensions.paddingXLarge,
+        AppDimensions.paddingXLarge,
+        AppDimensions.paddingXLarge,
+        AppDimensions.paddingSmall,
+      ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text('Programma', style: AppTextStyles.screenTitle),
-          const SizedBox(height: AppDimensions.paddingXLarge),
-          DaySelector(
-            days: _days,
-            selectedIndex: _selectedIndex,
-            onDaySelected: (i) => setState(() => _selectedIndex = i),
+          Image.asset(
+            AppAssets.logo,
+            height: AppDimensions.logoHeight,
+            fit: BoxFit.contain,
           ),
-          const SizedBox(height: AppDimensions.space25),
-          ListView.builder(
-            shrinkWrap: true,
-            physics: const NeverScrollableScrollPhysics(),
-            itemCount: programs.length,
-            itemBuilder: (context, index) {
-              final p = programs[index];
-              return ProgramCard(
-                time: p['time']!,
-                title: p['title']!,
-                subtitle: p['desc']!,
-                border: Border.all(
-                    color: Colors.white24,
-                    width: AppDimensions.borderThin),
-              );
-            },
+          const SizedBox(height: AppDimensions.spaceMedium),
+          const Text('Programma', style: AppTextStyles.screenTitle),
+          const SizedBox(height: AppDimensions.spaceXLarge),
+          DaySelector(
+            days: days,
+            selectedIndex: selectedIndex,
+            onDaySelected: onDaySelected,
           ),
         ],
       ),
     );
+  }
+
+  @override
+  bool shouldRebuild(_StickyHeaderDelegate oldDelegate) {
+    return oldDelegate.selectedIndex != selectedIndex ||
+        oldDelegate.days != days;
   }
 }

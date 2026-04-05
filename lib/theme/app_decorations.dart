@@ -14,7 +14,7 @@ class AppDecorations {
   // --- Background ---
 
   static const DecorationImage backgroundWatermark = DecorationImage(
-    image: AssetImage('../lib/assets/images/Background/Watermerk.JPG'),
+    image: AssetImage('assets/images/Background/Watermerk.JPG'),
     fit: BoxFit.cover,
     alignment: Alignment.topCenter,
   );
@@ -26,6 +26,22 @@ class AppDecorations {
         color: AppColors.navyMedium,
         borderRadius: BorderRadius.circular(radius),
         border: Border.all(color: Colors.white12, width: AppDimensions.borderThin),
+      );
+
+  // --- Current program card ---
+
+  static BoxDecoration currentProgramCard() => BoxDecoration(
+        color: AppColors.primaryLight,
+        borderRadius: BorderRadius.circular(AppDimensions.radiusXLarge),
+        border: Border.all(
+            color: Colors.white24, width: AppDimensions.borderThin),
+      );
+
+  // --- Nu bezig badge ---
+
+  static BoxDecoration nuBezigBadge() => BoxDecoration(
+        color: Colors.white24,
+        borderRadius: BorderRadius.circular(AppDimensions.radiusFull),
       );
 
   // --- Light card (used in events, sponsors, home cards) ---
@@ -52,13 +68,6 @@ class AppDecorations {
       );
 
   // --- Chat input field ---
-
-  static const BoxDecoration chatInput = BoxDecoration(
-    color: Color(0xFF102F52),
-    borderRadius: BorderRadius.all(Radius.circular(AppDimensions.radiusMedium)),
-    // Border added separately because Border.all isn't const-compatible with dynamic values,
-    // but we keep this as a near-const baseline and callers can copyWith if needed.
-  );
 
   static BoxDecoration chatInputFull() => BoxDecoration(
         color: AppColors.navyMedium,
@@ -111,6 +120,12 @@ class AppDecorations {
     borderRadius: BorderRadius.all(
         Radius.circular(AppDimensions.radiusSmall + 2)),
   );
+
+  // --- Sticky header background ---
+
+  static BoxDecoration stickyHeader() => BoxDecoration(
+        color: Colors.white.withValues(alpha: 0.97),
+      );
 
   // --- Bottom nav bar ---
 

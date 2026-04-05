@@ -5,6 +5,7 @@
 
 import 'package:flutter/material.dart';
 import 'app_colors.dart';
+import 'app_dimensions.dart';
 
 class AppTextStyles {
   AppTextStyles._();
@@ -135,4 +136,11 @@ class AppTextStyles {
   static const TextStyle inputHint = TextStyle(color: Colors.white54);
 
   static const TextStyle noDataText = TextStyle(color: Colors.black54);
+
+  // Nu bezig badge
+  static const TextStyle nuBezigLabel = TextStyle(
+    color: Colors.white,
+    fontSize: AppDimensions.nuBezigFontSize,
+    fontWeight: FontWeight.bold,
+  );
 }
