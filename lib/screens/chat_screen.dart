@@ -1,30 +1,41 @@
+/* Chat Screen
+
+   This screen lets users chat with the studio in real time.
+
+   Features:
+   - Username prompt on first visit (stored locally, shown once)
+   - Messages streamed live from Firestore
+   - Only messages from the last 24 hours are shown
+   - Messages are limited to 160 characters
+   - Own messages appear on the right (blue), others on the left
+   - Admin messages appear in orange with a radio icon
+*/
+
 import 'package:flutter/material.dart';
 import '../services/chat_service.dart';
-import '../services/auth_service.dart';
-import '../widgets/message_bubble.dart';
+import '../services/user_service.dart';
+import '../widgets/username_dialog.dart';
 import '../theme/app_theme.dart';
 import '../constants/constants.dart';
 
 class ChatScreen extends StatefulWidget {
-  final ChatService chatService;
-  final AuthService authService;
-
-  const ChatScreen({
-    super.key,
-    required this.chatService,
-    required this.authService,
-  });
+  const ChatScreen({super.key});
 
   @override
   State<ChatScreen> createState() => _ChatScreenState();
 }
 
 class _ChatScreenState extends State<ChatScreen> {
-  final TextEditingController _controller       = TextEditingController();
-  final ScrollController       _scrollController = ScrollController();
+  final _chatService = ChatService();
+  final _controller = TextEditingController();
+  final _scrollController = ScrollController();
 
-  ChatService get _chatService => widget.chatService;
-  AuthService get _authService => widget.authService;
+  @override
+  void initState() {
+    super.initState();
+    // Ask for a username the first time the user opens this screen.
+    WidgetsBinding.instance.addPostFrameCallback((_) => _ensureUsername());
+  }
 
   @override
   void dispose() {
@@ -33,16 +44,23 @@ class _ChatScreenState extends State<ChatScreen> {
     super.dispose();
   }
 
-  void _sendMessage() {
-    if (_controller.text.trim().isEmpty) return;
-    _chatService.sendMessage(_controller.text);
+  Future<void> _ensureUsername() async {
+    if (!UserService.instance.hasUsername && mounted) {
+      await UsernameDialog.show(context);
+      setState(() {}); // refresh so the username shows in the header
+    }
+  }
+
+  Future<void> _sendMessage() async {
+    final text = _controller.text.trim();
+    if (text.isEmpty) return;
     _controller.clear();
-    setState(() {});
+    await _chatService.sendMessage(text);
     _scrollToBottom();
   }
 
   void _scrollToBottom() {
-    Future.delayed(const Duration(milliseconds: 100), () {
+    Future.delayed(const Duration(milliseconds: 150), () {
       if (_scrollController.hasClients) {
         _scrollController.animateTo(
           _scrollController.position.maxScrollExtent,
@@ -51,6 +69,10 @@ class _ChatScreenState extends State<ChatScreen> {
         );
       }
     });
+  }
+
+  String _formatTime(DateTime dt) {
+    return '${dt.hour.toString().padLeft(2, '0')}:${dt.minute.toString().padLeft(2, '0')}';
   }
 
   @override
@@ -71,7 +93,7 @@ class _ChatScreenState extends State<ChatScreen> {
               const SizedBox(height: AppDimensions.spaceMedium),
               _buildChatTitle(),
               const SizedBox(height: AppDimensions.spaceMedium),
-              _buildChatList(),
+              _buildMessageList(),
               _buildInputField(),
             ],
           ),
@@ -90,19 +112,17 @@ class _ChatScreenState extends State<ChatScreen> {
       ),
       child: Align(
         alignment: Alignment.centerLeft,
-        child: GestureDetector(
-          onLongPress: _authService.isAdmin ? null : _showAdminLogin,
-          child: Image.asset(
-            AppAssets.logo,
-            height: AppDimensions.logoHeight,
-            fit: BoxFit.contain,
-          ),
+        child: Image.asset(
+          AppAssets.logo,
+          height: AppDimensions.logoHeight,
+          fit: BoxFit.contain,
         ),
       ),
     );
   }
 
   Widget _buildChatTitle() {
+    final username = UserService.instance.username;
     return Padding(
       padding: const EdgeInsets.symmetric(
           horizontal: AppDimensions.paddingXLarge),
@@ -112,45 +132,147 @@ class _ChatScreenState extends State<ChatScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text('Chat met de Studio', style: AppTextStyles.chatTitle),
-                if (_authService.isAdmin)
-                  const Padding(
-                    padding: EdgeInsets.only(top: AppDimensions.spaceSmall),
-                    child: Text('ADMIN MODE', style: AppTextStyles.adminBadge),
+                const Text('Chat met de Studio',
+                    style: AppTextStyles.chatTitle),
+                if (username != null)
+                  Padding(
+                    padding: const EdgeInsets.only(
+                        top: AppDimensions.spaceXSmall),
+                    child: Text(
+                      'Ingelogd als: $username',
+                      style: const TextStyle(
+                          color: Colors.black54, fontSize: 12),
+                    ),
                   ),
               ],
             ),
           ),
-          if (_authService.isAdmin)
+          // Allow user to change their username
+          if (username != null)
             TextButton.icon(
-              onPressed: _logout,
-              icon: const Icon(Icons.logout, size: 18, color: Colors.black54),
-              label: const Text(
-                'Uitloggen',
-                style: TextStyle(color: Colors.black54, fontSize: 13),
-              ),
+              onPressed: () async {
+                await UserService.instance.clearUsername();
+                setState(() {});
+                if (mounted) {
+                  await UsernameDialog.show(context);
+                  setState(() {});
+                }
+              },
+              icon: const Icon(Icons.edit, size: 16, color: Colors.black45),
+              label: const Text('Naam',
+                  style: TextStyle(color: Colors.black45, fontSize: 12)),
             ),
         ],
       ),
     );
   }
 
-  Widget _buildChatList() {
+  Widget _buildMessageList() {
     return Expanded(
       child: Container(
         margin: const EdgeInsets.symmetric(
             horizontal: AppDimensions.paddingXLarge),
         padding: const EdgeInsets.all(AppDimensions.paddingSmall),
         decoration: AppDecorations.chatList(),
-        child: ListView.builder(
-          controller: _scrollController,
-          itemCount: _chatService.messages.length,
-          padding:
-              const EdgeInsets.only(bottom: AppDimensions.spaceMedium),
-          itemBuilder: (context, index) {
-            return MessageBubble(message: _chatService.messages[index]);
+        child: StreamBuilder<List<Map<String, dynamic>>>(
+          stream: _chatService.messagesStream,
+          builder: (context, snapshot) {
+            if (snapshot.connectionState == ConnectionState.waiting) {
+              return const Center(
+                child: CircularProgressIndicator(
+                    color: AppColors.steelLight),
+              );
+            }
+            if (snapshot.hasError) {
+              return Center(
+                child: Text(
+                  'Fout bij laden: ${snapshot.error}',
+                  style: const TextStyle(color: Colors.white54),
+                  textAlign: TextAlign.center,
+                ),
+              );
+            }
+            final messages = snapshot.data ?? [];
+            if (messages.isEmpty) {
+              return const Center(
+                child: Text(
+                  'Nog geen berichten.\nWees de eerste!',
+                  style: TextStyle(color: Colors.white38, fontSize: 14),
+                  textAlign: TextAlign.center,
+                ),
+              );
+            }
+
+            // Auto-scroll when new messages arrive
+            WidgetsBinding.instance.addPostFrameCallback(
+                (_) => _scrollToBottom());
+
+            return ListView.builder(
+              controller: _scrollController,
+              padding:
+                  const EdgeInsets.only(bottom: AppDimensions.spaceMedium),
+              itemCount: messages.length,
+              itemBuilder: (context, index) =>
+                  _buildBubble(messages[index]),
+            );
           },
         ),
+      ),
+    );
+  }
+
+  Widget _buildBubble(Map<String, dynamic> msg) {
+    final myUsername = UserService.instance.username;
+    final msgUsername = msg['username'] as String;
+    final text = msg['text'] as String;
+    final time = msg['timestamp'] as DateTime;
+    final isMe = msgUsername == myUsername;
+
+    return Container(
+      margin: EdgeInsets.only(
+        top: AppDimensions.spaceSmall,
+        bottom: AppDimensions.spaceSmall,
+        left: isMe ? 60 : 0,
+        right: isMe ? 0 : 60,
+      ),
+      child: Column(
+        crossAxisAlignment:
+            isMe ? CrossAxisAlignment.end : CrossAxisAlignment.start,
+        children: [
+          // Username label (only for other people's messages)
+          if (!isMe)
+            Padding(
+              padding: const EdgeInsets.only(
+                  left: AppDimensions.spaceSmall,
+                  bottom: AppDimensions.spaceXSmall),
+              child: Text(
+                msgUsername,
+                style: const TextStyle(
+                  color: Colors.white60,
+                  fontSize: 11,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ),
+          Container(
+            padding:
+                const EdgeInsets.all(AppDimensions.paddingSmall),
+            decoration: BoxDecoration(
+              color: isMe ? AppColors.primaryLight : AppColors.steelMedium,
+              borderRadius:
+                  BorderRadius.circular(AppDimensions.radiusMedium),
+            ),
+            child: Text(
+              text,
+              style: const TextStyle(
+                  color: Colors.white, fontSize: 15),
+            ),
+          ),
+          const SizedBox(height: AppDimensions.spaceXSmall),
+          Text(_formatTime(time),
+              style: const TextStyle(
+                  color: Colors.white38, fontSize: 11)),
+        ],
       ),
     );
   }
@@ -174,6 +296,22 @@ class _ChatScreenState extends State<ChatScreen> {
             child: TextField(
               controller: _controller,
               style: AppTextStyles.inputText,
+              maxLength: ChatService.maxMessageLength,
+              // Hide the counter — we'll show remaining chars ourselves
+              buildCounter: (_, {required currentLength, required isFocused, maxLength}) {
+                final remaining = (maxLength ?? 160) - currentLength;
+                return remaining <= 30
+                    ? Text(
+                        '$remaining',
+                        style: TextStyle(
+                          color: remaining <= 10
+                              ? Colors.redAccent
+                              : Colors.white38,
+                          fontSize: 11,
+                        ),
+                      )
+                    : null;
+              },
               decoration: const InputDecoration(
                 hintText: 'Typ een bericht...',
                 hintStyle: AppTextStyles.inputHint,
@@ -185,46 +323,8 @@ class _ChatScreenState extends State<ChatScreen> {
           GestureDetector(
             onTap: _sendMessage,
             child: const Icon(Icons.send,
-                color: Colors.white, size: AppDimensions.iconLarge),
-          ),
-        ],
-      ),
-    );
-  }
-
-  void _logout() {
-    _authService.logout();
-    setState(() {});
-  }
-
-  void _showAdminLogin() {
-    final passwordController = TextEditingController();
-    showDialog(
-      context: context,
-      builder: (_) => AlertDialog(
-        title: const Text('Admin Login'),
-        content: TextField(
-          controller: passwordController,
-          obscureText: true,
-          decoration: const InputDecoration(hintText: 'Wachtwoord'),
-          onSubmitted: (_) {
-            _authService.login(passwordController.text);
-            setState(() {});
-            Navigator.pop(context);
-          },
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Annuleren'),
-          ),
-          TextButton(
-            onPressed: () {
-              _authService.login(passwordController.text);
-              setState(() {});
-              Navigator.pop(context);
-            },
-            child: const Text('Login'),
+                color: Colors.white,
+                size: AppDimensions.iconLarge),
           ),
         ],
       ),
