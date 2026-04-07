@@ -19,6 +19,7 @@ import '../widgets/message_bubble.dart';
 import '../widgets/username_dialog.dart';
 import '../theme/app_theme.dart';
 import '../constants/constants.dart';
+import '../models/message.dart';
 
 class ChatScreen extends StatefulWidget {
   final ChatService chatService;
