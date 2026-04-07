@@ -4,6 +4,8 @@ import '../screens/event_screen.dart';
 import '../screens/program_screen.dart';
 import '../screens/info_screen.dart';
 import '../screens/chat_screen.dart';
+import '../services/chat_service.dart';
+import '../services/auth_service.dart';
 import '../theme/app_theme.dart';
 
 class ApolloHome extends StatefulWidget {
@@ -15,14 +17,22 @@ class ApolloHome extends StatefulWidget {
 
 class _ApolloHomeState extends State<ApolloHome> {
   int _index = 0;
+  final AuthService _authService = AuthService.instance;
+  late final ChatService _chatService;
+  late final List<Widget> _screens;
 
-  late final List<Widget> _screens = [
-    HomeScreen(onNavigate: _switchTab),
-    const ProgramScreen(),
-    InfoScreen(),
-    EventScreen(),
-    const ChatScreen(), // Now self-contained — no external dependencies needed
-  ];
+  @override
+  void initState() {
+    super.initState();
+    _chatService = ChatService(authService: _authService);
+    _screens = [
+      HomeScreen(onNavigate: _switchTab),
+      const ProgramScreen(),
+      InfoScreen(),
+      EventScreen(),
+      ChatScreen(chatService: _chatService, authService: _authService),
+    ];
+  }
 
   void _switchTab(int newIndex) => setState(() => _index = newIndex);
 

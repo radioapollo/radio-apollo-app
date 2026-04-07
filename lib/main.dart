@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:audio_service/audio_service.dart';
 import 'navigation/apollo_home.dart';
 import 'services/audio_handler.dart';
-import 'services/user_service.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'firebase_options.dart';
 import 'constants/constants.dart';
@@ -15,9 +14,6 @@ Future<void> main() async {
   await Firebase.initializeApp(
     options: DefaultFirebaseOptions.currentPlatform,
   );
-
-  // Load any previously saved username from this device.
-  await UserService.instance.init();
 
   audioHandler = await AudioService.init(
     builder: () => RadioAudioHandler(),

@@ -6,6 +6,9 @@
    - admin messages appear in orange with a radio icon
    - user messages appear in blue, aligned to the right
    - other roles appear in white, aligned to the left
+
+   When a username is present on a non-user bubble,
+   it is shown as a small label above the bubble.
 */
 
 import 'package:flutter/material.dart';
@@ -24,17 +27,34 @@ class MessageBubble extends StatelessWidget {
 
     return Container(
       margin: EdgeInsets.only(
-        top: AppDimensions.spaceSmall,
+        top:    AppDimensions.spaceSmall,
         bottom: AppDimensions.spaceSmall,
-        left: isUser ? 80 : 0,
-        right: isUser ? 0 : 80,
+        left:   isUser ? 80 : 0,
+        right:  isUser ? 0  : 80,
       ),
       child: Column(
         crossAxisAlignment:
             isUser ? CrossAxisAlignment.end : CrossAxisAlignment.start,
         children: [
+          // Show the sender's username above other people's bubbles
+          if (!isUser && message.username != null)
+            Padding(
+              padding: const EdgeInsets.only(
+                left:   AppDimensions.spaceSmall,
+                bottom: AppDimensions.spaceXSmall,
+              ),
+              child: Text(
+                message.username!,
+                style: const TextStyle(
+                  color:      Colors.white60,
+                  fontSize:   11,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ),
+
           Container(
-            padding: const EdgeInsets.all(AppDimensions.paddingSmall),
+            padding:    const EdgeInsets.all(AppDimensions.paddingSmall),
             decoration: AppDecorations.chatBubble(
                 isAdmin: isAdmin, isUser: isUser),
             child: Row(
@@ -43,9 +63,11 @@ class MessageBubble extends StatelessWidget {
                 if (isAdmin)
                   const Padding(
                     padding: EdgeInsets.only(right: 8, top: 2),
-                    child: Icon(Icons.radio,
-                        color: Colors.black54,
-                        size: AppDimensions.iconMedium),
+                    child: Icon(
+                      Icons.radio,
+                      color: Colors.black54,
+                      size:  AppDimensions.iconMedium,
+                    ),
                   ),
                 Expanded(
                   child: Text(
