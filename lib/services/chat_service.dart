@@ -46,11 +46,16 @@ class ChatService {
               final data = doc.data();
               final ts   = data['timestamp'] as Timestamp?;
               final dt   = ts?.toDate() ?? DateTime.now();
+              final msgUsername = data['username'] as String? ?? 'Onbekend';
+              final localUsername = UserService.instance.username;
               return Message(
-                role:     data['role']     as String? ?? 'user',
-                text:     data['text']     as String? ?? '',
-                time:     AppDateUtils.formatTime(dt),
-                username: data['username'] as String? ?? 'Onbekend',
+                role:          data['role'] as String? ?? 'user',
+                text:          data['text'] as String? ?? '',
+                time:          AppDateUtils.formatTime(dt),
+                username:      msgUsername,
+                isCurrentUser: localUsername != null &&
+                    msgUsername == localUsername &&
+                    (data['role'] as String? ?? 'user') != 'admin',
               );
             }).toList());
   }

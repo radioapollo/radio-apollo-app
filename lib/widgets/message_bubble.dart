@@ -22,19 +22,22 @@ class MessageBubble extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final isUser  = message.role == 'user';
-    final isAdmin = message.role == 'admin';
+    final isCurrentUser = message.isCurrentUser;
+    final isAdmin       = message.role == 'admin';
+    // Keep isUser for colour — admin always gets the orange style, current-user
+    // gets blue, everyone else gets the neutral white bubble.
+    final isUser = isCurrentUser;
 
     return Container(
       margin: EdgeInsets.only(
         top:    AppDimensions.spaceSmall,
         bottom: AppDimensions.spaceSmall,
-        left:   isUser ? 80 : 0,
-        right:  isUser ? 0  : 80,
+        left:   isCurrentUser ? 80 : 0,
+        right:  isCurrentUser ? 0  : 80,
       ),
       child: Column(
         crossAxisAlignment:
-            isUser ? CrossAxisAlignment.end : CrossAxisAlignment.start,
+            isCurrentUser ? CrossAxisAlignment.end : CrossAxisAlignment.start,
         children: [
           // Show the sender's username above other people's bubbles
           if (!isUser && message.username != null)

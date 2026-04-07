@@ -19,19 +19,11 @@ class _ApolloHomeState extends State<ApolloHome> {
   int _index = 0;
   final AuthService _authService = AuthService.instance;
   late final ChatService _chatService;
-  late final List<Widget> _screens;
 
   @override
   void initState() {
     super.initState();
     _chatService = ChatService(authService: _authService);
-    _screens = [
-      HomeScreen(onNavigate: _switchTab),
-      const ProgramScreen(),
-      InfoScreen(),
-      EventScreen(),
-      ChatScreen(chatService: _chatService, authService: _authService),
-    ];
   }
 
   void _switchTab(int newIndex) => setState(() => _index = newIndex);
@@ -41,7 +33,19 @@ class _ApolloHomeState extends State<ApolloHome> {
     return Scaffold(
       body: IndexedStack(
         index: _index,
-        children: _screens,
+        children: [
+          HomeScreen(onNavigate: _switchTab),
+          const ProgramScreen(),
+          InfoScreen(),
+          EventScreen(),
+          // isActive updates on every rebuild so didUpdateWidget fires correctly
+          // when the user navigates to the chat tab.
+          ChatScreen(
+            chatService: _chatService,
+            authService: _authService,
+            isActive: _index == 4,
+          ),
+        ],
       ),
       bottomNavigationBar: _buildBottomNav(),
     );

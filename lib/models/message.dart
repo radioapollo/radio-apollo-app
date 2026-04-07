@@ -13,12 +13,14 @@ class Message {
   final String  role;
   final String  text;
   final String  time;
-  final String? username; // display name, null for legacy/local messages
+  final String? username;     // display name shown above other people's bubbles
+  final bool    isCurrentUser; // true when this message was sent by this device
 
   const Message({
     required this.role,
     required this.text,
     required this.time,
     this.username,
+    this.isCurrentUser = false,
   });
 }

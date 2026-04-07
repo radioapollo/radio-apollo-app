@@ -23,11 +23,15 @@ import '../constants/constants.dart';
 class ChatScreen extends StatefulWidget {
   final ChatService chatService;
   final AuthService authService;
+  /// Set to true when this tab is the active/visible one.
+  /// Used to defer the username prompt until the user actually opens the chat.
+  final bool isActive;
 
   const ChatScreen({
     super.key,
     required this.chatService,
     required this.authService,
+    this.isActive = false,
   });
 
   @override
@@ -41,17 +45,35 @@ class _ChatScreenState extends State<ChatScreen> {
   // Track remaining characters for the input counter
   int _charsLeft = ChatService.maxMessageLength;
 
+  // Cached stream — must not be recreated on every build or setState would
+  // cause the StreamBuilder to reconnect to Firestore on every keystroke,
+  // producing a visible flash/glitch.
+  late final Stream<List<Message>> _messagesStream;
+
+  // Used to only auto-scroll when new messages actually arrive.
+  int _lastMessageCount = 0;
+
+  // Prevent showing the username dialog more than once per session.
+  bool _usernameChecked = false;
+
   ChatService get _chatService => widget.chatService;
   AuthService get _authService => widget.authService;
 
   @override
   void initState() {
     super.initState();
+    _messagesStream = _chatService.messagesStream;
     _controller.addListener(_onTextChanged);
+  }
 
-    // Ask for a username the first time this screen is opened.
-    // addPostFrameCallback ensures the dialog opens after the first frame.
-    WidgetsBinding.instance.addPostFrameCallback((_) => _ensureUsername());
+  @override
+  void didUpdateWidget(ChatScreen oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    // Show the username prompt the first time this tab becomes visible.
+    if (widget.isActive && !oldWidget.isActive && !_usernameChecked) {
+      _usernameChecked = true;
+      WidgetsBinding.instance.addPostFrameCallback((_) => _ensureUsername());
+    }
   }
 
   @override
@@ -226,7 +248,7 @@ class _ChatScreenState extends State<ChatScreen> {
         padding: const EdgeInsets.all(AppDimensions.paddingSmall),
         decoration: AppDecorations.chatList(),
         child: StreamBuilder(
-          stream: _chatService.messagesStream,
+          stream: _messagesStream,
           builder: (context, snapshot) {
             if (snapshot.connectionState == ConnectionState.waiting) {
               return const Center(
@@ -257,9 +279,13 @@ class _ChatScreenState extends State<ChatScreen> {
               );
             }
 
-            // Auto-scroll when new messages arrive
-            WidgetsBinding.instance
-                .addPostFrameCallback((_) => _scrollToBottom());
+            // Auto-scroll only when new messages arrive, not on every rebuild
+            // (e.g. not while the user is typing).
+            if (messages.length > _lastMessageCount) {
+              _lastMessageCount = messages.length;
+              WidgetsBinding.instance
+                  .addPostFrameCallback((_) => _scrollToBottom());
+            }
 
             return ListView.builder(
               controller: _scrollController,
