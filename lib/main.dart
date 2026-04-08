@@ -5,6 +5,7 @@ import 'services/audio_handler.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'firebase_options.dart';
 import 'constants/constants.dart';
+import 'services/user_service.dart';
 
 late final RadioAudioHandler audioHandler;
 
@@ -14,6 +15,8 @@ Future<void> main() async {
   await Firebase.initializeApp(
     options: DefaultFirebaseOptions.currentPlatform,
   );
+
+  await UserService.instance.init();
 
   audioHandler = await AudioService.init(
     builder: () => RadioAudioHandler(),

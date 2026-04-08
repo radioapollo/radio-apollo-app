@@ -43,18 +43,12 @@ class _ChatScreenState extends State<ChatScreen> {
   final TextEditingController _controller       = TextEditingController();
   final ScrollController       _scrollController = ScrollController();
 
-  // Track remaining characters for the input counter
   int _charsLeft = ChatService.maxMessageLength;
 
-  // Cached stream — must not be recreated on every build or setState would
-  // cause the StreamBuilder to reconnect to Firestore on every keystroke,
-  // producing a visible flash/glitch.
   late final Stream<List<Message>> _messagesStream;
 
-  // Used to only auto-scroll when new messages actually arrive.
   int _lastMessageCount = 0;
 
-  // Prevent showing the username dialog more than once per session.
   bool _usernameChecked = false;
 
   ChatService get _chatService => widget.chatService;
@@ -65,12 +59,15 @@ class _ChatScreenState extends State<ChatScreen> {
     super.initState();
     _messagesStream = _chatService.messagesStream;
     _controller.addListener(_onTextChanged);
+    if (widget.isActive) {
+      _usernameChecked = true;
+      WidgetsBinding.instance.addPostFrameCallback((_) => _ensureUsername());
+    }
   }
 
   @override
   void didUpdateWidget(ChatScreen oldWidget) {
     super.didUpdateWidget(oldWidget);
-    // Show the username prompt the first time this tab becomes visible.
     if (widget.isActive && !oldWidget.isActive && !_usernameChecked) {
       _usernameChecked = true;
       WidgetsBinding.instance.addPostFrameCallback((_) => _ensureUsername());
@@ -92,11 +89,10 @@ class _ChatScreenState extends State<ChatScreen> {
   }
 
   Future<void> _ensureUsername() async {
-    // Load any previously stored username first.
     await UserService.instance.init();
     if (!UserService.instance.hasUsername && mounted) {
       await UsernameDialog.show(context);
-      setState(() {}); // Refresh so the username label updates
+      setState(() {});
     }
   }
 
@@ -147,8 +143,6 @@ class _ChatScreenState extends State<ChatScreen> {
     );
   }
 
-  // ── Header (logo) ──────────────────────────────────────────────────────────
-
   Widget _buildHeader() {
     return Padding(
       padding: const EdgeInsets.fromLTRB(
@@ -171,8 +165,6 @@ class _ChatScreenState extends State<ChatScreen> {
     );
   }
 
-  // ── Title + username / admin badge ────────────────────────────────────────
-
   Widget _buildChatTitle() {
     final username = UserService.instance.username;
 
@@ -189,15 +181,14 @@ class _ChatScreenState extends State<ChatScreen> {
                     style: AppTextStyles.chatTitle),
                 if (_authService.isAdmin)
                   const Padding(
-                    padding:
-                        EdgeInsets.only(top: AppDimensions.spaceSmall),
+                    padding: EdgeInsets.only(top: AppDimensions.spaceSmall),
                     child: Text('ADMIN MODE',
                         style: AppTextStyles.adminBadge),
                   )
                 else if (username != null)
                   Padding(
-                    padding:
-                        const EdgeInsets.only(top: AppDimensions.spaceXSmall),
+                    padding: const EdgeInsets.only(
+                        top: AppDimensions.spaceXSmall),
                     child: Text(
                       'Ingelogd als: $username',
                       style: const TextStyle(
@@ -207,7 +198,6 @@ class _ChatScreenState extends State<ChatScreen> {
               ],
             ),
           ),
-          // Admin logout button
           if (_authService.isAdmin)
             TextButton.icon(
               onPressed: _logout,
@@ -216,30 +206,11 @@ class _ChatScreenState extends State<ChatScreen> {
               label: const Text('Uitloggen',
                   style: TextStyle(
                       color: Colors.black54, fontSize: 13)),
-            )
-          // Allow changing username
-          else if (username != null)
-            TextButton.icon(
-              onPressed: () async {
-                await UserService.instance.clearUsername();
-                setState(() {});
-                if (mounted) {
-                  await UsernameDialog.show(context);
-                  setState(() {});
-                }
-              },
-              icon: const Icon(Icons.edit,
-                  size: 16, color: Colors.black45),
-              label: const Text('Naam',
-                  style: TextStyle(
-                      color: Colors.black45, fontSize: 12)),
             ),
         ],
       ),
     );
   }
-
-  // ── Message list (Firestore stream) ───────────────────────────────────────
 
   Widget _buildChatList() {
     return Expanded(
@@ -253,8 +224,7 @@ class _ChatScreenState extends State<ChatScreen> {
           builder: (context, snapshot) {
             if (snapshot.connectionState == ConnectionState.waiting) {
               return const Center(
-                child: CircularProgressIndicator(
-                    color: Colors.white38),
+                child: CircularProgressIndicator(color: Colors.white38),
               );
             }
             if (snapshot.hasError) {
@@ -273,15 +243,12 @@ class _ChatScreenState extends State<ChatScreen> {
               return const Center(
                 child: Text(
                   'Nog geen berichten.\nWees de eerste!',
-                  style: TextStyle(
-                      color: Colors.white38, fontSize: 14),
+                  style: TextStyle(color: Colors.white38, fontSize: 14),
                   textAlign: TextAlign.center,
                 ),
               );
             }
 
-            // Auto-scroll only when new messages arrive, not on every rebuild
-            // (e.g. not while the user is typing).
             if (messages.length > _lastMessageCount) {
               _lastMessageCount = messages.length;
               WidgetsBinding.instance
@@ -301,8 +268,6 @@ class _ChatScreenState extends State<ChatScreen> {
       ),
     );
   }
-
-  // ── Input field + send button ─────────────────────────────────────────────
 
   Widget _buildInputField() {
     return Container(
@@ -329,7 +294,6 @@ class _ChatScreenState extends State<ChatScreen> {
                   controller:  _controller,
                   style:       AppTextStyles.inputText,
                   maxLength:   ChatService.maxMessageLength,
-                  // Hide Flutter's default counter — we draw our own
                   buildCounter: (_, {required currentLength,
                       required isFocused, maxLength}) => null,
                   decoration: const InputDecoration(
@@ -340,12 +304,11 @@ class _ChatScreenState extends State<ChatScreen> {
                   ),
                   onSubmitted: (_) => _sendMessage(),
                 ),
-                // Show character counter only when close to the limit
                 if (_charsLeft <= 30)
                   Text(
                     '$_charsLeft',
                     style: TextStyle(
-                      color:    _charsLeft <= 10
+                      color: _charsLeft <= 10
                           ? Colors.redAccent
                           : Colors.white38,
                       fontSize: 11,
@@ -368,8 +331,6 @@ class _ChatScreenState extends State<ChatScreen> {
     );
   }
 
-  // ── Admin helpers ─────────────────────────────────────────────────────────
-
   void _logout() {
     _authService.logout();
     setState(() {});
@@ -385,10 +346,20 @@ class _ChatScreenState extends State<ChatScreen> {
           controller:  passwordController,
           obscureText: true,
           decoration:  const InputDecoration(hintText: 'Wachtwoord'),
-          onSubmitted: (_) {
-            _authService.login(passwordController.text);
-            setState(() {});
-            Navigator.pop(context);
+          onSubmitted: (_) async {
+            try {
+              await _authService.login(passwordController.text);
+              if (mounted) {
+                setState(() {});
+                Navigator.pop(context);
+              }
+            } catch (e) {
+              if (mounted) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(content: Text('Ongeldig wachtwoord')),
+                );
+              }
+            }
           },
         ),
         actions: [
@@ -397,10 +368,20 @@ class _ChatScreenState extends State<ChatScreen> {
             child: const Text('Annuleren'),
           ),
           TextButton(
-            onPressed: () {
-              _authService.login(passwordController.text);
-              setState(() {});
-              Navigator.pop(context);
+            onPressed: () async {
+              try {
+                await _authService.login(passwordController.text);
+                if (mounted) {
+                  setState(() {});
+                  Navigator.pop(context);
+                }
+              } catch (e) {
+                if (mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text('Ongeldig wachtwoord')),
+                  );
+                }
+              }
             },
             child: const Text('Login'),
           ),

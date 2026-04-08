@@ -68,7 +68,7 @@ class ChatService {
     final trimmed = text.trim();
     if (trimmed.isEmpty || trimmed.length > maxMessageLength) return false;
 
-    final username = UserService.instance.username ?? 'Onbekend';
+    final username = authService.isAdmin ? 'Radio Apollo' : (UserService.instance.username ?? 'Onbekend');
     final role     = authService.currentRole;
 
     await _db.collection(_collection).add({
