@@ -4,14 +4,17 @@
 
    It handles:
    - streaming live messages from the last 24 hours, oldest first
-   - sending new messages with the correct username and role
+   - sending user messages directly to Firestore
+   - sending admin messages through a Cloud Function (server-side)
    - enforcing the 160 character limit
 
    Firestore collection: 'chat_messages'
    Document fields: { username, text, role, timestamp }
 */
 
+import 'dart:convert';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:http/http.dart' as http;
 import '../models/message.dart';
 import '../utils/date_utils.dart';
 import 'auth_service.dart';
@@ -21,8 +24,11 @@ class ChatService {
   final AuthService authService;
   final _db = FirebaseFirestore.instance;
 
-  static const String _collection  = 'chat_messages';
+  static const String _collection      = 'chat_messages';
   static const int    maxMessageLength = 160;
+
+  static const String _projectId = 'radio-apollo-90693';
+  static const String _region    = 'europe-west1';
 
   ChatService({required this.authService});
 
@@ -61,17 +67,47 @@ class ChatService {
     final trimmed = text.trim();
     if (trimmed.isEmpty || trimmed.length > maxMessageLength) return false;
 
-    final username = authService.isAdmin
-        ? 'Radio Apollo'
-        : (UserService.instance.username ?? 'Onbekend');
+    if (authService.isAdmin) {
+      return _sendAdminMessage(trimmed);
+    }
+
+    return _sendUserMessage(trimmed);
+  }
+
+  // ── Private: user message (direct Firestore write) ────────────────────────
+
+  Future<bool> _sendUserMessage(String text) async {
+    final username = UserService.instance.username ?? 'Onbekend';
 
     await _db.collection(_collection).add({
       'username':  username,
-      'text':      trimmed,
-      'role':      authService.currentRole,
+      'text':      text,
+      'role':      'user',
       'timestamp': FieldValue.serverTimestamp(),
     });
 
     return true;
+  }
+
+  // ── Private: admin message (via Cloud Function) ───────────────────────────
+
+  Future<bool> _sendAdminMessage(String text) async {
+    final password = authService.adminPassword;
+    if (password == null) return false;
+
+    final uri = Uri.parse(
+      'https://$_region-$_projectId.cloudfunctions.net/adminSendMessage',
+    );
+
+    final response = await http.post(
+      uri,
+      headers: {'Content-Type': 'application/json'},
+      body: jsonEncode({
+        'password': password,
+        'text':     text,
+      }),
+    );
+
+    return response.statusCode == 200;
   }
 }

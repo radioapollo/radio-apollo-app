@@ -3,7 +3,7 @@
    Shown the first time a user opens the chat screen.
 
    The user picks a display name (3–20 characters) which is then
-   saved to the device via UserService. It is not shown again.
+   checked for uniqueness and saved via UserService.
 */
 
 import 'package:flutter/material.dart';
@@ -29,6 +29,7 @@ class UsernameDialog extends StatefulWidget {
 class _UsernameDialogState extends State<UsernameDialog> {
   final _controller = TextEditingController();
   String? _error;
+  bool _loading = false;
 
   @override
   void dispose() {
@@ -48,8 +49,20 @@ class _UsernameDialogState extends State<UsernameDialog> {
       setState(() => _error = 'Maximaal 20 tekens toegestaan.');
       return;
     }
-    await UserService.instance.setUsername(name);
-    if (mounted) Navigator.of(context).pop(name);
+
+    setState(() { _loading = true; _error = null; });
+
+    try {
+      await UserService.instance.setUsername(name);
+      if (mounted) Navigator.of(context).pop(name);
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          _loading = false;
+          _error = e.toString().replaceFirst('Exception: ', '');
+        });
+      }
+    }
   }
 
   // ── Build ─────────────────────────────────────────────────────────────────
@@ -76,6 +89,7 @@ class _UsernameDialogState extends State<UsernameDialog> {
             controller: _controller,
             autofocus:  true,
             maxLength:  20,
+            enabled:    !_loading,
             decoration: InputDecoration(
               hintText:  'Jouw naam...',
               errorText: _error,
@@ -99,12 +113,18 @@ class _UsernameDialogState extends State<UsernameDialog> {
       ),
       actions: [
         TextButton(
-          onPressed: _submit,
-          child: const Text(
-            'Opslaan',
-            style: TextStyle(
-                color: AppColors.primaryLight, fontWeight: FontWeight.bold),
-          ),
+          onPressed: _loading ? null : _submit,
+          child: _loading
+              ? const SizedBox(
+                  width: 18, height: 18,
+                  child: CircularProgressIndicator(strokeWidth: 2),
+                )
+              : const Text(
+                  'Opslaan',
+                  style: TextStyle(
+                      color: AppColors.primaryLight,
+                      fontWeight: FontWeight.bold),
+                ),
         ),
       ],
     );

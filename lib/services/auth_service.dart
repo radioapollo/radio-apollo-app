@@ -5,7 +5,8 @@
    It handles:
    - tracking whether the current user is a regular user or admin
    - sending the password to the Cloud Function for verification
-   - logging out by resetting the role to user
+   - providing the password to ChatService for server-side admin messages
+   - logging out by resetting the role and clearing the password
 */
 
 import 'dart:convert';
@@ -19,12 +20,14 @@ class AuthService {
   static const _projectId = 'radio-apollo-90693';
   static const _region    = 'europe-west1';
 
-  String _role = 'user';
+  String  _role = 'user';
+  String? _adminPassword;   // kept in memory only, cleared on logout
 
   // ── Getters ───────────────────────────────────────────────────────────────
 
-  String get currentRole => _role;
-  bool   get isAdmin     => _role == 'admin';
+  String  get currentRole    => _role;
+  bool    get isAdmin        => _role == 'admin';
+  String? get adminPassword  => _adminPassword;
 
   // ── Login / logout ────────────────────────────────────────────────────────
 
@@ -41,11 +44,20 @@ class AuthService {
 
     if (response.statusCode == 200) {
       _role = 'admin';
+      _adminPassword = password;
+    } else if (response.statusCode == 429) {
+      _role = 'user';
+      _adminPassword = null;
+      throw Exception('Te veel pogingen. Probeer het over 5 minuten opnieuw.');
     } else {
       _role = 'user';
+      _adminPassword = null;
       throw Exception('Invalid password');
     }
   }
 
-  void logout() => _role = 'user';
+  void logout() {
+    _role = 'user';
+    _adminPassword = null;
+  }
 }

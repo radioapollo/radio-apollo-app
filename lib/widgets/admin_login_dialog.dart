@@ -55,10 +55,12 @@ class _AdminLoginDialogState extends State<AdminLoginDialog> {
         Navigator.pop(context);
         widget.onSuccess();
       }
-    } catch (_) {
+    } catch (e) {
       if (mounted) {
+        final message = e.toString().replaceFirst('Exception: ', '');
+        Navigator.pop(context);
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Ongeldig wachtwoord')),
+          SnackBar(content: Text(message)),
         );
       }
     }

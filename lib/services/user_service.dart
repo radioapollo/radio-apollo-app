@@ -4,10 +4,12 @@
 
    It handles:
    - loading the saved username from device storage on startup
-   - saving a new username chosen in the dialog
-   - exposing whether a username has been set yet
+   - checking Firestore to ensure the username is unique
+   - claiming the username in Firestore so nobody else can take it
+   - saving the username locally on the device
 */
 
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class UserService {
@@ -16,6 +18,7 @@ class UserService {
   static final UserService instance = UserService._();
 
   static const String _key = 'chat_username';
+  final _db = FirebaseFirestore.instance;
 
   String? _username;
 
@@ -32,10 +35,35 @@ class UserService {
     _username = prefs.getString(_key);
   }
 
-  /// Saves a new username to the device and memory.
+  /// Checks if a username is already taken (case-insensitive).
+  Future<bool> isUsernameTaken(String name) async {
+    final doc = await _db
+        .collection('usernames')
+        .doc(name.trim().toLowerCase())
+        .get();
+    return doc.exists;
+  }
+
+  /// Claims and saves a new username. Throws if the name is taken.
   Future<void> setUsername(String name) async {
     final trimmed = name.trim();
     if (trimmed.isEmpty) return;
+
+    final docId = trimmed.toLowerCase();
+
+    // Check if already taken
+    final doc = await _db.collection('usernames').doc(docId).get();
+    if (doc.exists) {
+      throw Exception('Deze naam is al in gebruik. Kies een andere.');
+    }
+
+    // Claim the username in Firestore
+    await _db.collection('usernames').doc(docId).set({
+      'displayName': trimmed,
+      'claimedAt': FieldValue.serverTimestamp(),
+    });
+
+    // Save locally
     final prefs = await SharedPreferences.getInstance();
     await prefs.setString(_key, trimmed);
     _username = trimmed;
