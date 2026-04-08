@@ -35,15 +35,6 @@ class UserService {
     _username = prefs.getString(_key);
   }
 
-  /// Checks if a username is already taken (case-insensitive).
-  Future<bool> isUsernameTaken(String name) async {
-    final doc = await _db
-        .collection('usernames')
-        .doc(name.trim().toLowerCase())
-        .get();
-    return doc.exists;
-  }
-
   /// Claims and saves a new username. Throws if the name is taken.
   Future<void> setUsername(String name) async {
     final trimmed = name.trim();

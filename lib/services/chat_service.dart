@@ -17,6 +17,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:http/http.dart' as http;
 import '../models/message.dart';
 import '../utils/date_utils.dart';
+import '../constants/constants.dart';
 import 'auth_service.dart';
 import 'user_service.dart';
 
@@ -26,9 +27,6 @@ class ChatService {
 
   static const String _collection      = 'chat_messages';
   static const int    maxMessageLength = 160;
-
-  static const String _projectId = 'radio-apollo-90693';
-  static const String _region    = 'europe-west1';
 
   ChatService({required this.authService});
 
@@ -96,7 +94,7 @@ class ChatService {
     if (password == null) return false;
 
     final uri = Uri.parse(
-      'https://$_region-$_projectId.cloudfunctions.net/adminSendMessage',
+      'https://${AppConstants.region}-${AppConstants.projectId}.cloudfunctions.net/adminSendMessage',
     );
 
     final response = await http.post(

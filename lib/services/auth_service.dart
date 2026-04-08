@@ -11,14 +11,12 @@
 
 import 'dart:convert';
 import 'package:http/http.dart' as http;
+import '../constants/constants.dart';
 
 class AuthService {
   AuthService._();
 
   static final AuthService instance = AuthService._();
-
-  static const _projectId = 'radio-apollo-90693';
-  static const _region    = 'europe-west1';
 
   String  _role = 'user';
   String? _adminPassword;   // kept in memory only, cleared on logout
@@ -33,7 +31,7 @@ class AuthService {
 
   Future<void> login(String password) async {
     final uri = Uri.parse(
-      'https://$_region-$_projectId.cloudfunctions.net/adminLogin',
+      'https://${AppConstants.region}-${AppConstants.projectId}.cloudfunctions.net/adminLogin',
     );
 
     final response = await http.post(
