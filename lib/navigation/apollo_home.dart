@@ -1,3 +1,11 @@
+/* Apollo Home
+
+   Root scaffold of the app.
+
+   Manages the bottom navigation bar and switches between the five
+   main screens using an IndexedStack so each screen keeps its state.
+*/
+
 import 'package:flutter/material.dart';
 import '../screens/home_screen.dart';
 import '../screens/event_screen.dart';
@@ -20,13 +28,19 @@ class _ApolloHomeState extends State<ApolloHome> {
   final AuthService _authService = AuthService.instance;
   late final ChatService _chatService;
 
+  // ── Lifecycle ─────────────────────────────────────────────────────────────
+
   @override
   void initState() {
     super.initState();
     _chatService = ChatService(authService: _authService);
   }
 
+  // ── Navigation ────────────────────────────────────────────────────────────
+
   void _switchTab(int newIndex) => setState(() => _index = newIndex);
+
+  // ── Build ─────────────────────────────────────────────────────────────────
 
   @override
   Widget build(BuildContext context) {
@@ -38,8 +52,6 @@ class _ApolloHomeState extends State<ApolloHome> {
           const ProgramScreen(),
           InfoScreen(),
           EventScreen(),
-          // isActive updates on every rebuild so didUpdateWidget fires correctly
-          // when the user navigates to the chat tab.
           ChatScreen(
             chatService: _chatService,
             authService: _authService,

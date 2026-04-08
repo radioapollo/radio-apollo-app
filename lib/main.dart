@@ -1,11 +1,17 @@
+/* Main Entry Point
+
+   Initialises Firebase, loads the stored username, sets up the
+   audio service, and launches the app.
+*/
+
 import 'package:flutter/material.dart';
 import 'package:audio_service/audio_service.dart';
+import 'package:firebase_core/firebase_core.dart';
 import 'navigation/apollo_home.dart';
 import 'services/audio_handler.dart';
-import 'package:firebase_core/firebase_core.dart';
+import 'services/user_service.dart';
 import 'firebase_options.dart';
 import 'constants/constants.dart';
-import 'services/user_service.dart';
 
 late final RadioAudioHandler audioHandler;
 

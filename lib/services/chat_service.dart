@@ -1,17 +1,14 @@
 /* Chat Service
 
-   This service manages chat messages.
+   Manages chat messages with Firestore.
 
    It handles:
-   - streaming live messages from Firestore (last 24 hours only)
-   - sending new messages with username, text, and timestamp
-   - enforcing a 160 character limit on outgoing messages
-
-   The existing AuthService is still accepted in the constructor
-   so that the rest of the app does not need to change.
+   - streaming live messages from the last 24 hours, oldest first
+   - sending new messages with the correct username and role
+   - enforcing the 160 character limit
 
    Firestore collection: 'chat_messages'
-   Each document: { username, text, timestamp, role }
+   Document fields: { username, text, role, timestamp }
 */
 
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -25,15 +22,12 @@ class ChatService {
   final _db = FirebaseFirestore.instance;
 
   static const String _collection  = 'chat_messages';
-  static const int maxMessageLength = 160;
+  static const int    maxMessageLength = 160;
 
   ChatService({required this.authService});
 
-  // ── Firestore stream ──────────────────────────────────────────────────────
+  // ── Stream ────────────────────────────────────────────────────────────────
 
-  /// Live stream of messages from the last 24 hours, oldest first.
-  /// Each item maps directly to the existing [Message] model so nothing
-  /// else in the UI needs to change.
   Stream<List<Message>> get messagesStream {
     final cutoff = DateTime.now().subtract(const Duration(hours: 24));
 
@@ -43,10 +37,10 @@ class ChatService {
         .orderBy('timestamp', descending: false)
         .snapshots()
         .map((snap) => snap.docs.map((doc) {
-              final data = doc.data();
-              final ts   = data['timestamp'] as Timestamp?;
-              final dt   = ts?.toDate() ?? DateTime.now();
-              final msgUsername = data['username'] as String? ?? 'Onbekend';
+              final data         = doc.data();
+              final ts           = data['timestamp'] as Timestamp?;
+              final dt           = ts?.toDate() ?? DateTime.now();
+              final msgUsername  = data['username'] as String? ?? 'Onbekend';
               final localUsername = UserService.instance.username;
               return Message(
                 role:          data['role'] as String? ?? 'user',
@@ -60,21 +54,21 @@ class ChatService {
             }).toList());
   }
 
-  // ── Send ─────────────────────────────────────────────────────────────────
+  // ── Send ──────────────────────────────────────────────────────────────────
 
-  /// Sends a message to Firestore.
-  /// Returns false when the text is empty or exceeds [maxMessageLength].
+  /// Returns false when text is empty or exceeds [maxMessageLength].
   Future<bool> sendMessage(String text) async {
     final trimmed = text.trim();
     if (trimmed.isEmpty || trimmed.length > maxMessageLength) return false;
 
-    final username = authService.isAdmin ? 'Radio Apollo' : (UserService.instance.username ?? 'Onbekend');
-    final role     = authService.currentRole;
+    final username = authService.isAdmin
+        ? 'Radio Apollo'
+        : (UserService.instance.username ?? 'Onbekend');
 
     await _db.collection(_collection).add({
       'username':  username,
       'text':      trimmed,
-      'role':      role,
+      'role':      authService.currentRole,
       'timestamp': FieldValue.serverTimestamp(),
     });
 

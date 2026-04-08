@@ -1,14 +1,11 @@
 /* Message Bubble Widget
 
-   This widget displays a single chat message as a styled bubble.
+   Displays a single chat message as a styled bubble.
 
-   It adapts its appearance based on the sender role:
-   - admin messages appear in orange with a radio icon
-   - user messages appear in blue, aligned to the right
-   - other roles appear in white, aligned to the left
-
-   When a username is present on a non-user bubble,
-   it is shown as a small label above the bubble.
+   Appearance varies by role:
+   - admin  → orange bubble, left-aligned, radio icon, "Radio Apollo" label
+   - own    → blue bubble, right-aligned, no label
+   - other  → white bubble, left-aligned, username label above
 */
 
 import 'package:flutter/material.dart';
@@ -24,9 +21,7 @@ class MessageBubble extends StatelessWidget {
   Widget build(BuildContext context) {
     final isCurrentUser = message.isCurrentUser;
     final isAdmin       = message.role == 'admin';
-    // Keep isUser for colour — admin always gets the orange style, current-user
-    // gets blue, everyone else gets the neutral white bubble.
-    final isUser = isCurrentUser;
+    final isUser        = isCurrentUser;
 
     return Container(
       margin: EdgeInsets.only(
@@ -39,7 +34,7 @@ class MessageBubble extends StatelessWidget {
         crossAxisAlignment:
             isCurrentUser ? CrossAxisAlignment.end : CrossAxisAlignment.start,
         children: [
-          // Show the sender's username above other people's bubbles
+          // ── Username label above other people's bubbles ──────────────────
           if (!isUser && message.username != null)
             Padding(
               padding: const EdgeInsets.only(
@@ -56,6 +51,7 @@ class MessageBubble extends StatelessWidget {
               ),
             ),
 
+          // ── Bubble ───────────────────────────────────────────────────────
           Container(
             padding:    const EdgeInsets.all(AppDimensions.paddingSmall),
             decoration: AppDecorations.chatBubble(
@@ -83,6 +79,8 @@ class MessageBubble extends StatelessWidget {
               ],
             ),
           ),
+
+          // ── Timestamp ────────────────────────────────────────────────────
           const SizedBox(height: AppDimensions.spaceXSmall),
           Text(message.time, style: AppTextStyles.bubbleTime),
         ],

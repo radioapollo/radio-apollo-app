@@ -1,13 +1,11 @@
 /* Auth Service
 
-   This service manages authentication state.
+   Manages authentication state for the current session.
 
    It handles:
-   - tracking the current user role
-   - admin login and logout
-
-   When Firebase Auth is added later, only this
-   file needs to change.
+   - tracking whether the current user is a regular user or admin
+   - sending the password to the Cloud Function for verification
+   - logging out by resetting the role to user
 */
 
 import 'dart:convert';
@@ -19,35 +17,33 @@ class AuthService {
   static final AuthService instance = AuthService._();
 
   static const _projectId = 'radio-apollo-90693';
-  static const _region = 'europe-west1';
+  static const _region    = 'europe-west1';
 
   String _role = 'user';
 
-  String get currentRole => _role;
+  // ── Getters ───────────────────────────────────────────────────────────────
 
-  bool get isAdmin => _role == 'admin';
+  String get currentRole => _role;
+  bool   get isAdmin     => _role == 'admin';
+
+  // ── Login / logout ────────────────────────────────────────────────────────
 
   Future<void> login(String password) async {
-    try {
-      final uri = Uri.parse(
-        'https://$_region-$_projectId.cloudfunctions.net/adminLogin',
-      );
+    final uri = Uri.parse(
+      'https://$_region-$_projectId.cloudfunctions.net/adminLogin',
+    );
 
-      final response = await http.post(
-        uri,
-        headers: {'Content-Type': 'application/json'},
-        body: jsonEncode({'password': password}),
-      );
+    final response = await http.post(
+      uri,
+      headers: {'Content-Type': 'application/json'},
+      body: jsonEncode({'password': password}),
+    );
 
-      if (response.statusCode == 200) {
-        _role = 'admin';
-      } else {
-        _role = 'user';
-        throw Exception('Invalid password');
-      }
-    } catch (e) {
+    if (response.statusCode == 200) {
+      _role = 'admin';
+    } else {
       _role = 'user';
-      rethrow;
+      throw Exception('Invalid password');
     }
   }
 

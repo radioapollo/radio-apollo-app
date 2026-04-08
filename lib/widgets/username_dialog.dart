@@ -2,9 +2,8 @@
 
    Shown the first time a user opens the chat screen.
 
-   They choose a display name (3–20 characters).
-   The name is saved to the device via UserService so
-   they only need to enter it once.
+   The user picks a display name (3–20 characters) which is then
+   saved to the device via UserService. It is not shown again.
 */
 
 import 'package:flutter/material.dart';
@@ -14,11 +13,11 @@ import '../theme/app_theme.dart';
 class UsernameDialog extends StatefulWidget {
   const UsernameDialog({super.key});
 
-  /// Show the dialog. Returns the chosen username, or null if dismissed.
+  /// Shows the dialog and returns the chosen name, or null if dismissed.
   static Future<String?> show(BuildContext context) {
     return showDialog<String>(
       context: context,
-      barrierDismissible: false, // must choose a name
+      barrierDismissible: false,
       builder: (_) => const UsernameDialog(),
     );
   }
@@ -37,7 +36,9 @@ class _UsernameDialogState extends State<UsernameDialog> {
     super.dispose();
   }
 
-  void _submit() async {
+  // ── Submit ────────────────────────────────────────────────────────────────
+
+  Future<void> _submit() async {
     final name = _controller.text.trim();
     if (name.length < 3) {
       setState(() => _error = 'Kies een naam van minimaal 3 tekens.');
@@ -50,6 +51,8 @@ class _UsernameDialogState extends State<UsernameDialog> {
     await UserService.instance.setUsername(name);
     if (mounted) Navigator.of(context).pop(name);
   }
+
+  // ── Build ─────────────────────────────────────────────────────────────────
 
   @override
   Widget build(BuildContext context) {
@@ -71,10 +74,10 @@ class _UsernameDialogState extends State<UsernameDialog> {
           const SizedBox(height: 16),
           TextField(
             controller: _controller,
-            autofocus: true,
-            maxLength: 20,
+            autofocus:  true,
+            maxLength:  20,
             decoration: InputDecoration(
-              hintText: 'Jouw naam...',
+              hintText:  'Jouw naam...',
               errorText: _error,
               border: OutlineInputBorder(
                 borderRadius:
@@ -88,7 +91,7 @@ class _UsernameDialogState extends State<UsernameDialog> {
               ),
             ),
             onSubmitted: (_) => _submit(),
-            onChanged: (_) {
+            onChanged:   (_) {
               if (_error != null) setState(() => _error = null);
             },
           ),

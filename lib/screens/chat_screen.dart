@@ -1,13 +1,13 @@
 /* Chat Screen
 
-   This screen lets users chat with the studio in real time.
+   Main chat screen where users talk to the studio in real time.
 
    Features:
-   - Username prompt shown only the first time the user opens this screen
+   - Username prompt on first visit, persisted across restarts
    - Messages streamed live from Firestore (last 24 hours only)
-   - 160 character limit with a countdown shown below 30 chars remaining
-   - Own messages appear on the right (blue), others on the left
-   - Admin messages appear in orange with a radio icon
+   - 160 character limit with a countdown near the limit
+   - Own messages on the right (blue), others on the left
+   - Admin messages in orange with a radio icon
    - Long-press the logo to open the admin login
 */
 
@@ -15,6 +15,9 @@ import 'package:flutter/material.dart';
 import '../services/chat_service.dart';
 import '../services/auth_service.dart';
 import '../services/user_service.dart';
+import '../widgets/chat_header.dart';
+import '../widgets/chat_title.dart';
+import '../widgets/chat_input_field.dart';
 import '../widgets/message_bubble.dart';
 import '../widgets/username_dialog.dart';
 import '../theme/app_theme.dart';
@@ -24,8 +27,9 @@ import '../models/message.dart';
 class ChatScreen extends StatefulWidget {
   final ChatService chatService;
   final AuthService authService;
+
   /// Set to true when this tab is the active/visible one.
-  /// Used to defer the username prompt until the user actually opens the chat.
+  /// Used to defer the username prompt until the user opens the chat.
   final bool isActive;
 
   const ChatScreen({
@@ -40,19 +44,19 @@ class ChatScreen extends StatefulWidget {
 }
 
 class _ChatScreenState extends State<ChatScreen> {
-  final TextEditingController _controller       = TextEditingController();
-  final ScrollController       _scrollController = ScrollController();
-
-  int _charsLeft = ChatService.maxMessageLength;
+  final TextEditingController _controller      = TextEditingController();
+  final ScrollController      _scrollController = ScrollController();
 
   late final Stream<List<Message>> _messagesStream;
 
-  int _lastMessageCount = 0;
-
-  bool _usernameChecked = false;
+  int  _charsLeft        = ChatService.maxMessageLength;
+  int  _lastMessageCount = 0;
+  bool _usernameChecked  = false;
 
   ChatService get _chatService => widget.chatService;
   AuthService get _authService => widget.authService;
+
+  // ── Lifecycle ─────────────────────────────────────────────────────────────
 
   @override
   void initState() {
@@ -81,6 +85,8 @@ class _ChatScreenState extends State<ChatScreen> {
     _scrollController.dispose();
     super.dispose();
   }
+
+  // ── Helpers ───────────────────────────────────────────────────────────────
 
   void _onTextChanged() {
     setState(() {
@@ -116,6 +122,15 @@ class _ChatScreenState extends State<ChatScreen> {
     });
   }
 
+  void _onAdminLogin() => setState(() {});
+
+  void _onLogout() {
+    _authService.logout();
+    setState(() {});
+  }
+
+  // ── Build ─────────────────────────────────────────────────────────────────
+
   @override
   Widget build(BuildContext context) {
     return SizedBox.expand(
@@ -130,12 +145,22 @@ class _ChatScreenState extends State<ChatScreen> {
         child: SafeArea(
           child: Column(
             children: [
-              _buildHeader(),
+              ChatHeader(
+                authService: _authService,
+                onAdminLogin: _onAdminLogin,
+              ),
               const SizedBox(height: AppDimensions.spaceMedium),
-              _buildChatTitle(),
+              ChatTitle(
+                authService: _authService,
+                onLogout: _onLogout,
+              ),
               const SizedBox(height: AppDimensions.spaceMedium),
               _buildChatList(),
-              _buildInputField(),
+              ChatInputField(
+                controller: _controller,
+                charsLeft:  _charsLeft,
+                onSend:     _sendMessage,
+              ),
             ],
           ),
         ),
@@ -143,74 +168,7 @@ class _ChatScreenState extends State<ChatScreen> {
     );
   }
 
-  Widget _buildHeader() {
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(
-        AppDimensions.paddingXLarge,
-        AppDimensions.paddingXLarge,
-        AppDimensions.paddingXLarge,
-        0,
-      ),
-      child: Align(
-        alignment: Alignment.centerLeft,
-        child: GestureDetector(
-          onLongPress: _authService.isAdmin ? null : _showAdminLogin,
-          child: Image.asset(
-            AppAssets.logo,
-            height: AppDimensions.logoHeight,
-            fit: BoxFit.contain,
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildChatTitle() {
-    final username = UserService.instance.username;
-
-    return Padding(
-      padding: const EdgeInsets.symmetric(
-          horizontal: AppDimensions.paddingXLarge),
-      child: Row(
-        children: [
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const Text('Chat met de Studio',
-                    style: AppTextStyles.chatTitle),
-                if (_authService.isAdmin)
-                  const Padding(
-                    padding: EdgeInsets.only(top: AppDimensions.spaceSmall),
-                    child: Text('ADMIN MODE',
-                        style: AppTextStyles.adminBadge),
-                  )
-                else if (username != null)
-                  Padding(
-                    padding: const EdgeInsets.only(
-                        top: AppDimensions.spaceXSmall),
-                    child: Text(
-                      'Ingelogd als: $username',
-                      style: const TextStyle(
-                          color: Colors.black54, fontSize: 12),
-                    ),
-                  ),
-              ],
-            ),
-          ),
-          if (_authService.isAdmin)
-            TextButton.icon(
-              onPressed: _logout,
-              icon: const Icon(Icons.logout,
-                  size: 18, color: Colors.black54),
-              label: const Text('Uitloggen',
-                  style: TextStyle(
-                      color: Colors.black54, fontSize: 13)),
-            ),
-        ],
-      ),
-    );
-  }
+  // ── Message list ──────────────────────────────────────────────────────────
 
   Widget _buildChatList() {
     return Expanded(
@@ -260,132 +218,11 @@ class _ChatScreenState extends State<ChatScreen> {
               padding: const EdgeInsets.only(
                   bottom: AppDimensions.spaceMedium),
               itemCount: messages.length,
-              itemBuilder: (context, index) =>
+              itemBuilder: (_, index) =>
                   MessageBubble(message: messages[index]),
             );
           },
         ),
-      ),
-    );
-  }
-
-  Widget _buildInputField() {
-    return Container(
-      padding: const EdgeInsets.symmetric(
-        horizontal: AppDimensions.paddingMedium,
-        vertical:   AppDimensions.paddingSmall,
-      ),
-      margin: const EdgeInsets.fromLTRB(
-        AppDimensions.paddingXLarge,
-        AppDimensions.spaceMedium,
-        AppDimensions.paddingXLarge,
-        AppDimensions.paddingXLarge,
-      ),
-      decoration: AppDecorations.chatInputFull(),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.end,
-        children: [
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.end,
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                TextField(
-                  controller:  _controller,
-                  style:       AppTextStyles.inputText,
-                  maxLength:   ChatService.maxMessageLength,
-                  buildCounter: (_, {required currentLength,
-                      required isFocused, maxLength}) => null,
-                  decoration: const InputDecoration(
-                    hintText:  'Typ een bericht...',
-                    hintStyle: AppTextStyles.inputHint,
-                    border:    InputBorder.none,
-                    isDense:   true,
-                  ),
-                  onSubmitted: (_) => _sendMessage(),
-                ),
-                if (_charsLeft <= 30)
-                  Text(
-                    '$_charsLeft',
-                    style: TextStyle(
-                      color: _charsLeft <= 10
-                          ? Colors.redAccent
-                          : Colors.white38,
-                      fontSize: 11,
-                    ),
-                  ),
-              ],
-            ),
-          ),
-          const SizedBox(width: AppDimensions.spaceSmall),
-          GestureDetector(
-            onTap: _sendMessage,
-            child: const Icon(
-              Icons.send,
-              color: Colors.white,
-              size:  AppDimensions.iconLarge,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  void _logout() {
-    _authService.logout();
-    setState(() {});
-  }
-
-  void _showAdminLogin() {
-    final passwordController = TextEditingController();
-    showDialog(
-      context: context,
-      builder: (_) => AlertDialog(
-        title: const Text('Admin Login'),
-        content: TextField(
-          controller:  passwordController,
-          obscureText: true,
-          decoration:  const InputDecoration(hintText: 'Wachtwoord'),
-          onSubmitted: (_) async {
-            try {
-              await _authService.login(passwordController.text);
-              if (mounted) {
-                setState(() {});
-                Navigator.pop(context);
-              }
-            } catch (e) {
-              if (mounted) {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('Ongeldig wachtwoord')),
-                );
-              }
-            }
-          },
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Annuleren'),
-          ),
-          TextButton(
-            onPressed: () async {
-              try {
-                await _authService.login(passwordController.text);
-                if (mounted) {
-                  setState(() {});
-                  Navigator.pop(context);
-                }
-              } catch (e) {
-                if (mounted) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('Ongeldig wachtwoord')),
-                  );
-                }
-              }
-            },
-            child: const Text('Login'),
-          ),
-        ],
       ),
     );
   }
