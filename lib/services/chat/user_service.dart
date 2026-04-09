@@ -33,8 +33,20 @@ class UserService {
   Future<void> init() async {
     final prefs = await SharedPreferences.getInstance();
     _username = prefs.getString(_key);
-  }
 
+    // Re-claim if the username was cleaned up from Firestore
+    if (_username != null && _username!.isNotEmpty) {
+      final docId = _username!.toLowerCase();
+      final doc = await _db.collection('usernames').doc(docId).get();
+      if (!doc.exists) {
+        await _db.collection('usernames').doc(docId).set({
+          'displayName': _username!,
+          'claimedAt': FieldValue.serverTimestamp(),
+        });
+      }
+    }
+  }
+  
   /// Claims and saves a new username. Throws if the name is taken.
   Future<void> setUsername(String name) async {
     final trimmed = name.trim();
