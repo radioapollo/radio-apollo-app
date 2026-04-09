@@ -110,6 +110,19 @@ class InfoScreen extends StatelessWidget {
                         );
                       },
                     ),
+
+                    // Developer credit
+                    const SizedBox(height: AppDimensions.space30),
+                    const Center(
+                      child: Text(
+                        'App ontwikkeld door Raf Vermeylen',
+                        style: TextStyle(
+                          color: Color.fromARGB(204, 0, 0, 0),
+                          fontSize: 12,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                    ),
                   ],
                 ),
               ),

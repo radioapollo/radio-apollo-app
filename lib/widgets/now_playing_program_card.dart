@@ -12,10 +12,18 @@
 
    It fetches today's programs from Firestore and determines
    which one is currently on air. Refreshes every minute.
+
+   On launch, it loads cached program data from shared_preferences
+   so the card appears instantly without waiting for Firestore.
+
+   It also updates the audio handler with the current program name
+   and image so the media notification can display them.
 */
 
 import 'dart:async';
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import '../main.dart';
 import '../services/program_service.dart';
 import '../theme/app_theme.dart';
 
@@ -32,6 +40,12 @@ class _NowPlayingProgramCardState extends State<NowPlayingProgramCard> {
   final _programService = ProgramService();
   Timer? _timer;
 
+  // Cache keys
+  static const _keyTitle     = 'now_playing_title';
+  static const _keyPresenter = 'now_playing_presenter';
+  static const _keyTimeSlot  = 'now_playing_time_slot';
+  static const _keyImageUrl  = 'now_playing_image_url';
+
   String? _programTitle;
   String? _presenter;
   String? _timeSlot;
@@ -41,8 +55,8 @@ class _NowPlayingProgramCardState extends State<NowPlayingProgramCard> {
   @override
   void initState() {
     super.initState();
+    _loadCachedProgram();
     _loadCurrentProgram();
-    // Refresh every minute to catch program changes
     _timer = Timer.periodic(
       const Duration(minutes: 1),
       (_) => _loadCurrentProgram(),
@@ -54,6 +68,42 @@ class _NowPlayingProgramCardState extends State<NowPlayingProgramCard> {
     _timer?.cancel();
     super.dispose();
   }
+
+  // ── Cache ─────────────────────────────────────────────────────────────────
+
+  Future<void> _loadCachedProgram() async {
+    final prefs = await SharedPreferences.getInstance();
+    final cachedTitle = prefs.getString(_keyTitle);
+
+    if (cachedTitle != null && cachedTitle.isNotEmpty && mounted) {
+      final cachedImageUrl = prefs.getString(_keyImageUrl);
+      setState(() {
+        _programTitle = cachedTitle;
+        _presenter    = prefs.getString(_keyPresenter);
+        _timeSlot     = prefs.getString(_keyTimeSlot);
+        _imageUrl     = cachedImageUrl;
+        _loading      = false;
+      });
+      audioHandler.setCurrentProgram(cachedTitle, imageUrl: cachedImageUrl);
+    }
+  }
+
+  Future<void> _saveToCache() async {
+    final prefs = await SharedPreferences.getInstance();
+    if (_programTitle != null) {
+      await prefs.setString(_keyTitle, _programTitle!);
+      await prefs.setString(_keyPresenter, _presenter ?? '');
+      await prefs.setString(_keyTimeSlot, _timeSlot ?? '');
+      await prefs.setString(_keyImageUrl, _imageUrl ?? '');
+    } else {
+      await prefs.remove(_keyTitle);
+      await prefs.remove(_keyPresenter);
+      await prefs.remove(_keyTimeSlot);
+      await prefs.remove(_keyImageUrl);
+    }
+  }
+
+  // ── Helpers ───────────────────────────────────────────────────────────────
 
   String _formatTime(String time) {
     if (time == '24:00') return '00:00';
@@ -72,13 +122,14 @@ class _NowPlayingProgramCardState extends State<NowPlayingProgramCard> {
     final start = parseTime(startTime);
     final end = parseTime(endTime);
 
-    // Handle overnight programs (e.g. 22:00 - 07:00)
     if (end <= start) {
       return currentMinutes >= start || currentMinutes < end;
     }
 
     return currentMinutes >= start && currentMinutes < end;
   }
+
+  // ── Firestore fetch ───────────────────────────────────────────────────────
 
   Future<void> _loadCurrentProgram() async {
     final todayName =
@@ -111,14 +162,19 @@ class _NowPlayingProgramCardState extends State<NowPlayingProgramCard> {
         _imageUrl = foundImageUrl;
         _loading = false;
       });
+
+      audioHandler.setCurrentProgram(foundTitle ?? '', imageUrl: foundImageUrl);
+
+      _saveToCache();
     }).catchError((_) {
       if (mounted) setState(() => _loading = false);
     });
   }
 
+  // ── Build ─────────────────────────────────────────────────────────────────
+
   @override
   Widget build(BuildContext context) {
-    // Don't show anything while loading or if no program is found
     if (_loading || _programTitle == null) return const SizedBox.shrink();
 
     return GestureDetector(

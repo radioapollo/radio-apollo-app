@@ -5,17 +5,15 @@
    It shows:
    - a play/pause button that controls the audio stream
    - the LIVE indicator and station name
-   - the currently playing song, fetched every 5 seconds
+   - the currently playing song, read from the audio handler's mediaItem stream
 */
 
-import 'dart:async';
-import 'dart:convert';
 import 'package:flutter/material.dart';
-import 'package:http/http.dart' as http;
+import 'package:audio_service/audio_service.dart';
+import '../main.dart';
 import '../theme/app_theme.dart';
-import '../constants/constants.dart';
 
-class LivePlayerCard extends StatefulWidget {
+class LivePlayerCard extends StatelessWidget {
   final bool isPlaying;
   final VoidCallback onTap;
 
@@ -26,63 +24,16 @@ class LivePlayerCard extends StatefulWidget {
   });
 
   @override
-  State<LivePlayerCard> createState() => _LivePlayerCardState();
-}
-
-class _LivePlayerCardState extends State<LivePlayerCard> {
-  String _currentSong = 'Live radio speelt...';
-  Timer? _timer;
-
-  @override
-  void initState() {
-    super.initState();
-    _fetchCurrentSong();
-    _timer = Timer.periodic(
-        const Duration(seconds: 5), (_) => _fetchCurrentSong());
-  }
-
-  @override
-  void didUpdateWidget(covariant LivePlayerCard oldWidget) {
-    super.didUpdateWidget(oldWidget);
-    if (widget.isPlaying && !oldWidget.isPlaying) _fetchCurrentSong();
-  }
-
-  @override
-  void dispose() {
-    _timer?.cancel();
-    super.dispose();
-  }
-
-  Future<void> _fetchCurrentSong() async {
-    if (!widget.isPlaying) return;
-    try {
-      final response = await http.get(
-        Uri.parse(AppConstants.statsUrl),
-      );
-      if (response.statusCode == 200 && mounted) {
-        final song =
-            (jsonDecode(response.body)['songtitle'] ?? '').toString().trim();
-        setState(() =>
-            _currentSong = song.isNotEmpty ? song : 'Onbekend nummer');
-      }
-    } catch (_) {}
-  }
-
-  @override
   Widget build(BuildContext context) {
-    final parts  = _currentSong.split(' - ');
-    final artist = parts.length > 1 ? parts[0] : '';
-    final title  = parts.length > 1 ? parts[1] : _currentSong;
-
     return Container(
       padding: const EdgeInsets.all(AppDimensions.paddingXLarge),
       decoration: AppDecorations.livePlayerCard(),
       child: Row(
         children: [
           GestureDetector(
-            onTap: widget.onTap,
+            onTap: onTap,
             child: Icon(
-              widget.isPlaying
+              isPlaying
                   ? Icons.pause_circle_filled
                   : Icons.play_circle_fill,
               color: Colors.white,
@@ -95,22 +46,44 @@ class _LivePlayerCardState extends State<LivePlayerCard> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                  padding: const EdgeInsets.symmetric(
+                      horizontal: 10, vertical: 4),
                   decoration: AppDecorations.liveBadge(),
-                  child: const Text('● LIVE', style: AppTextStyles.liveLabel),
+                  child:
+                      const Text('● LIVE', style: AppTextStyles.liveLabel),
                 ),
                 const SizedBox(height: AppDimensions.spaceSmall),
-                const Text('RADIO APOLLO', style: AppTextStyles.stationName),
+                const Text('RADIO APOLLO',
+                    style: AppTextStyles.stationName),
                 const SizedBox(height: AppDimensions.spaceSmall),
-                if (artist.isNotEmpty)
-                  Text(artist,
-                      style: AppTextStyles.playerArtist,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis),
-                Text(title,
-                    style: AppTextStyles.playerSong,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis),
+                // Song info from the audio handler's mediaItem stream
+                StreamBuilder<MediaItem?>(
+                  stream: audioHandler.mediaItem,
+                  builder: (context, snapshot) {
+                    final item = snapshot.data;
+                    final artist = item?.artist ?? '';
+                    final title = item?.title ?? 'Live radio speelt...';
+
+                    // Don't show artist if it's the default "Live"
+                    final showArtist =
+                        artist.isNotEmpty && artist != 'Live';
+
+                    return Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        if (showArtist)
+                          Text(artist,
+                              style: AppTextStyles.playerArtist,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis),
+                        Text(title,
+                            style: AppTextStyles.playerSong,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis),
+                      ],
+                    );
+                  },
+                ),
               ],
             ),
           ),
