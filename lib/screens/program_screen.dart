@@ -32,13 +32,17 @@ class _ProgramScreenState extends State<ProgramScreen> {
   int _selectedIndex = 3;
   bool _hasScrolledToCurrent = false;
   Timer? _timer;
+  //int _lastCurrentIndex = -1;
 
   @override
   void initState() {
     super.initState();
     _days = _programService.getShiftedDays(_selectedIndex);
+    // Only rebuild when the current program might have changed
     _timer = Timer.periodic(const Duration(minutes: 1), (_) {
-      setState(() {});
+      if (_isToday()) {
+        setState(() {});
+      }
     });
   }
 
@@ -232,6 +236,7 @@ class _ProgramScreenState extends State<ProgramScreen> {
                             time: displayTime,
                             title: p['title']!,
                             subtitle: p['desc']!,
+                            imageUrl: p['imageUrl'] ?? '',
                             isCurrent: index == currentIndex,
                             border: Border.all(
                               color: Colors.white24,

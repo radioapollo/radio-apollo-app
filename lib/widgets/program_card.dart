@@ -3,6 +3,7 @@
    This widget displays a single radio program in the schedule.
 
    It shows:
+   - the program image (from network) or a fallback radio icon
    - the broadcast time
    - the program title
    - a short description
@@ -16,6 +17,7 @@ class ProgramCard extends StatelessWidget {
   final String time;
   final String title;
   final String subtitle;
+  final String imageUrl;
   final Border? border;
   final bool isCurrent;
 
@@ -24,6 +26,7 @@ class ProgramCard extends StatelessWidget {
     required this.time,
     required this.title,
     required this.subtitle,
+    this.imageUrl = '',
     this.border,
     this.isCurrent = false,
   });
@@ -38,12 +41,7 @@ class ProgramCard extends StatelessWidget {
           : AppDecorations.darkCard(radius: AppDimensions.radiusXLarge),
       child: Row(
         children: [
-          Container(
-            padding: const EdgeInsets.all(AppDimensions.paddingSmall),
-            decoration: AppDecorations.programIconBg,
-            child: const Icon(Icons.radio,
-                color: Colors.white, size: AppDimensions.iconXLarge),
-          ),
+          _buildImage(),
           const SizedBox(width: AppDimensions.paddingLarge),
           Expanded(
             child: Column(
@@ -61,6 +59,54 @@ class ProgramCard extends StatelessWidget {
           ),
         ],
       ),
+    );
+  }
+
+  Widget _buildImage() {
+    const double size = 48;
+    const borderRadius = BorderRadius.all(
+        Radius.circular(AppDimensions.radiusSmall + 2));
+
+    if (imageUrl.isNotEmpty) {
+      return ClipRRect(
+        borderRadius: borderRadius,
+        child: Image.network(
+          imageUrl,
+          width: size,
+          height: size,
+          fit: BoxFit.cover,
+          loadingBuilder: (context, child, loadingProgress) {
+            if (loadingProgress == null) return child;
+            return Container(
+              width: size,
+              height: size,
+              decoration: AppDecorations.programIconBg,
+              child: const Center(
+                child: SizedBox(
+                  width: 20,
+                  height: 20,
+                  child: CircularProgressIndicator(
+                    strokeWidth: 2,
+                    color: Colors.white38,
+                  ),
+                ),
+              ),
+            );
+          },
+          errorBuilder: (context, error, stackTrace) => _buildFallbackIcon(),
+        ),
+      );
+    }
+
+    return _buildFallbackIcon();
+  }
+
+  Widget _buildFallbackIcon() {
+    return Container(
+      padding: const EdgeInsets.all(AppDimensions.paddingSmall),
+      decoration: AppDecorations.programIconBg,
+      child: const Icon(Icons.radio,
+          color: Colors.white, size: AppDimensions.iconXLarge),
     );
   }
 

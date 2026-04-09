@@ -30,10 +30,16 @@ class ProgramService {
           docs.sort((a, b) =>
               (a['startTime'] as String).compareTo(b['startTime'] as String));
           return docs
-              .map((doc) => {
-                    'time': '${doc['startTime']} - ${doc['endTime']}',
-                    'title': doc['title'] as String,
-                    'desc': doc['presenter'] as String,
+              .map((doc) {
+                    final data = doc.data();
+                    return {
+                      'time': '${doc['startTime']} - ${doc['endTime']}',
+                      'title': doc['title'] as String,
+                      'desc': doc['presenter'] as String,
+                      'imageUrl': data.containsKey('imageUrl')
+                          ? (doc['imageUrl'] as String? ?? '')
+                          : '',
+                    };
                   })
               .toList();
         });
