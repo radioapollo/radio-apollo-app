@@ -1,45 +1,110 @@
-# Dependencies
-node_modules/
-package-lock.json
-yarn.lock
+# ============================================================
+# Radio Apollo - .gitignore
+# ============================================================
 
-# Build outputs
-dist/
-build/
-*.o
-*.a
-*.so
-
-# IDE and editor files
-.vscode/
-.idea/
-*.swp
-*.swo
-*~
-.DS_Store
-*.sublime-project
-*.sublime-workspace
-
-# Environment variables
+# ── SECRETS & CREDENTIALS ───────────────────────────────────
+serviceAccount.json
+key.properties
+**/*.keystore
+**/*.jks
 .env
 .env.local
 .env.*.local
 
-# OS-specific
-Thumbs.db
-.DS_Store
+# ── FLUTTER / DART ──────────────────────────────────────────
+.dart_tool/
+.flutter-plugins
+.flutter-plugins-dependencies
+.metadata/
+build/
 
-# Logs
+# ── ANDROID ─────────────────────────────────────────────────
+android/local.properties
+android/.gradle/
+android/.cxx/
+android/captures/
+android/gradlew
+android/gradlew.bat
+**/GeneratedPluginRegistrant.java
+
+# ── iOS ─────────────────────────────────────────────────────
+ios/Pods/
+ios/.symlinks/
+ios/**/DerivedData/
+ios/**/xcuserdata/
+ios/**/.generated/
+ios/Flutter/App.framework
+ios/Flutter/Flutter.framework
+ios/Flutter/Flutter.podspec
+ios/Flutter/Generated.xcconfig
+ios/Flutter/ephemeral/
+ios/Flutter/app.flx
+ios/Flutter/app.zip
+ios/Flutter/flutter_assets/
+ios/Flutter/flutter_export_environment.sh
+ios/ServiceDefinitions.json
+ios/Runner/GeneratedPluginRegistrant.*
+**/dgph
+*.mode1v3
+*.mode2v3
+*.moved-aside
+*.pbxuser
+*.perspectivev3
+**/*sync/
+.sconsign.dblite
+.tags*
+**/.vagrant/
+profile
+
+# Keep default Xcode user settings
+!default.mode1v3
+!default.mode2v3
+!default.pbxuser
+!default.perspectivev3
+
+# ── macOS ───────────────────────────────────────────────────
+macos/Flutter/ephemeral/
+macos/Pods/
+
+# ── DEPENDENCIES ────────────────────────────────────────────
+node_modules/
+package-lock.json
+yarn.lock
+
+# ── BUILD OUTPUTS ───────────────────────────────────────────
+dist/
+*.o
+*.a
+*.so
+
+# ── IDE & EDITORS ───────────────────────────────────────────
+.vscode/
+.idea/
+*.iml
+*.swp
+*.swo
+*~
+*.sublime-project
+*.sublime-workspace
+
+# ── OS FILES ────────────────────────────────────────────────
+.DS_Store
+Thumbs.db
+Icon?
+
+# ── LOGS ────────────────────────────────────────────────────
 *.log
+firebase-debug.log
+firebase-debug.*.log
 npm-debug.log*
 yarn-debug.log*
 
-# Temporary files
+# ── TEMPORARY FILES ─────────────────────────────────────────
 tmp/
 temp/
 *.tmp
 
-# Python
+# ── PYTHON (if applicable) ──────────────────────────────────
 __pycache__/
 *.py[cod]
 *$py.class
@@ -47,152 +112,8 @@ __pycache__/
 venv/
 env/
 
-# Testing
+# ── TESTING & CACHE ─────────────────────────────────────────
 coverage/
 .nyc_output/
-
-# IDE cache
 .cache/
 .eslintcache
-.dart_tool/chrome-device/Default/BrowsingTopicsState
-.dart_tool/chrome-device/Default/DIPS
-.dart_tool/chrome-device/Default/ExtensionActivityEdge
-.dart_tool/chrome-device/Default/Favicons
-.dart_tool/chrome-device/Default/favorites_diagnostic.log
-.dart_tool/chrome-device/Default/History
-.dart_tool/chrome-device/Default/load_statistics.db
-.dart_tool/chrome-device/Default/Preferences
-.dart_tool/chrome-device/Default/Secure Preferences
-.dart_tool/chrome-device/Default/Shortcuts
-.dart_tool/chrome-device/Default/Top Sites
-.dart_tool/chrome-device/Default/trusted_vault.pb
-.dart_tool/chrome-device/Default/Web Data
-.dart_tool/chrome-device/Default/Asset Store/assets.db/000004.log
-.dart_tool/chrome-device/Default/Asset Store/assets.db/LOG
-.dart_tool/chrome-device/Default/Asset Store/assets.db/LOG.old
-.dart_tool/chrome-device/Default/DualEngine/SiteList-Consumer.json
-.dart_tool/chrome-device/Default/DualEngine/SiteList-Enterprise.json
-.dart_tool/chrome-device/Default/EdgeCoupons/coupons_data.db/000034.ldb
-.dart_tool/chrome-device/Default/EdgeCoupons/coupons_data.db/000037.ldb
-.dart_tool/chrome-device/Default/EdgeCoupons/coupons_data.db/000040.ldb
-.dart_tool/chrome-device/Default/EdgeCoupons/coupons_data.db/000043.ldb
-.dart_tool/chrome-device/Default/EdgeCoupons/coupons_data.db/000047.ldb
-.dart_tool/chrome-device/Default/EdgeCoupons/coupons_data.db/000050.ldb
-.dart_tool/chrome-device/Default/EdgeCoupons/coupons_data.db/000053.ldb
-.dart_tool/chrome-device/Default/EdgeCoupons/coupons_data.db/000056.ldb
-.dart_tool/chrome-device/Default/EdgeCoupons/coupons_data.db/LOG
-.dart_tool/chrome-device/Default/EdgeCoupons/coupons_data.db/LOG.old
-.dart_tool/chrome-device/Default/EdgeCoupons/coupons_data.db/MANIFEST-000001
-.dart_tool/chrome-device/Default/EdgeHubAppUsage/EdgeHubAppUsageSQLite.db
-.dart_tool/chrome-device/Default/EntityExtraction/domains_config.json
-.dart_tool/chrome-device/Default/EntityExtraction/EntityExtractionAssetStore.db/000003.log
-.dart_tool/chrome-device/Default/EntityExtraction/EntityExtractionAssetStore.db/LOG
-.dart_tool/chrome-device/Default/EntityExtraction/EntityExtractionAssetStore.db/LOG.old
-.dart_tool/chrome-device/Default/Extension Rules/000003.log
-.dart_tool/chrome-device/Default/Extension Rules/LOG
-.dart_tool/chrome-device/Default/Extension Rules/LOG.old
-.dart_tool/chrome-device/Default/Extension Scripts/000003.log
-.dart_tool/chrome-device/Default/Extension Scripts/LOG
-.dart_tool/chrome-device/Default/Extension Scripts/LOG.old
-.dart_tool/chrome-device/Default/Extension State/000003.log
-.dart_tool/chrome-device/Default/Extension State/LOG
-.dart_tool/chrome-device/Default/Extension State/LOG.old
-.dart_tool/chrome-device/Default/Extensions/cgjgjfacjflmgphhhepmbhhbgjieaecn/135.0.3176.0_1/DevToolsPlugin.html
-.dart_tool/chrome-device/Default/Extensions/cgjgjfacjflmgphhhepmbhhbgjieaecn/135.0.3176.0_1/DevToolsPlugin.js
-.dart_tool/chrome-device/Default/Extensions/cgjgjfacjflmgphhhepmbhhbgjieaecn/135.0.3176.0_1/DevToolsPlugin.js.map
-.dart_tool/chrome-device/Default/Extensions/cgjgjfacjflmgphhhepmbhhbgjieaecn/135.0.3176.0_1/manifest.json
-.dart_tool/chrome-device/Default/Extensions/cgjgjfacjflmgphhhepmbhhbgjieaecn/135.0.3176.0_1/NamedFunctionRange.js
-.dart_tool/chrome-device/Default/Extensions/cgjgjfacjflmgphhhepmbhhbgjieaecn/135.0.3176.0_1/NamedFunctionRange.js.map
-.dart_tool/chrome-device/Default/Extensions/cgjgjfacjflmgphhhepmbhhbgjieaecn/135.0.3176.0_1/_metadata/computed_hashes.json
-.dart_tool/chrome-device/Default/Extensions/cgjgjfacjflmgphhhepmbhhbgjieaecn/135.0.3176.0_1/_metadata/verified_contents.json
-.dart_tool/chrome-device/Default/Extensions/cgjgjfacjflmgphhhepmbhhbgjieaecn/135.0.3176.0_1/third_party/typescript/LICENSE.txt
-.dart_tool/chrome-device/Default/Extensions/cgjgjfacjflmgphhhepmbhhbgjieaecn/135.0.3176.0_1/third_party/typescript/typescript-tsconfig.json
-.dart_tool/chrome-device/Default/Extensions/cgjgjfacjflmgphhhepmbhhbgjieaecn/135.0.3176.0_1/third_party/typescript/typescript.d.ts
-.dart_tool/chrome-device/Default/Extensions/cgjgjfacjflmgphhhepmbhhbgjieaecn/135.0.3176.0_1/third_party/typescript/typescript.js
-.dart_tool/chrome-device/Default/Extensions/cgjgjfacjflmgphhhepmbhhbgjieaecn/135.0.3176.0_1/third_party/typescript/typescript.js.map
-.dart_tool/chrome-device/Default/Extensions/kfbdpdaobnofkbopebjglnaadopfikhh/113.0.1765.0_1/filelist.txt
-.dart_tool/chrome-device/Default/Extensions/kfbdpdaobnofkbopebjglnaadopfikhh/113.0.1765.0_1/manifest.json
-.dart_tool/chrome-device/Default/Extensions/kfbdpdaobnofkbopebjglnaadopfikhh/113.0.1765.0_1/_metadata/computed_hashes.json
-.dart_tool/chrome-device/Default/Extensions/kfbdpdaobnofkbopebjglnaadopfikhh/113.0.1765.0_1/_metadata/verified_contents.json
-.dart_tool/chrome-device/Default/Extensions/kfbdpdaobnofkbopebjglnaadopfikhh/113.0.1765.0_1/third_party/babylon/babylon.js
-.dart_tool/chrome-device/Default/Extensions/kfbdpdaobnofkbopebjglnaadopfikhh/113.0.1765.0_1/third_party/babylon/LICENSE.md
-.dart_tool/chrome-device/Default/Extensions/kfbdpdaobnofkbopebjglnaadopfikhh/113.0.1765.0_1/third_party/typescript/LICENSE.txt
-.dart_tool/chrome-device/Default/Extensions/kfbdpdaobnofkbopebjglnaadopfikhh/113.0.1765.0_1/third_party/typescript/typescript.js
-.dart_tool/chrome-device/Default/IndexedDB/devtools_devtools_0.indexeddb.leveldb/000003.log
-.dart_tool/chrome-device/Default/IndexedDB/devtools_devtools_0.indexeddb.leveldb/LOG
-.dart_tool/chrome-device/Default/IndexedDB/devtools_devtools_0.indexeddb.leveldb/LOG.old
-.dart_tool/chrome-device/Default/Local Extension Settings/jdiccldimpdaibmpdkjnbmckianbfold/LOG
-.dart_tool/chrome-device/Default/Local Extension Settings/jdiccldimpdaibmpdkjnbmckianbfold/LOG.old
-.dart_tool/chrome-device/Default/Local Storage/leveldb/000066.log
-.dart_tool/chrome-device/Default/Local Storage/leveldb/000071.ldb
-.dart_tool/chrome-device/Default/Local Storage/leveldb/LOG
-.dart_tool/chrome-device/Default/Local Storage/leveldb/LOG.old
-.dart_tool/chrome-device/Default/Local Storage/leveldb/MANIFEST-000001
-.dart_tool/chrome-device/Default/Network/Cookies
-.dart_tool/chrome-device/Default/Network/Network Persistent State
-.dart_tool/chrome-device/Default/Network/Reporting and NEL
-.dart_tool/chrome-device/Default/Service Worker/Database/LOG
-.dart_tool/chrome-device/Default/Service Worker/Database/LOG.old
-.dart_tool/chrome-device/Default/Session Storage/000007.log
-.dart_tool/chrome-device/Default/Session Storage/LOG
-.dart_tool/chrome-device/Default/Session Storage/LOG.old
-.dart_tool/chrome-device/Default/Sessions/Session_13417477728584787
-.dart_tool/chrome-device/Default/Sessions/Session_13417625918890673
-.dart_tool/chrome-device/Default/Sessions/Session_13417626109810625
-.dart_tool/chrome-device/Default/Sessions/Session_13417626235143103
-.dart_tool/chrome-device/Default/Sessions/Session_13417626395261620
-.dart_tool/chrome-device/Default/Sessions/Session_13417626465772675
-.dart_tool/chrome-device/Default/Sessions/Session_13417626525444283
-.dart_tool/chrome-device/Default/Sessions/Session_13417626699416288
-.dart_tool/chrome-device/Default/Sessions/Tabs_13417477729056340
-.dart_tool/chrome-device/Default/Sessions/Tabs_13417625919097013
-.dart_tool/chrome-device/Default/Sessions/Tabs_13417626110024483
-.dart_tool/chrome-device/Default/Sessions/Tabs_13417626235359029
-.dart_tool/chrome-device/Default/Sessions/Tabs_13417626395473598
-.dart_tool/chrome-device/Default/Sessions/Tabs_13417626465984790
-.dart_tool/chrome-device/Default/Sessions/Tabs_13417626525639281
-.dart_tool/chrome-device/Default/Sessions/Tabs_13417626699637221
-.dart_tool/chrome-device/Default/Shared Dictionary/cache/index-dir/the-real-index
-.dart_tool/chrome-device/Default/shared_proto_db/000004.log
-.dart_tool/chrome-device/Default/shared_proto_db/LOG
-.dart_tool/chrome-device/Default/shared_proto_db/LOG.old
-.dart_tool/chrome-device/Default/shared_proto_db/metadata/000003.log
-.dart_tool/chrome-device/Default/shared_proto_db/metadata/LOG
-.dart_tool/chrome-device/Default/shared_proto_db/metadata/LOG.old
-.dart_tool/chrome-device/Default/Site Characteristics Database/000003.log
-.dart_tool/chrome-device/Default/Site Characteristics Database/LOG
-.dart_tool/chrome-device/Default/Site Characteristics Database/LOG.old
-.dart_tool/chrome-device/Default/Storage/ext/ihmafllikibpmigkcoadcmckbfhibefp/def/Code Cache/js/6f3a0dc5e6916f1e_0
-.dart_tool/chrome-device/Default/Storage/ext/ihmafllikibpmigkcoadcmckbfhibefp/def/Code Cache/js/index-dir/the-real-index
-.dart_tool/chrome-device/Default/Storage/ext/ihmafllikibpmigkcoadcmckbfhibefp/def/Code Cache/wasm/index-dir/the-real-index
-.dart_tool/chrome-device/Default/Storage/ext/ihmafllikibpmigkcoadcmckbfhibefp/def/DawnGraphiteCache/index
-.dart_tool/chrome-device/Default/Storage/ext/ihmafllikibpmigkcoadcmckbfhibefp/def/DawnWebGPUCache/index
-.dart_tool/chrome-device/Default/Storage/ext/ihmafllikibpmigkcoadcmckbfhibefp/def/GPUCache/index
-.dart_tool/chrome-device/Default/Storage/ext/ihmafllikibpmigkcoadcmckbfhibefp/def/Local Storage/leveldb/LOG
-.dart_tool/chrome-device/Default/Storage/ext/ihmafllikibpmigkcoadcmckbfhibefp/def/Local Storage/leveldb/LOG.old
-.dart_tool/chrome-device/Default/Storage/ext/ihmafllikibpmigkcoadcmckbfhibefp/def/Network/Network Persistent State
-.dart_tool/chrome-device/Default/Storage/ext/ihmafllikibpmigkcoadcmckbfhibefp/def/Session Storage/000003.log
-.dart_tool/chrome-device/Default/Storage/ext/ihmafllikibpmigkcoadcmckbfhibefp/def/Session Storage/LOG
-.dart_tool/chrome-device/Default/Storage/ext/ihmafllikibpmigkcoadcmckbfhibefp/def/Session Storage/LOG.old
-.dart_tool/chrome-device/Default/Storage/ext/ihmafllikibpmigkcoadcmckbfhibefp/def/Shared Dictionary/cache/index-dir/the-real-index
-.dart_tool/chrome-device/Default/Sync Data/LevelDB/000004.log
-.dart_tool/chrome-device/Default/Sync Data/LevelDB/LOG
-.dart_tool/chrome-device/Default/Sync Data/LevelDB/LOG.old
-.dart_tool/chrome-device/Default/Sync Data/Logs/sync_diagnostic.log
-.dart_tool/chrome-device/Default/WebStorage/QuotaManager
-.dart_tool/chrome-device/Default/Workspaces/Logs/Workspaces Internals Logs
-.dart_tool/hooks_runner/objective_c/337ce265dc/.lock
-.dart_tool/hooks_runner/objective_c/337ce265dc/hook.dependencies_hash_file.json
-.dart_tool/hooks_runner/objective_c/337ce265dc/hook.dill.d
-.dart_tool/hooks_runner/objective_c/337ce265dc/input.json
-.dart_tool/hooks_runner/objective_c/337ce265dc/output.json
-.dart_tool/hooks_runner/objective_c/337ce265dc/stdout.txt
-.dart_tool/hooks_runner/shared/objective_c/.lock
-build/8730b13ca0249799964d0a71255a8f3b.cache.dill.track.dill
-build/native_hooks/.last_build_id
-.flutter-plugins-dependencies
-build/
-.dart_tool/
-.metadata/
-flutter_application_1.iml
-serviceAccount.json
