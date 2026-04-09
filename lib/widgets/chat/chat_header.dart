@@ -5,9 +5,9 @@
 */
 
 import 'package:flutter/material.dart';
-import '../services/auth_service.dart';
-import '../theme/app_theme.dart';
-import '../constants/constants.dart';
+import '../../services/chat/auth_service.dart';
+import '../../theme/app_theme.dart';
+import '../../constants/constants.dart';
 import 'admin_login_dialog.dart';
 
 class ChatHeader extends StatelessWidget {

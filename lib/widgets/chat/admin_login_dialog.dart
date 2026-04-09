@@ -7,7 +7,7 @@
 */
 
 import 'package:flutter/material.dart';
-import '../services/auth_service.dart';
+import '../../services/chat/auth_service.dart';
 
 class AdminLoginDialog extends StatefulWidget {
   final AuthService authService;

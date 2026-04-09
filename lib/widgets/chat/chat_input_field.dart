@@ -5,8 +5,8 @@
 */
 
 import 'package:flutter/material.dart';
-import '../services/chat_service.dart';
-import '../theme/app_theme.dart';
+import '../../services/chat/chat_service.dart';
+import '../../theme/app_theme.dart';
 
 class ChatInputField extends StatelessWidget {
   final TextEditingController controller;

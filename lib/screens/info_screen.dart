@@ -9,7 +9,7 @@
 
 import 'package:flutter/material.dart';
 import '../models/sponsor.dart';
-import '../services/info_services.dart';
+import '../services/info_service.dart';
 import '../theme/app_theme.dart';
 import '../constants/constants.dart';
 

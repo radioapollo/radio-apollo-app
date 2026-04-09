@@ -12,8 +12,8 @@ import '../screens/event_screen.dart';
 import '../screens/program_screen.dart';
 import '../screens/info_screen.dart';
 import '../screens/chat_screen.dart';
-import '../services/chat_service.dart';
-import '../services/auth_service.dart';
+import '../services/chat/chat_service.dart';
+import '../services/chat/auth_service.dart';
 import '../theme/app_theme.dart';
 
 class ApolloHome extends StatefulWidget {

@@ -13,8 +13,8 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import '../services/program_service.dart';
-import '../widgets/program_card.dart';
-import '../widgets/day_selector.dart';
+import '../widgets/program/program_card.dart';
+import '../widgets/program/day_selector.dart';
 import '../theme/app_theme.dart';
 import '../constants/constants.dart';
 

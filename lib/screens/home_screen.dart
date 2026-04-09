@@ -4,6 +4,7 @@
 
    It displays:
    - the live radio player
+   - the currently playing program (title, presenter, time)
    - quick navigation cards to the schedule, info, events, and chat
 */
 
@@ -13,6 +14,7 @@ import '../main.dart';
 import '../widgets/page_with_header.dart';
 import '../widgets/apollo_card.dart';
 import '../widgets/live_player_card.dart';
+import '../widgets/now_playing_program_card.dart';
 import '../theme/app_theme.dart';
 
 class HomeScreen extends StatelessWidget {
@@ -31,6 +33,11 @@ class HomeScreen extends StatelessWidget {
               isPlaying: snapshot.data?.playing ?? false,
               onTap: audioHandler.toggle,
             ),
+          ),
+          const SizedBox(height: AppDimensions.spaceLarge),
+          // Currently playing program card
+          NowPlayingProgramCard(
+            onTap: () => onNavigate(1), // Navigate to Programs tab
           ),
           const SizedBox(height: AppDimensions.space30),
           _buildRow([

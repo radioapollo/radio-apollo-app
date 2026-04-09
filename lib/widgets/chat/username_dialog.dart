@@ -7,8 +7,8 @@
 */
 
 import 'package:flutter/material.dart';
-import '../services/user_service.dart';
-import '../theme/app_theme.dart';
+import '../../services/chat/user_service.dart';
+import '../../theme/app_theme.dart';
 
 class UsernameDialog extends StatefulWidget {
   const UsernameDialog({super.key});

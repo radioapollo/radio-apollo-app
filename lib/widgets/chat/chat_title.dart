@@ -5,9 +5,9 @@
 */
 
 import 'package:flutter/material.dart';
-import '../services/auth_service.dart';
-import '../services/user_service.dart';
-import '../theme/app_theme.dart';
+import '../../services/chat/auth_service.dart';
+import '../../services/chat/user_service.dart';
+import '../../theme/app_theme.dart';
 
 class ChatTitle extends StatelessWidget {
   final AuthService authService;

@@ -15,9 +15,9 @@
 import 'dart:convert';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:http/http.dart' as http;
-import '../models/message.dart';
-import '../utils/date_utils.dart';
-import '../constants/constants.dart';
+import '../../models/message.dart';
+import '../../utils/date_utils.dart';
+import '../../constants/constants.dart';
 import 'auth_service.dart';
 import 'user_service.dart';
 

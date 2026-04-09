@@ -12,14 +12,14 @@
 */
 
 import 'package:flutter/material.dart';
-import '../services/chat_service.dart';
-import '../services/auth_service.dart';
-import '../services/user_service.dart';
-import '../widgets/chat_header.dart';
-import '../widgets/chat_title.dart';
-import '../widgets/chat_input_field.dart';
-import '../widgets/message_bubble.dart';
-import '../widgets/username_dialog.dart';
+import '../services/chat/chat_service.dart';
+import '../services/chat/auth_service.dart';
+import '../services/chat/user_service.dart';
+import '../widgets/chat/chat_header.dart';
+import '../widgets/chat/chat_title.dart';
+import '../widgets/chat/chat_input_field.dart';
+import '../widgets/chat/message_bubble.dart';
+import '../widgets/chat/username_dialog.dart';
 import '../theme/app_theme.dart';
 import '../constants/constants.dart';
 import '../models/message.dart';
