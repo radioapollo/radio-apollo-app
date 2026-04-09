@@ -127,24 +127,36 @@ class InfoScreen extends StatelessWidget {
       );
 
   Widget _buildSponsorCard(Sponsor sponsor) => Container(
-        margin: const EdgeInsets.only(bottom: AppDimensions.spaceXLarge),
-        padding: const EdgeInsets.all(AppDimensions.paddingMedium),
-        decoration: AppDecorations.lightCard(),
-        child: Row(
-          children: [
-            const SizedBox(width: AppDimensions.spaceLarge),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(sponsor.title, style: AppTextStyles.cardTitle),
-                  const SizedBox(height: AppDimensions.spaceXSmall),
-                  Text(sponsor.description,
-                      style: AppTextStyles.cardSubtitle),
-                ],
+      margin: const EdgeInsets.only(bottom: AppDimensions.spaceXLarge),
+      padding: const EdgeInsets.all(AppDimensions.paddingMedium),
+      decoration: AppDecorations.lightCard(),
+      child: Row(
+        children: [
+          if (sponsor.imageUrl != null && sponsor.imageUrl!.isNotEmpty)
+            ClipRRect(
+              borderRadius: BorderRadius.circular(8),
+              child: Image.network(
+                sponsor.imageUrl!,
+                width: 60,
+                height: 60,
+                fit: BoxFit.contain,
+                errorBuilder: (_, __, ___) => const SizedBox(width: 60, height: 60),
               ),
+            )
+          else
+            const SizedBox(width: 60, height: 60),
+          const SizedBox(width: AppDimensions.spaceLarge),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(sponsor.title, style: AppTextStyles.cardTitle),
+                const SizedBox(height: AppDimensions.spaceXSmall),
+                Text(sponsor.description, style: AppTextStyles.cardSubtitle),
+              ],
             ),
-          ],
-        ),
-      );
+          ),
+        ],
+      ),
+    );
 }

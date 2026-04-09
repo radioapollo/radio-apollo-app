@@ -23,12 +23,16 @@ class InfoService {
       .map((doc) => doc.data()?['text'] as String? ?? '');
 
   Stream<List<Sponsor>> get sponsorsStream => _db
-      .collection(AppConstants.firestoreSponsors)
-      .snapshots()
-      .map((snap) => snap.docs
-          .map((doc) => Sponsor(
-                title:       doc['title']       ?? '',
-                description: doc['description'] ?? '',
-              ))
-          .toList());
+    .collection(AppConstants.firestoreSponsors)
+    .snapshots()
+    .map((snap) => snap.docs
+        .map((doc) {
+          final data = doc.data();
+          return Sponsor(
+            title:       data['title']       ?? '',
+            description: data['description'] ?? '',
+            imageUrl:    data['imageUrl']     as String?,
+          );
+        })
+        .toList());
 }

@@ -11,11 +11,11 @@
 class Sponsor {
   final String title;
   final String description;
-  //final String? imageUrl;
+  final String? imageUrl;
  
   const Sponsor({
     required this.title,
     required this.description,
-    //this.imageUrl,
+    this.imageUrl,
   });
 }

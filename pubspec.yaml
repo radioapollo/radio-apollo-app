@@ -27,5 +27,4 @@ flutter:
   assets:
     - assets/images/Logo/
     - assets/images/Background/
-    - assets/images/Programs/
   uses-material-design: true
