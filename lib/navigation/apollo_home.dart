@@ -4,8 +4,12 @@
 
    Manages the bottom navigation bar and switches between the five
    main screens using an IndexedStack so each screen keeps its state.
+
+   Also shows an offline banner when there is no network connection.
 */
 
+import 'dart:async';
+import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:flutter/material.dart';
 import '../screens/home_screen.dart';
 import '../screens/event_screen.dart';
@@ -25,6 +29,8 @@ class ApolloHome extends StatefulWidget {
 
 class _ApolloHomeState extends State<ApolloHome> {
   int _index = 0;
+  bool _isOffline = false;
+  StreamSubscription<List<ConnectivityResult>>? _connectivitySub;
   final AuthService _authService = AuthService.instance;
   late final ChatService _chatService;
 
@@ -34,6 +40,29 @@ class _ApolloHomeState extends State<ApolloHome> {
   void initState() {
     super.initState();
     _chatService = ChatService(authService: _authService);
+    _initConnectivity();
+    _connectivitySub = Connectivity()
+        .onConnectivityChanged
+        .listen(_updateConnectivity);
+  }
+
+  @override
+  void dispose() {
+    _connectivitySub?.cancel();
+    super.dispose();
+  }
+
+  // ── Connectivity ──────────────────────────────────────────────────────────
+
+  Future<void> _initConnectivity() async {
+    final results = await Connectivity().checkConnectivity();
+    _updateConnectivity(results);
+  }
+
+  void _updateConnectivity(List<ConnectivityResult> results) {
+    if (!mounted) return;
+    setState(() =>
+        _isOffline = results.every((r) => r == ConnectivityResult.none));
   }
 
   // ── Navigation ────────────────────────────────────────────────────────────
@@ -45,23 +74,55 @@ class _ApolloHomeState extends State<ApolloHome> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: IndexedStack(
-        index: _index,
+      body: Column(
         children: [
-          HomeScreen(onNavigate: _switchTab),
-          const ProgramScreen(),
-          InfoScreen(),
-          EventScreen(),
-          ChatScreen(
-            chatService: _chatService,
-            authService: _authService,
-            isActive: _index == 4,
+          if (_isOffline) _buildOfflineBanner(),
+          Expanded(
+            child: IndexedStack(
+              index: _index,
+              children: [
+                HomeScreen(onNavigate: _switchTab),
+                const ProgramScreen(),
+                InfoScreen(),
+                EventScreen(),
+                ChatScreen(
+                  chatService: _chatService,
+                  authService: _authService,
+                  isActive: _index == 4,
+                ),
+              ],
+            ),
           ),
         ],
       ),
       bottomNavigationBar: _buildBottomNav(),
     );
   }
+
+  Widget _buildOfflineBanner() => Container(
+        width: double.infinity,
+        color: Colors.orange.shade100,
+        padding: const EdgeInsets.symmetric(
+          horizontal: AppDimensions.paddingXLarge,
+          vertical: AppDimensions.paddingSmall,
+        ),
+        child: SafeArea(
+          bottom: false,
+          child: Row(
+            children: const [
+              Icon(Icons.wifi_off,
+                  size: AppDimensions.iconMedium, color: Colors.orange),
+              SizedBox(width: AppDimensions.spaceSmall),
+              Expanded(
+                child: Text(
+                  'Je bent offline – gegevens kunnen verouderd zijn.',
+                  style: TextStyle(fontSize: 12, color: Colors.deepOrange),
+                ),
+              ),
+            ],
+          ),
+        ),
+      );
 
   Widget _buildBottomNav() {
     return Container(

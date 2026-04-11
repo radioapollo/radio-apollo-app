@@ -10,6 +10,7 @@
    - a "Nu bezig" badge if the program is currently playing
 */
 
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import '../../theme/app_theme.dart';
 
@@ -70,30 +71,27 @@ class ProgramCard extends StatelessWidget {
     if (imageUrl.isNotEmpty) {
       return ClipRRect(
         borderRadius: borderRadius,
-        child: Image.network(
-          imageUrl,
+        child: CachedNetworkImage(
+          imageUrl: imageUrl,
           width: size,
           height: size,
           fit: BoxFit.cover,
-          loadingBuilder: (context, child, loadingProgress) {
-            if (loadingProgress == null) return child;
-            return Container(
-              width: size,
-              height: size,
-              decoration: AppDecorations.programIconBg,
-              child: const Center(
-                child: SizedBox(
-                  width: 20,
-                  height: 20,
-                  child: CircularProgressIndicator(
-                    strokeWidth: 2,
-                    color: Colors.white38,
-                  ),
+          placeholder: (context, url) => Container(
+            width: size,
+            height: size,
+            decoration: AppDecorations.programIconBg,
+            child: const Center(
+              child: SizedBox(
+                width: 20,
+                height: 20,
+                child: CircularProgressIndicator(
+                  strokeWidth: 2,
+                  color: Colors.white38,
                 ),
               ),
-            );
-          },
-          errorBuilder: (context, error, stackTrace) => _buildFallbackIcon(),
+            ),
+          ),
+          errorWidget: (context, url, error) => _buildFallbackIcon(),
         ),
       );
     }
