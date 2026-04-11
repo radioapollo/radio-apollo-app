@@ -90,7 +90,7 @@ class EventScreen extends StatelessWidget {
                       ),
                       itemCount: snapshot.data!.length,
                       itemBuilder: (context, index) =>
-                          _buildEventCard(snapshot.data![index]),
+                          _buildEventCard(context, snapshot.data![index]),
                     );
                   },
                 ),
@@ -102,40 +102,87 @@ class EventScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildEventCard(Event event) => Container(
+  Widget _buildEventCard(BuildContext context, Event event) => Container(
         margin: const EdgeInsets.only(bottom: AppDimensions.spaceXLarge),
-        padding: const EdgeInsets.all(AppDimensions.paddingMedium),
         decoration: AppDecorations.lightCard(),
-        child: Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Container(
-              padding: const EdgeInsets.all(AppDimensions.paddingSmall),
-              decoration: AppDecorations.iconContainer(
-                  color: AppColors.cardBlue,
-                  radius: AppDimensions.radiusSmall),
-              child: const Icon(Icons.event,
-                  color: AppColors.primary,
-                  size: AppDimensions.iconLarge),
-            ),
-            const SizedBox(width: AppDimensions.spaceLarge),
-            Expanded(
-              child: Column(
+        child: Material(
+          color: Colors.transparent,
+          borderRadius: BorderRadius.circular(AppDimensions.radiusMedium),
+          child: InkWell(
+            borderRadius: BorderRadius.circular(AppDimensions.radiusMedium),
+            onTap: () => _showEventDetail(context, event),
+            child: Padding(
+              padding: const EdgeInsets.all(AppDimensions.paddingMedium),
+              child: Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(event.title, style: AppTextStyles.cardTitle),
-                  const SizedBox(height: AppDimensions.spaceXSmall),
-                  _iconRow(Icons.access_time, event.date),
-                  const SizedBox(height: 2),
-                  _iconRow(Icons.location_on, event.location),
-                  const SizedBox(height: AppDimensions.spaceSmall),
-                  Text(event.what, style: AppTextStyles.cardSubtitle),
+                  Container(
+                    padding: const EdgeInsets.all(AppDimensions.paddingSmall),
+                    decoration: AppDecorations.iconContainer(
+                        color: AppColors.cardBlue,
+                        radius: AppDimensions.radiusSmall),
+                    child: const Icon(Icons.event,
+                        color: AppColors.primary,
+                        size: AppDimensions.iconLarge),
+                  ),
+                  const SizedBox(width: AppDimensions.spaceLarge),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(event.title, style: AppTextStyles.cardTitle),
+                        const SizedBox(height: AppDimensions.spaceXSmall),
+                        _iconRow(Icons.access_time, event.date),
+                        const SizedBox(height: 2),
+                        _iconRow(Icons.location_on, event.location),
+                        const SizedBox(height: AppDimensions.spaceSmall),
+                        Text(event.what, style: AppTextStyles.cardSubtitle),
+                      ],
+                    ),
+                  ),
+                  const Icon(
+                    Icons.chevron_right,
+                    color: Colors.black26,
+                    size: AppDimensions.iconMedium,
+                  ),
                 ],
               ),
             ),
-          ],
+          ),
         ),
       );
+
+  void _showEventDetail(BuildContext context, Event event) {
+    showModalBottomSheet(
+      context: context,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(
+          top: Radius.circular(AppDimensions.radiusXLarge),
+        ),
+      ),
+      builder: (_) => Padding(
+        padding: const EdgeInsets.fromLTRB(
+          AppDimensions.paddingXLarge,
+          AppDimensions.paddingXLarge,
+          AppDimensions.paddingXLarge,
+          AppDimensions.space30,
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(event.title, style: AppTextStyles.screenTitleSmall),
+            const SizedBox(height: AppDimensions.spaceLarge),
+            _iconRow(Icons.access_time, event.date),
+            const SizedBox(height: AppDimensions.spaceSmall),
+            _iconRow(Icons.location_on, event.location),
+            const SizedBox(height: AppDimensions.spaceLarge),
+            Text(event.what, style: AppTextStyles.cardSubtitle),
+          ],
+        ),
+      ),
+    );
+  }
 
   Widget _iconRow(IconData icon, String label) => Row(
         children: [
