@@ -31,6 +31,7 @@ class _ProgramScreenState extends State<ProgramScreen> {
   late List<String> _days;
   int _selectedIndex = 3;
   bool _hasScrolledToCurrent = false;
+  bool _hasData = false;
   Timer? _timer;
   //int _lastCurrentIndex = -1;
 
@@ -145,6 +146,7 @@ class _ProgramScreenState extends State<ProgramScreen> {
                       onDaySelected: (i) => setState(() {
                         _selectedIndex = i;
                         _hasScrolledToCurrent = false;
+                        _hasData = false;
                       }),
                     ),
                     const SizedBox(height: AppDimensions.spaceLarge),
@@ -167,14 +169,16 @@ class _ProgramScreenState extends State<ProgramScreen> {
                   child: StreamBuilder<List<Map<String, String>>>(
                     stream: _programService.getProgramsForDay(selectedDay),
                     builder: (context, snapshot) {
-                      if (snapshot.connectionState ==
-                          ConnectionState.waiting) {
+                      if (!_hasData &&
+                          snapshot.connectionState ==
+                              ConnectionState.waiting) {
                         return const Center(
                           child: CircularProgressIndicator(
                             color: AppColors.steelLight,
                           ),
                         );
                       }
+                      if (snapshot.hasData) _hasData = true;
                       if (snapshot.hasError) {
                         return const Center(
                           child: Padding(

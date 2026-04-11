@@ -80,6 +80,7 @@ class HomeScreen extends StatelessWidget {
   }
 
   Widget _buildRow(List<Widget> children) => Row(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           Expanded(child: children[0]),
           const SizedBox(width: AppDimensions.spaceXLarge),
