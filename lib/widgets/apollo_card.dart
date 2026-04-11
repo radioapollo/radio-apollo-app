@@ -55,7 +55,7 @@ class ApolloCard extends StatelessWidget {
   }
 
   Widget _buildVertical(Color textColor) => Column(
-        mainAxisSize: MainAxisSize.min,
+        mainAxisSize: MainAxisSize.max,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(title,
