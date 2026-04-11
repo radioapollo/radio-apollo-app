@@ -21,6 +21,7 @@
 */
 
 import 'dart:async';
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../main.dart';
@@ -200,12 +201,12 @@ class _NowPlayingProgramCardState extends State<NowPlayingProgramCard> {
               borderRadius:
                   BorderRadius.circular(AppDimensions.radiusSmall),
               child: _imageUrl != null && _imageUrl!.isNotEmpty
-                  ? Image.network(
-                      _imageUrl!,
+                  ? CachedNetworkImage(
+                      imageUrl: _imageUrl!,
                       width: 48,
                       height: 48,
                       fit: BoxFit.cover,
-                      errorBuilder: (_, __, ___) => Container(
+                      errorWidget: (_, __, ___) => Container(
                         width: 48,
                         height: 48,
                         decoration: const BoxDecoration(

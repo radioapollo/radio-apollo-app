@@ -7,6 +7,7 @@
    - a scrollable content area with about text and sponsors
 */
 
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import '../models/sponsor.dart';
 import '../services/info_service.dart';
@@ -148,12 +149,12 @@ class InfoScreen extends StatelessWidget {
           if (sponsor.imageUrl != null && sponsor.imageUrl!.isNotEmpty)
             ClipRRect(
               borderRadius: BorderRadius.circular(8),
-              child: Image.network(
-                sponsor.imageUrl!,
+              child: CachedNetworkImage(
+                imageUrl: sponsor.imageUrl!,
                 width: 60,
                 height: 60,
                 fit: BoxFit.contain,
-                errorBuilder: (_, __, ___) => const SizedBox(width: 60, height: 60),
+                errorWidget: (_, __, ___) => const SizedBox(width: 60, height: 60),
               ),
             )
           else
