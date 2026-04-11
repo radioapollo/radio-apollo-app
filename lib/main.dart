@@ -12,12 +12,16 @@ import 'services/audio_handler.dart';
 import 'services/chat/user_service.dart';
 import 'firebase_options.dart';
 import 'constants/constants.dart';
+import 'package:flutter/services.dart';
 
 late final RadioAudioHandler audioHandler;
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
-
+  SystemChrome.setPreferredOrientations([
+    DeviceOrientation.portraitUp,
+    DeviceOrientation.portraitDown,
+  ]);
   await Firebase.initializeApp(
     options: DefaultFirebaseOptions.currentPlatform,
   );

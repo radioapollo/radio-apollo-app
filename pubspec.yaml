@@ -17,6 +17,7 @@ dependencies:
   audio_service: ^0.18.12
   audio_session: ^0.1.16
   shared_preferences: ^2.3.0   # NEW — stores username locally on device
+  cached_network_image: ^3.4.1
 
 dev_dependencies:
   flutter_test:

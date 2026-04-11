@@ -109,6 +109,7 @@ class _ProgramScreenState extends State<ProgramScreen> {
   Widget build(BuildContext context) {
     final selectedDay = _days[_selectedIndex];
     final isToday = _isToday();
+    bool _hasData = false;
 
     return SizedBox.expand(
       child: Container(
@@ -145,6 +146,7 @@ class _ProgramScreenState extends State<ProgramScreen> {
                       onDaySelected: (i) => setState(() {
                         _selectedIndex = i;
                         _hasScrolledToCurrent = false;
+                        _hasData = false;
                       }),
                     ),
                     const SizedBox(height: AppDimensions.spaceLarge),
@@ -167,7 +169,7 @@ class _ProgramScreenState extends State<ProgramScreen> {
                   child: StreamBuilder<List<Map<String, String>>>(
                     stream: _programService.getProgramsForDay(selectedDay),
                     builder: (context, snapshot) {
-                      if (snapshot.connectionState ==
+                      if (!_hasData && snapshot.connectionState ==
                           ConnectionState.waiting) {
                         return const Center(
                           child: CircularProgressIndicator(
@@ -175,6 +177,7 @@ class _ProgramScreenState extends State<ProgramScreen> {
                           ),
                         );
                       }
+                      if (snapshot.hasData) _hasData = true;
                       if (snapshot.hasError) {
                         return const Center(
                           child: Padding(

@@ -173,10 +173,7 @@ class RadioAudioHandler extends BaseAudioHandler {
       album: 'Radio Apollo',
       artUri: _programArtUri ?? _defaultArtUri,
     ));
-
-    if (_player.audioSource == null) {
-      await _player.setUrl(AppConstants.streamUrl);
-    }
+    await _player.setUrl(AppConstants.streamUrl);
     await _player.play();
   }
 
@@ -208,7 +205,15 @@ class RadioAudioHandler extends BaseAudioHandler {
           _player.processingState == ProcessingState.completed) {
         await _player.setUrl(AppConstants.streamUrl);
       }
+      await _player.setUrl(AppConstants.streamUrl);
       await _player.play();
     }
+  }
+
+  @override
+  Future<void> onTaskRemoved() async {
+    await _player.stop();
+    _stopMetadataPolling();
+    await super.onTaskRemoved();
   }
 }

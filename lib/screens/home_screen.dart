@@ -80,12 +80,13 @@ class HomeScreen extends StatelessWidget {
   }
 
   Widget _buildRow(List<Widget> children) => Row(
-        children: [
-          Expanded(child: children[0]),
-          const SizedBox(width: AppDimensions.spaceXLarge),
-          Expanded(child: children[1]),
-        ],
-      );
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Expanded(child: children[0]),
+        const SizedBox(width: AppDimensions.spaceXLarge),
+        Expanded(child: children[1]),
+      ],
+    );
 
   Widget _card({
     required Color color,
