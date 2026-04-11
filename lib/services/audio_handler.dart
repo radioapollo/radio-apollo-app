@@ -173,6 +173,8 @@ class RadioAudioHandler extends BaseAudioHandler {
       album: 'Radio Apollo',
       artUri: _programArtUri ?? _defaultArtUri,
     ));
+
+    // Always reload for live stream to start from the current position
     await _player.setUrl(AppConstants.streamUrl);
     await _player.play();
   }
@@ -201,10 +203,7 @@ class RadioAudioHandler extends BaseAudioHandler {
         artUri: _programArtUri ?? _defaultArtUri,
       ));
 
-      if (_player.processingState == ProcessingState.idle ||
-          _player.processingState == ProcessingState.completed) {
-        await _player.setUrl(AppConstants.streamUrl);
-      }
+      // Always reload for live stream to start from the current position
       await _player.setUrl(AppConstants.streamUrl);
       await _player.play();
     }

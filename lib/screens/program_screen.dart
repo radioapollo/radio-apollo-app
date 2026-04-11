@@ -31,6 +31,7 @@ class _ProgramScreenState extends State<ProgramScreen> {
   late List<String> _days;
   int _selectedIndex = 3;
   bool _hasScrolledToCurrent = false;
+  bool _hasData = false;
   Timer? _timer;
   //int _lastCurrentIndex = -1;
 
@@ -169,8 +170,9 @@ class _ProgramScreenState extends State<ProgramScreen> {
                   child: StreamBuilder<List<Map<String, String>>>(
                     stream: _programService.getProgramsForDay(selectedDay),
                     builder: (context, snapshot) {
-                      if (!_hasData && snapshot.connectionState ==
-                          ConnectionState.waiting) {
+                      if (!_hasData &&
+                          snapshot.connectionState ==
+                              ConnectionState.waiting) {
                         return const Center(
                           child: CircularProgressIndicator(
                             color: AppColors.steelLight,
