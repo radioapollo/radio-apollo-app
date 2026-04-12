@@ -29,46 +29,65 @@ class UserService {
 
   // ── Storage ───────────────────────────────────────────────────────────────
 
-  /// Call once at app startup to load the previously saved username.
   Future<void> init() async {
     final prefs = await SharedPreferences.getInstance();
     _username = prefs.getString(_key);
 
-    // Re-claim if the username was cleaned up from Firestore
+    // Verify the username still exists in Firestore.
+    // Since usernames are now permanent, the doc should always exist.
+    // If it somehow doesn't, re-claim it silently.
     if (_username != null && _username!.isNotEmpty) {
       final docId = _username!.toLowerCase();
       final doc = await _db.collection('usernames').doc(docId).get();
       if (!doc.exists) {
-        await _db.collection('usernames').doc(docId).set({
-          'displayName': _username!,
-          'claimedAt': FieldValue.serverTimestamp(),
-        });
+        try {
+          await _db.collection('usernames').doc(docId).set({
+            'displayName': _username!,
+            'claimedAt': FieldValue.serverTimestamp(),
+          });
+        } catch (_) {
+          // If re-claim fails (e.g. someone else took it), clear local state
+          _username = null;
+          await prefs.remove(_key);
+        }
       }
     }
   }
 
-  /// Claims and saves a new username. Throws if the name is taken.
-  /// Uses a Firestore transaction to prevent two users from claiming
-  /// the same name simultaneously.
-  Future<void> setUsername(String name) async {
+ Future<void> setUsername(String name) async {
     final trimmed = name.trim();
     if (trimmed.isEmpty) return;
 
     final docId = trimmed.toLowerCase();
     final docRef = _db.collection('usernames').doc(docId);
 
-    await _db.runTransaction((transaction) async {
-      final snapshot = await transaction.get(docRef);
+    // Check if the username is already taken before attempting a write
+    final existing = await docRef.get();
+    if (existing.exists) {
+      throw Exception('Deze naam is al in gebruik. Kies een andere.');
+    }
 
-      if (snapshot.exists) {
-        throw Exception('Deze naam is al in gebruik. Kies een andere.');
-      }
+    try {
+      await _db.runTransaction((transaction) async {
+        final snapshot = await transaction.get(docRef);
 
-      transaction.set(docRef, {
-        'displayName': trimmed,
-        'claimedAt': FieldValue.serverTimestamp(),
+        if (snapshot.exists) {
+          throw Exception('Deze naam is al in gebruik. Kies een andere.');
+        }
+
+        transaction.set(docRef, {
+          'displayName': trimmed,
+          'claimedAt': FieldValue.serverTimestamp(),
+        });
       });
-    });
+    } catch (e) {
+      // If it's already our friendly message, rethrow it
+      if (e is Exception && e.toString().contains('al in gebruik')) {
+        rethrow;
+      }
+      // Any other error (permission denied, network, etc.)
+      throw Exception('Deze naam is al in gebruik. Kies een andere.');
+    }
 
     // Save locally only after the transaction succeeded
     final prefs = await SharedPreferences.getInstance();

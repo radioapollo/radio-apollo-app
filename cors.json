@@ -1,6 +1,6 @@
 [
   {
-    "origin": ["*"],
+    "origin": ["https://radio-apollo-90693.firebasestorage.app"],
     "method": ["GET"],
     "maxAgeSeconds": 3600
   }

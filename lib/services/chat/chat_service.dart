@@ -4,8 +4,8 @@
 
    It handles:
    - streaming live messages from the last 24 hours, oldest first
-   - sending user messages directly to Firestore
-   - sending admin messages through a Cloud Function (server-side)
+   - sending user messages directly to Firestore (with client-side cooldown)
+   - sending admin messages through a Cloud Function (token-based auth)
    - enforcing the 160 character limit
 
    Firestore collection: 'chat_messages'
@@ -27,14 +27,14 @@ class ChatService {
 
   static const String _collection      = 'chat_messages';
   static const int    maxMessageLength = 160;
+  static const int    _cooldownSeconds = 3;
+
+  DateTime? _lastMessageSent;
 
   ChatService({required this.authService});
 
   // ── Stream ────────────────────────────────────────────────────────────────
 
-  /// Returns a fresh stream each time, with the 24h cutoff recalculated.
-  /// This ensures that if the user navigates away and comes back,
-  /// the cutoff is always based on the current time.
   Stream<List<Message>> get messagesStream {
     final cutoff = DateTime.now().subtract(const Duration(hours: 24));
 
@@ -63,7 +63,6 @@ class ChatService {
 
   // ── Send ──────────────────────────────────────────────────────────────────
 
-  /// Returns false when text is empty or exceeds [maxMessageLength].
   Future<bool> sendMessage(String text) async {
     final trimmed = text.trim();
     if (trimmed.isEmpty || trimmed.length > maxMessageLength) return false;
@@ -75,9 +74,18 @@ class ChatService {
     return _sendUserMessage(trimmed);
   }
 
-  // ── Private: user message (direct Firestore write) ────────────────────────
+  // ── Private: user message (direct Firestore write with cooldown) ──────────
 
   Future<bool> _sendUserMessage(String text) async {
+    // Client-side cooldown to prevent spam
+    if (_lastMessageSent != null) {
+      final elapsed = DateTime.now().difference(_lastMessageSent!).inSeconds;
+      if (elapsed < _cooldownSeconds) {
+        throw Exception(
+            'Wacht ${_cooldownSeconds - elapsed} seconden voor je nog een bericht stuurt.');
+      }
+    }
+
     final username = UserService.instance.username ?? 'Onbekend';
 
     await _db.collection(_collection).add({
@@ -87,14 +95,15 @@ class ChatService {
       'timestamp': FieldValue.serverTimestamp(),
     });
 
+    _lastMessageSent = DateTime.now();
     return true;
   }
 
-  // ── Private: admin message (via Cloud Function) ───────────────────────────
+  // ── Private: admin message (via Cloud Function with session token) ────────
 
   Future<bool> _sendAdminMessage(String text) async {
-    final password = authService.adminPassword;
-    if (password == null) return false;
+    final token = authService.sessionToken;
+    if (token == null) return false;
 
     final uri = Uri.parse(
       'https://${AppConstants.region}-${AppConstants.projectId}.cloudfunctions.net/adminSendMessage',
@@ -104,10 +113,15 @@ class ChatService {
       uri,
       headers: {'Content-Type': 'application/json'},
       body: jsonEncode({
-        'password': password,
-        'text':     text,
+        'token': token,
+        'text':  text,
       }),
     );
+
+    if (response.statusCode == 401) {
+      authService.logout();
+      throw Exception('Sessie verlopen. Log opnieuw in.');
+    }
 
     return response.statusCode == 200;
   }

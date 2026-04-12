@@ -5,8 +5,9 @@
    It handles:
    - tracking whether the current user is a regular user or admin
    - sending the password to the Cloud Function for verification
-   - providing the password to ChatService for server-side admin messages
-   - logging out by resetting the role and clearing the password
+   - storing the returned session token (never the password)
+   - providing the token to ChatService for server-side admin messages
+   - logging out by resetting the role and clearing the token
 */
 
 import 'dart:convert';
@@ -19,13 +20,13 @@ class AuthService {
   static final AuthService instance = AuthService._();
 
   String  _role = 'user';
-  String? _adminPassword;   // kept in memory only, cleared on logout
+  String? _sessionToken;   // short-lived token from server, cleared on logout
 
   // ── Getters ───────────────────────────────────────────────────────────────
 
   String  get currentRole    => _role;
   bool    get isAdmin        => _role == 'admin';
-  String? get adminPassword  => _adminPassword;
+  String? get sessionToken   => _sessionToken;
 
   // ── Login / logout ────────────────────────────────────────────────────────
 
@@ -41,21 +42,22 @@ class AuthService {
     );
 
     if (response.statusCode == 200) {
+      final body = jsonDecode(response.body);
       _role = 'admin';
-      _adminPassword = password;
+      _sessionToken = body['token'] as String?;
     } else if (response.statusCode == 429) {
       _role = 'user';
-      _adminPassword = null;
+      _sessionToken = null;
       throw Exception('Te veel pogingen. Probeer het over 5 minuten opnieuw.');
     } else {
       _role = 'user';
-      _adminPassword = null;
+      _sessionToken = null;
       throw Exception('Invalid password');
     }
   }
 
   void logout() {
     _role = 'user';
-    _adminPassword = null;
+    _sessionToken = null;
   }
 }
