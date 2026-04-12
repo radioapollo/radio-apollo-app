@@ -44,7 +44,7 @@ class MessageBubble extends StatelessWidget {
               child: Text(
                 message.username!,
                 style: const TextStyle(
-                  color:      Colors.white60,
+                  color:      AppColors.usernameLabel,
                   fontSize:   11,
                   fontWeight: FontWeight.w600,
                 ),
@@ -64,7 +64,7 @@ class MessageBubble extends StatelessWidget {
                     padding: EdgeInsets.only(right: 8, top: 2),
                     child: Icon(
                       Icons.radio,
-                      color: Colors.black54,
+                      color: AppColors.textSecondary,
                       size:  AppDimensions.iconMedium,
                     ),
                   ),
@@ -72,7 +72,7 @@ class MessageBubble extends StatelessWidget {
                   child: Text(
                     message.text,
                     style: AppTextStyles.bubbleText.copyWith(
-                      color: isUser ? Colors.white : Colors.black87,
+                      color: isUser ? AppColors.textOnDark : AppColors.textBody,
                     ),
                   ),
                 ),

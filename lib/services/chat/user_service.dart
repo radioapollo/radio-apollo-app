@@ -5,7 +5,7 @@
    It handles:
    - loading the saved username from device storage on startup
    - checking Firestore to ensure the username is unique
-   - claiming the username in Firestore so nobody else can take it
+   - claiming the username in Firestore atomically (transaction)
    - saving the username locally on the device
 */
 
@@ -46,27 +46,31 @@ class UserService {
       }
     }
   }
-  
+
   /// Claims and saves a new username. Throws if the name is taken.
+  /// Uses a Firestore transaction to prevent two users from claiming
+  /// the same name simultaneously.
   Future<void> setUsername(String name) async {
     final trimmed = name.trim();
     if (trimmed.isEmpty) return;
 
     final docId = trimmed.toLowerCase();
+    final docRef = _db.collection('usernames').doc(docId);
 
-    // Check if already taken
-    final doc = await _db.collection('usernames').doc(docId).get();
-    if (doc.exists) {
-      throw Exception('Deze naam is al in gebruik. Kies een andere.');
-    }
+    await _db.runTransaction((transaction) async {
+      final snapshot = await transaction.get(docRef);
 
-    // Claim the username in Firestore
-    await _db.collection('usernames').doc(docId).set({
-      'displayName': trimmed,
-      'claimedAt': FieldValue.serverTimestamp(),
+      if (snapshot.exists) {
+        throw Exception('Deze naam is al in gebruik. Kies een andere.');
+      }
+
+      transaction.set(docRef, {
+        'displayName': trimmed,
+        'claimedAt': FieldValue.serverTimestamp(),
+      });
     });
 
-    // Save locally
+    // Save locally only after the transaction succeeded
     final prefs = await SharedPreferences.getInstance();
     await prefs.setString(_key, trimmed);
     _username = trimmed;

@@ -81,6 +81,7 @@ class EventScreen extends StatelessWidget {
                       );
                     }
 
+                    final events = snapshot.data!;
                     return ListView.builder(
                       padding: const EdgeInsets.fromLTRB(
                         AppDimensions.paddingXLarge,
@@ -88,9 +89,9 @@ class EventScreen extends StatelessWidget {
                         AppDimensions.paddingXLarge,
                         AppDimensions.paddingXLarge,
                       ),
-                      itemCount: snapshot.data!.length,
+                      itemCount: events.length,
                       itemBuilder: (context, index) =>
-                          _buildEventCard(context, snapshot.data![index]),
+                          _buildEventCard(context, events[index]),
                     );
                   },
                 ),
@@ -102,51 +103,46 @@ class EventScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildEventCard(BuildContext context, Event event) => Container(
-        margin: const EdgeInsets.only(bottom: AppDimensions.spaceXLarge),
-        decoration: AppDecorations.lightCard(),
-        child: Material(
-          color: Colors.transparent,
-          borderRadius: BorderRadius.circular(AppDimensions.radiusMedium),
-          child: InkWell(
-            borderRadius: BorderRadius.circular(AppDimensions.radiusMedium),
-            onTap: () => _showEventDetail(context, event),
-            child: Padding(
-              padding: const EdgeInsets.all(AppDimensions.paddingMedium),
-              child: Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Container(
-                    padding: const EdgeInsets.all(AppDimensions.paddingSmall),
-                    decoration: AppDecorations.iconContainer(
-                        color: AppColors.cardBlue,
-                        radius: AppDimensions.radiusSmall),
-                    child: const Icon(Icons.event,
-                        color: AppColors.primary,
-                        size: AppDimensions.iconLarge),
+  Widget _buildEventCard(BuildContext context, Event event) => Padding(
+        padding:
+            const EdgeInsets.only(bottom: AppDimensions.spaceLarge),
+        child: GestureDetector(
+          onTap: () => _showEventDetail(context, event),
+          child: Container(
+            padding: const EdgeInsets.all(AppDimensions.paddingLarge),
+            decoration: AppDecorations.lightCard(),
+            child: Row(
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(
+                      AppDimensions.paddingSmall),
+                  decoration: AppDecorations.iconContainer(
+                      color: AppColors.cardBlue),
+                  child: const Icon(Icons.event,
+                      color: AppColors.primaryLight,
+                      size: AppDimensions.iconLarge),
+                ),
+                const SizedBox(width: AppDimensions.spaceLarge),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(event.title, style: AppTextStyles.cardTitle),
+                      const SizedBox(height: AppDimensions.spaceXSmall),
+                      _iconRow(Icons.access_time, event.date),
+                      const SizedBox(height: 2),
+                      _iconRow(Icons.location_on, event.location),
+                      const SizedBox(height: AppDimensions.spaceSmall),
+                      Text(event.what, style: AppTextStyles.cardSubtitle),
+                    ],
                   ),
-                  const SizedBox(width: AppDimensions.spaceLarge),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(event.title, style: AppTextStyles.cardTitle),
-                        const SizedBox(height: AppDimensions.spaceXSmall),
-                        _iconRow(Icons.access_time, event.date),
-                        const SizedBox(height: 2),
-                        _iconRow(Icons.location_on, event.location),
-                        const SizedBox(height: AppDimensions.spaceSmall),
-                        Text(event.what, style: AppTextStyles.cardSubtitle),
-                      ],
-                    ),
-                  ),
-                  const Icon(
-                    Icons.chevron_right,
-                    color: Colors.black26,
-                    size: AppDimensions.iconMedium,
-                  ),
-                ],
-              ),
+                ),
+                const Icon(
+                  Icons.chevron_right,
+                  color: AppColors.chevronIcon,
+                  size: AppDimensions.iconMedium,
+                ),
+              ],
             ),
           ),
         ),
@@ -155,30 +151,50 @@ class EventScreen extends StatelessWidget {
   void _showEventDetail(BuildContext context, Event event) {
     showModalBottomSheet(
       context: context,
+      isScrollControlled: true,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(
           top: Radius.circular(AppDimensions.radiusXLarge),
         ),
       ),
-      builder: (_) => Padding(
-        padding: const EdgeInsets.fromLTRB(
-          AppDimensions.paddingXLarge,
-          AppDimensions.paddingXLarge,
-          AppDimensions.paddingXLarge,
-          AppDimensions.space30,
-        ),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(event.title, style: AppTextStyles.screenTitleSmall),
-            const SizedBox(height: AppDimensions.spaceLarge),
-            _iconRow(Icons.access_time, event.date),
-            const SizedBox(height: AppDimensions.spaceSmall),
-            _iconRow(Icons.location_on, event.location),
-            const SizedBox(height: AppDimensions.spaceLarge),
-            Text(event.what, style: AppTextStyles.cardSubtitle),
-          ],
+      builder: (_) => DraggableScrollableSheet(
+        initialChildSize: 0.4,
+        minChildSize: 0.25,
+        maxChildSize: 0.85,
+        expand: false,
+        builder: (context, scrollController) => SingleChildScrollView(
+          controller: scrollController,
+          padding: const EdgeInsets.fromLTRB(
+            AppDimensions.paddingXLarge,
+            AppDimensions.paddingXLarge,
+            AppDimensions.paddingXLarge,
+            AppDimensions.space30,
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Drag handle
+              Center(
+                child: Container(
+                  width: 40,
+                  height: 4,
+                  margin: const EdgeInsets.only(
+                      bottom: AppDimensions.spaceLarge),
+                  decoration: BoxDecoration(
+                    color: AppColors.divider,
+                    borderRadius: BorderRadius.circular(2),
+                  ),
+                ),
+              ),
+              Text(event.title, style: AppTextStyles.screenTitleSmall),
+              const SizedBox(height: AppDimensions.spaceLarge),
+              _iconRow(Icons.access_time, event.date),
+              const SizedBox(height: AppDimensions.spaceSmall),
+              _iconRow(Icons.location_on, event.location),
+              const SizedBox(height: AppDimensions.spaceLarge),
+              Text(event.what, style: AppTextStyles.cardSubtitle),
+            ],
+          ),
         ),
       ),
     );
@@ -187,7 +203,7 @@ class EventScreen extends StatelessWidget {
   Widget _iconRow(IconData icon, String label) => Row(
         children: [
           Icon(icon,
-              size: AppDimensions.iconSmall, color: Colors.black45),
+              size: AppDimensions.iconSmall, color: AppColors.textMeta),
           const SizedBox(width: AppDimensions.spaceXSmall),
           Text(label, style: AppTextStyles.cardMeta),
         ],

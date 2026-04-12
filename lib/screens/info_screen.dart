@@ -118,7 +118,7 @@ class InfoScreen extends StatelessWidget {
                       child: Text(
                         'App ontwikkeld door Raf Vermeylen',
                         style: TextStyle(
-                          color: Color.fromARGB(204, 0, 0, 0),
+                          color: AppColors.creditText,
                           fontSize: 12,
                           fontWeight: FontWeight.w500,
                         ),

@@ -47,7 +47,7 @@ class ChatTitle extends StatelessWidget {
                     child: Text(
                       'Ingelogd als: $username',
                       style: const TextStyle(
-                          color: Colors.black54, fontSize: 12),
+                          color: AppColors.textSecondary, fontSize: 12),
                     ),
                   ),
               ],
@@ -58,9 +58,9 @@ class ChatTitle extends StatelessWidget {
           if (authService.isAdmin)
             TextButton.icon(
               onPressed: onLogout,
-              icon: const Icon(Icons.logout, size: 18, color: Colors.black54),
+              icon: const Icon(Icons.logout, size: 18, color: AppColors.textSecondary),
               label: const Text('Uitloggen',
-                  style: TextStyle(color: Colors.black54, fontSize: 13)),
+                  style: TextStyle(color: AppColors.textSecondary, fontSize: 13)),
             ),
         ],
       ),

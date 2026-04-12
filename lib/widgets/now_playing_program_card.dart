@@ -10,299 +10,152 @@
    - the time slot
    - a small "Nu bezig" indicator
 
-   It fetches today's programs from Firestore and determines
-   which one is currently on air. Refreshes every minute.
-
-   On launch, it loads cached program data from shared_preferences
-   so the card appears instantly without waiting for Firestore.
-
-   It also updates the audio handler with the current program name
-   and image so the media notification can display them.
+   It listens to CurrentProgramService for data — all Firestore
+   fetching, time logic, and caching live in that service.
 */
 
-import 'dart:async';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
-import 'package:shared_preferences/shared_preferences.dart';
-import '../main.dart';
-import '../services/program_service.dart';
+import 'service_provider.dart';
+import '../services/program/current_program_service.dart';
 import '../theme/app_theme.dart';
 
-class NowPlayingProgramCard extends StatefulWidget {
+class NowPlayingProgramCard extends StatelessWidget {
   final VoidCallback? onTap;
 
   const NowPlayingProgramCard({super.key, this.onTap});
 
   @override
-  State<NowPlayingProgramCard> createState() => _NowPlayingProgramCardState();
-}
+  Widget build(BuildContext context) {
+    final cpService = ServiceProvider.of(context).currentProgramService;
 
-class _NowPlayingProgramCardState extends State<NowPlayingProgramCard> {
-  final _programService = ProgramService();
-  Timer? _timer;
+    return StreamBuilder<CurrentProgram>(
+      stream: cpService.currentProgram,
+      initialData: cpService.lastProgram,
+      builder: (context, snapshot) {
+        final program = snapshot.data;
+        if (program == null || !program.hasData) {
+          return const SizedBox.shrink();
+        }
 
-  // Cache keys
-  static const _keyTitle     = 'now_playing_title';
-  static const _keyPresenter = 'now_playing_presenter';
-  static const _keyTimeSlot  = 'now_playing_time_slot';
-  static const _keyImageUrl  = 'now_playing_image_url';
-
-  String? _programTitle;
-  String? _presenter;
-  String? _timeSlot;
-  String? _imageUrl;
-  bool _loading = true;
-
-  @override
-  void initState() {
-    super.initState();
-    _loadCachedProgram();
-    _loadCurrentProgram();
-    _timer = Timer.periodic(
-      const Duration(minutes: 1),
-      (_) => _loadCurrentProgram(),
+        return GestureDetector(
+          onTap: onTap,
+          child: Container(
+            width: double.infinity,
+            padding: const EdgeInsets.symmetric(
+              horizontal: AppDimensions.paddingXLarge,
+              vertical: AppDimensions.paddingMedium,
+            ),
+            decoration: BoxDecoration(
+              color: AppColors.navyMedium,
+              borderRadius: BorderRadius.circular(AppDimensions.radiusLarge),
+              border: Border.all(
+                color: AppColors.borderSubtle,
+                width: AppDimensions.borderThin,
+              ),
+            ),
+            child: Row(
+              children: [
+                _buildImage(program.imageUrl),
+                const SizedBox(width: AppDimensions.spaceLarge),
+                Expanded(child: _buildInfo(program)),
+                if (onTap != null)
+                  const Icon(
+                    Icons.chevron_right,
+                    color: AppColors.loadingIndicator,
+                    size: AppDimensions.iconLarge,
+                  ),
+              ],
+            ),
+          ),
+        );
+      },
     );
   }
 
-  @override
-  void dispose() {
-    _timer?.cancel();
-    super.dispose();
+  // ── Image ─────────────────────────────────────────────────────────────────
+
+  Widget _buildImage(String? imageUrl) {
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(AppDimensions.radiusSmall),
+      child: imageUrl != null && imageUrl.isNotEmpty
+          ? CachedNetworkImage(
+              imageUrl: imageUrl,
+              width: 48,
+              height: 48,
+              fit: BoxFit.cover,
+              errorWidget: (_, __, ___) => _buildFallbackIcon(),
+            )
+          : _buildFallbackIcon(),
+    );
   }
 
-  // ── Cache ─────────────────────────────────────────────────────────────────
-
-  Future<void> _loadCachedProgram() async {
-    final prefs = await SharedPreferences.getInstance();
-    final cachedTitle = prefs.getString(_keyTitle);
-
-    if (cachedTitle != null && cachedTitle.isNotEmpty && mounted) {
-      final cachedImageUrl = prefs.getString(_keyImageUrl);
-      setState(() {
-        _programTitle = cachedTitle;
-        _presenter    = prefs.getString(_keyPresenter);
-        _timeSlot     = prefs.getString(_keyTimeSlot);
-        _imageUrl     = cachedImageUrl;
-        _loading      = false;
-      });
-      audioHandler.setCurrentProgram(cachedTitle, imageUrl: cachedImageUrl);
-    }
+  Widget _buildFallbackIcon() {
+    return Container(
+      width: 48,
+      height: 48,
+      decoration: const BoxDecoration(color: AppColors.borderSubtle),
+      child: const Icon(
+        Icons.radio,
+        color: AppColors.iconOnDarkMuted,
+        size: AppDimensions.iconLarge,
+      ),
+    );
   }
 
-  Future<void> _saveToCache() async {
-    final prefs = await SharedPreferences.getInstance();
-    if (_programTitle != null) {
-      await prefs.setString(_keyTitle, _programTitle!);
-      await prefs.setString(_keyPresenter, _presenter ?? '');
-      await prefs.setString(_keyTimeSlot, _timeSlot ?? '');
-      await prefs.setString(_keyImageUrl, _imageUrl ?? '');
-    } else {
-      await prefs.remove(_keyTitle);
-      await prefs.remove(_keyPresenter);
-      await prefs.remove(_keyTimeSlot);
-      await prefs.remove(_keyImageUrl);
-    }
-  }
+  // ── Info column ───────────────────────────────────────────────────────────
 
-  // ── Helpers ───────────────────────────────────────────────────────────────
-
-  String _formatTime(String time) {
-    if (time == '24:00') return '00:00';
-    return time;
-  }
-
-  bool _isCurrent(String startTime, String endTime) {
-    final now = DateTime.now();
-    final currentMinutes = now.hour * 60 + now.minute;
-
-    int parseTime(String time) {
-      final parts = time.split(':');
-      return int.parse(parts[0]) * 60 + int.parse(parts[1]);
-    }
-
-    final start = parseTime(startTime);
-    final end = parseTime(endTime);
-
-    if (end <= start) {
-      return currentMinutes >= start || currentMinutes < end;
-    }
-
-    return currentMinutes >= start && currentMinutes < end;
-  }
-
-  // ── Firestore fetch ───────────────────────────────────────────────────────
-
-  Future<void> _loadCurrentProgram() async {
-    final todayName =
-        ProgramService.weekdays[DateTime.now().weekday - 1];
-
-    _programService.getProgramsForDay(todayName).first.then((programs) {
-      if (!mounted) return;
-
-      String? foundTitle;
-      String? foundPresenter;
-      String? foundTimeSlot;
-      String? foundImageUrl;
-
-      for (final p in programs) {
-        final timeParts = p['time']!.split(' - ');
-        if (timeParts.length == 2 && _isCurrent(timeParts[0], timeParts[1])) {
-          foundTitle = p['title'];
-          foundPresenter = p['desc'];
-          foundImageUrl = p['imageUrl'];
-          foundTimeSlot =
-              '${_formatTime(timeParts[0])} - ${_formatTime(timeParts[1])}';
-          break;
-        }
-      }
-
-      setState(() {
-        _programTitle = foundTitle;
-        _presenter = foundPresenter;
-        _timeSlot = foundTimeSlot;
-        _imageUrl = foundImageUrl;
-        _loading = false;
-      });
-
-      audioHandler.setCurrentProgram(foundTitle ?? '', imageUrl: foundImageUrl);
-
-      _saveToCache();
-    }).catchError((_) {
-      if (mounted) setState(() => _loading = false);
-    });
-  }
-
-  // ── Build ─────────────────────────────────────────────────────────────────
-
-  @override
-  Widget build(BuildContext context) {
-    if (_loading || _programTitle == null) return const SizedBox.shrink();
-
-    return GestureDetector(
-      onTap: widget.onTap,
-      child: Container(
-        width: double.infinity,
-        padding: const EdgeInsets.symmetric(
-          horizontal: AppDimensions.paddingXLarge,
-          vertical: AppDimensions.paddingMedium,
-        ),
-        decoration: BoxDecoration(
-          color: AppColors.navyMedium,
-          borderRadius: BorderRadius.circular(AppDimensions.radiusLarge),
-          border: Border.all(
-            color: Colors.white12,
-            width: AppDimensions.borderThin,
-          ),
-        ),
-        child: Row(
+  Widget _buildInfo(CurrentProgram program) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        // "Nu bezig" label + time
+        Row(
           children: [
-            // Program image or fallback radio icon
-            ClipRRect(
-              borderRadius:
-                  BorderRadius.circular(AppDimensions.radiusSmall),
-              child: _imageUrl != null && _imageUrl!.isNotEmpty
-                  ? CachedNetworkImage(
-                      imageUrl: _imageUrl!,
-                      width: 48,
-                      height: 48,
-                      fit: BoxFit.cover,
-                      errorWidget: (_, __, ___) => Container(
-                        width: 48,
-                        height: 48,
-                        decoration: const BoxDecoration(
-                          color: Colors.white12,
-                        ),
-                        child: const Icon(
-                          Icons.radio,
-                          color: Colors.white70,
-                          size: AppDimensions.iconLarge,
-                        ),
-                      ),
-                    )
-                  : Container(
-                      width: 48,
-                      height: 48,
-                      decoration: const BoxDecoration(
-                        color: Colors.white12,
-                      ),
-                      child: const Icon(
-                        Icons.radio,
-                        color: Colors.white70,
-                        size: AppDimensions.iconLarge,
-                      ),
-                    ),
-            ),
-            const SizedBox(width: AppDimensions.spaceLarge),
-            // Program info
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
+            Container(
+              padding: const EdgeInsets.symmetric(
+                horizontal: AppDimensions.nuBezigBadgePaddingH,
+                vertical: AppDimensions.nuBezigBadgePaddingV,
+              ),
+              decoration: AppDecorations.nuBezigBadge(),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
                 children: [
-                  // "Nu bezig" label + time
-                  Row(
-                    children: [
-                      Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: AppDimensions.nuBezigBadgePaddingH,
-                          vertical: AppDimensions.nuBezigBadgePaddingV,
-                        ),
-                        decoration: AppDecorations.nuBezigBadge(),
-                        child: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Icon(
-                              Icons.circle,
-                              size: AppDimensions.nuBezigIconSize,
-                              color: Colors.greenAccent.shade400,
-                            ),
-                            const SizedBox(
-                                width: AppDimensions.nuBezigIconSpacing),
-                            const Text('Nu bezig',
-                                style: AppTextStyles.nuBezigLabel),
-                          ],
-                        ),
-                      ),
-                      const SizedBox(width: AppDimensions.spaceSmall),
-                      if (_timeSlot != null)
-                        Text(
-                          _timeSlot!,
-                          style: AppTextStyles.darkCardTime,
-                        ),
-                    ],
+                  Icon(
+                    Icons.circle,
+                    size: AppDimensions.nuBezigIconSize,
+                    color: AppColors.nowPlayingDot,
                   ),
-                  const SizedBox(height: AppDimensions.spaceSmall),
-                  // Program title
-                  Text(
-                    _programTitle!,
-                    style: AppTextStyles.darkCardTitle,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                  // Presenter
-                  if (_presenter != null && _presenter!.isNotEmpty)
-                    Padding(
-                      padding: const EdgeInsets.only(
-                          top: AppDimensions.spaceXSmall),
-                      child: Text(
-                        _presenter!,
-                        style: AppTextStyles.darkCardSubtitle,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                    ),
+                  const SizedBox(width: AppDimensions.nuBezigIconSpacing),
+                  const Text('Nu bezig', style: AppTextStyles.nuBezigLabel),
                 ],
               ),
             ),
-            // Chevron to hint it navigates to programs
-            if (widget.onTap != null)
-              const Icon(
-                Icons.chevron_right,
-                color: Colors.white38,
-                size: AppDimensions.iconLarge,
-              ),
+            const SizedBox(width: AppDimensions.spaceSmall),
+            if (program.timeSlot != null)
+              Text(program.timeSlot!, style: AppTextStyles.darkCardTime),
           ],
         ),
-      ),
+        const SizedBox(height: AppDimensions.spaceSmall),
+        // Program title
+        Text(
+          program.title!,
+          style: AppTextStyles.darkCardTitle,
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+        ),
+        // Presenter
+        if (program.presenter != null && program.presenter!.isNotEmpty)
+          Padding(
+            padding: const EdgeInsets.only(top: AppDimensions.spaceXSmall),
+            child: Text(
+              program.presenter!,
+              style: AppTextStyles.darkCardSubtitle,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+            ),
+          ),
+      ],
     );
   }
 }

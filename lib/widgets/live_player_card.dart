@@ -10,7 +10,7 @@
 
 import 'package:flutter/material.dart';
 import 'package:audio_service/audio_service.dart';
-import '../main.dart';
+import 'service_provider.dart';
 import '../theme/app_theme.dart';
 
 class LivePlayerCard extends StatelessWidget {
@@ -25,6 +25,8 @@ class LivePlayerCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final audioHandler = ServiceProvider.of(context).audioHandler;
+
     return Container(
       padding: const EdgeInsets.all(AppDimensions.paddingXLarge),
       decoration: AppDecorations.livePlayerCard(),
@@ -36,7 +38,7 @@ class LivePlayerCard extends StatelessWidget {
               isPlaying
                   ? Icons.pause_circle_filled
                   : Icons.play_circle_fill,
-              color: Colors.white,
+              color: AppColors.textOnDark,
               size: AppDimensions.iconPlayPause,
             ),
           ),
@@ -56,7 +58,6 @@ class LivePlayerCard extends StatelessWidget {
                 const Text('RADIO APOLLO',
                     style: AppTextStyles.stationName),
                 const SizedBox(height: AppDimensions.spaceSmall),
-                // Song info from the audio handler's mediaItem stream
                 StreamBuilder<MediaItem?>(
                   stream: audioHandler.mediaItem,
                   builder: (context, snapshot) {
@@ -64,7 +65,6 @@ class LivePlayerCard extends StatelessWidget {
                     final artist = item?.artist ?? '';
                     final title = item?.title ?? 'Live radio speelt...';
 
-                    // Don't show artist if it's the default "Live"
                     final showArtist =
                         artist.isNotEmpty && artist != 'Live';
 

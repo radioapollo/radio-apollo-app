@@ -25,7 +25,7 @@ class AppDecorations {
       BoxDecoration(
         color: AppColors.navyMedium,
         borderRadius: BorderRadius.circular(radius),
-        border: Border.all(color: Colors.white12, width: AppDimensions.borderThin),
+        border: Border.all(color: AppColors.borderSubtle, width: AppDimensions.borderThin),
       );
 
   // --- Current program card ---
@@ -34,13 +34,13 @@ class AppDecorations {
         color: AppColors.primaryLight,
         borderRadius: BorderRadius.circular(AppDimensions.radiusXLarge),
         border: Border.all(
-            color: Colors.white24, width: AppDimensions.borderThin),
+            color: AppColors.overlayLight, width: AppDimensions.borderThin),
       );
 
   // --- Nu bezig badge ---
 
   static BoxDecoration nuBezigBadge() => BoxDecoration(
-        color: Colors.white24,
+        color: AppColors.overlayLight,
         borderRadius: BorderRadius.circular(AppDimensions.radiusFull),
       );
 
@@ -74,7 +74,7 @@ class AppDecorations {
         borderRadius:
             BorderRadius.circular(AppDimensions.radiusMedium),
         border: Border.all(
-            color: Colors.white12, width: AppDimensions.borderThin),
+            color: AppColors.borderSubtle, width: AppDimensions.borderThin),
       );
 
   // --- Chat message list container ---
@@ -83,7 +83,7 @@ class AppDecorations {
         color: AppColors.navyDeep,
         borderRadius: BorderRadius.circular(AppDimensions.radiusXLarge),
         border: Border.all(
-            color: Colors.white12, width: AppDimensions.borderThin),
+            color: AppColors.borderSubtle, width: AppDimensions.borderThin),
       );
 
   // --- Live player card ---
@@ -116,7 +116,7 @@ class AppDecorations {
   // --- Program card icon background ---
 
   static const BoxDecoration programIconBg = BoxDecoration(
-    color: Colors.white12,
+    color: AppColors.borderSubtle,
     borderRadius: BorderRadius.all(
         Radius.circular(AppDimensions.radiusSmall + 2)),
   );
@@ -124,13 +124,13 @@ class AppDecorations {
   // --- Sticky header background ---
 
   static BoxDecoration stickyHeader() => BoxDecoration(
-        color: Colors.white.withValues(alpha: 0.95),
+        color: AppColors.stickyHeaderBg,
       );
 
   // --- Bottom nav bar ---
 
   static const BoxDecoration bottomNav = BoxDecoration(
-    color: Color(0xFFF8FAFF),
+    color: AppColors.bottomNavBg,
     borderRadius: BorderRadius.only(
       topLeft: Radius.circular(AppDimensions.radiusXLarge),
       topRight: Radius.circular(AppDimensions.radiusXLarge),

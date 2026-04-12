@@ -7,6 +7,9 @@
    - rotating/shifting lists (used for the day selector in the schedule)
    - formatting the current time for chat messages
    - formatting a DateTime as HH:mm (used when converting Firestore timestamps)
+   - parsing "HH:mm" time strings into minutes (used for current-program detection)
+   - checking whether a time range covers the current moment
+   - formatting schedule times (converting "24:00" to "00:00")
 */
 
 class AppDateUtils {
@@ -25,5 +28,41 @@ class AppDateUtils {
   /// Formats any [DateTime] as a HH:mm string (e.g. "09:07").
   static String formatTime(DateTime dt) {
     return '${dt.hour.toString().padLeft(2, '0')}:${dt.minute.toString().padLeft(2, '0')}';
+  }
+
+  // ── Schedule time helpers ─────────────────────────────────────────────────
+
+  /// Normalises a schedule time string: converts "24:00" → "00:00".
+  static String formatScheduleTime(String time) {
+    if (time == '24:00') return '00:00';
+    return time;
+  }
+
+  /// Formats a start–end pair into a display string like "08:00 - 10:00".
+  static String formatTimeRange(String start, String end) {
+    return '${formatScheduleTime(start)} - ${formatScheduleTime(end)}';
+  }
+
+  /// Parses a "HH:mm" string into total minutes since midnight.
+  static int parseTimeToMinutes(String time) {
+    final parts = time.split(':');
+    return int.parse(parts[0]) * 60 + int.parse(parts[1]);
+  }
+
+  /// Returns true when the current moment falls inside [startTime]–[endTime].
+  /// Handles overnight ranges (e.g. 23:00 – 02:00).
+  static bool isCurrentTimeInRange(String startTime, String endTime) {
+    final now = DateTime.now();
+    final currentMinutes = now.hour * 60 + now.minute;
+
+    final start = parseTimeToMinutes(startTime);
+    final end = parseTimeToMinutes(endTime);
+
+    if (end <= start) {
+      // Overnight range
+      return currentMinutes >= start || currentMinutes < end;
+    }
+
+    return currentMinutes >= start && currentMinutes < end;
   }
 }

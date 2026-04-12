@@ -62,8 +62,8 @@ class ChatInputField extends StatelessWidget {
                     '$charsLeft',
                     style: TextStyle(
                       color: charsLeft <= 10
-                          ? Colors.redAccent
-                          : Colors.white38,
+                          ? AppColors.charCounterWarn
+                          : AppColors.loadingIndicator,
                       fontSize: 11,
                     ),
                   ),
@@ -77,7 +77,7 @@ class ChatInputField extends StatelessWidget {
             onTap: onSend,
             child: const Icon(
               Icons.send,
-              color: Colors.white,
+              color: AppColors.textOnDark,
               size:  AppDimensions.iconLarge,
             ),
           ),

@@ -21,7 +21,6 @@ import '../widgets/chat/chat_input_field.dart';
 import '../widgets/chat/message_bubble.dart';
 import '../widgets/chat/username_dialog.dart';
 import '../theme/app_theme.dart';
-import '../constants/constants.dart';
 import '../models/message.dart';
 
 class ChatScreen extends StatefulWidget {
@@ -112,7 +111,8 @@ class _ChatScreenState extends State<ChatScreen> {
 
   void _scrollToBottom() {
     Future.delayed(const Duration(milliseconds: 150), () {
-      if (_scrollController.hasClients) {
+      if (_scrollController.hasClients &&
+          _scrollController.position.hasContentDimensions) {
         _scrollController.animateTo(
           _scrollController.position.maxScrollExtent,
           duration: const Duration(milliseconds: 300),
@@ -135,12 +135,8 @@ class _ChatScreenState extends State<ChatScreen> {
   Widget build(BuildContext context) {
     return SizedBox.expand(
       child: Container(
-        decoration: BoxDecoration(
-          image: DecorationImage(
-            image: AssetImage(AppAssets.watermark),
-            fit: BoxFit.cover,
-            alignment: Alignment.topCenter,
-          ),
+        decoration: const BoxDecoration(
+          image: AppDecorations.backgroundWatermark,
         ),
         child: SafeArea(
           child: Column(
@@ -182,7 +178,7 @@ class _ChatScreenState extends State<ChatScreen> {
           builder: (context, snapshot) {
             if (snapshot.connectionState == ConnectionState.waiting) {
               return const Center(
-                child: CircularProgressIndicator(color: Colors.white38),
+                child: CircularProgressIndicator(color: AppColors.loadingIndicator),
               );
             }
             if (snapshot.hasError) {
@@ -190,7 +186,7 @@ class _ChatScreenState extends State<ChatScreen> {
                 child: Text(
                   'Fout bij laden:\n${snapshot.error}',
                   style: const TextStyle(
-                      color: Colors.white54, fontSize: 13),
+                      color: AppColors.textOnDarkMuted, fontSize: 13),
                   textAlign: TextAlign.center,
                 ),
               );
@@ -201,7 +197,7 @@ class _ChatScreenState extends State<ChatScreen> {
               return const Center(
                 child: Text(
                   'Nog geen berichten.\nWees de eerste!',
-                  style: TextStyle(color: Colors.white38, fontSize: 14),
+                  style: TextStyle(color: AppColors.loadingIndicator, fontSize: 14),
                   textAlign: TextAlign.center,
                 ),
               );

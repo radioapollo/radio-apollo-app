@@ -39,10 +39,21 @@ class _DaySelectorState extends State<DaySelector> {
   @override
   void didUpdateWidget(covariant DaySelector oldWidget) {
     super.didUpdateWidget(oldWidget);
-    _scrollToSelected();
+    if (oldWidget.selectedIndex != widget.selectedIndex) {
+      WidgetsBinding.instance.addPostFrameCallback((_) => _scrollToSelected());
+    }
+  }
+
+  @override
+  void dispose() {
+    _scrollController.dispose();
+    super.dispose();
   }
 
   void _scrollToSelected() {
+    if (!_scrollController.hasClients ||
+        !_scrollController.position.hasContentDimensions) return;
+
     final screenWidth = MediaQuery.of(context).size.width;
     final offset =
         (widget.selectedIndex *
@@ -52,7 +63,7 @@ class _DaySelectorState extends State<DaySelector> {
             (AppDimensions.daySelectorItemWidth / 2);
 
     _scrollController.animateTo(
-      offset.clamp(0, double.infinity),
+      offset.clamp(0, _scrollController.position.maxScrollExtent),
       duration: const Duration(milliseconds: 300),
       curve: Curves.easeOut,
     );

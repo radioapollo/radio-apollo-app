@@ -22,12 +22,8 @@ class PageWithHeader extends StatelessWidget {
   Widget build(BuildContext context) {
     return SizedBox.expand(
       child: Container(
-        decoration: BoxDecoration(
-          image: DecorationImage(
-            image: AssetImage(AppAssets.watermark),
-            fit: BoxFit.cover,
-            alignment: Alignment.topCenter,
-          ),
+        decoration: const BoxDecoration(
+          image: AppDecorations.backgroundWatermark,
         ),
         child: SafeArea(
           child: SingleChildScrollView(
@@ -35,7 +31,7 @@ class PageWithHeader extends StatelessWidget {
               AppDimensions.paddingXLarge,
               AppDimensions.paddingXLarge,
               AppDimensions.paddingXLarge,
-              30,
+              AppDimensions.space30,
             ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,

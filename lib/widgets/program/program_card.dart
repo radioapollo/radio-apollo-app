@@ -86,7 +86,7 @@ class ProgramCard extends StatelessWidget {
                 height: 20,
                 child: CircularProgressIndicator(
                   strokeWidth: 2,
-                  color: Colors.white38,
+                  color: AppColors.loadingIndicator,
                 ),
               ),
             ),
@@ -104,7 +104,7 @@ class ProgramCard extends StatelessWidget {
       padding: const EdgeInsets.all(AppDimensions.paddingSmall),
       decoration: AppDecorations.programIconBg,
       child: const Icon(Icons.radio,
-          color: Colors.white, size: AppDimensions.iconXLarge),
+          color: AppColors.textOnDark, size: AppDimensions.iconXLarge),
     );
   }
 
@@ -120,7 +120,7 @@ class ProgramCard extends StatelessWidget {
         mainAxisSize: MainAxisSize.min,
         children: [
           const Icon(Icons.circle,
-              color: Colors.redAccent,
+              color: AppColors.liveDot,
               size: AppDimensions.nuBezigIconSize),
           const SizedBox(width: AppDimensions.nuBezigIconSpacing),
           Text('NU BEZIG', style: AppTextStyles.nuBezigLabel),

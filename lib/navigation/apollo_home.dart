@@ -82,7 +82,7 @@ class _ApolloHomeState extends State<ApolloHome> {
               index: _index,
               children: [
                 HomeScreen(onNavigate: _switchTab),
-                const ProgramScreen(),
+                ProgramScreen(isActive: _index == 1),
                 InfoScreen(),
                 EventScreen(),
                 ChatScreen(
@@ -101,7 +101,7 @@ class _ApolloHomeState extends State<ApolloHome> {
 
   Widget _buildOfflineBanner() => Container(
         width: double.infinity,
-        color: Colors.orange.shade100,
+        color: AppColors.offlineBannerBg,
         padding: const EdgeInsets.symmetric(
           horizontal: AppDimensions.paddingXLarge,
           vertical: AppDimensions.paddingSmall,
@@ -111,12 +111,12 @@ class _ApolloHomeState extends State<ApolloHome> {
           child: Row(
             children: const [
               Icon(Icons.wifi_off,
-                  size: AppDimensions.iconMedium, color: Colors.orange),
+                  size: AppDimensions.iconMedium, color: AppColors.offlineIcon),
               SizedBox(width: AppDimensions.spaceSmall),
               Expanded(
                 child: Text(
                   'Je bent offline – gegevens kunnen verouderd zijn.',
-                  style: TextStyle(fontSize: 12, color: Colors.deepOrange),
+                  style: TextStyle(fontSize: 12, color: AppColors.offlineText),
                 ),
               ),
             ],
@@ -133,7 +133,7 @@ class _ApolloHomeState extends State<ApolloHome> {
         backgroundColor: AppColors.white,
         elevation: 0,
         selectedItemColor: AppColors.primaryMid,
-        unselectedItemColor: Colors.grey,
+        unselectedItemColor: AppColors.navUnselected,
         type: BottomNavigationBarType.fixed,
         items: const [
           BottomNavigationBarItem(icon: Icon(Icons.home),           label: 'Home'),

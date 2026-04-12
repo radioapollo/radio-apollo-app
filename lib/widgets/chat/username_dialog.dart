@@ -82,7 +82,7 @@ class _UsernameDialogState extends State<UsernameDialog> {
         children: [
           const Text(
             'Deze naam is zichtbaar voor andere chatters.',
-            style: TextStyle(color: Colors.black54, fontSize: 13),
+            style: TextStyle(color: AppColors.textSecondary, fontSize: 13),
           ),
           const SizedBox(height: 16),
           TextField(

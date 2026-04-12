@@ -1,21 +1,22 @@
 /* Main Entry Point
 
    Initialises Firebase, loads the stored username, sets up the
-   audio service, and launches the app.
+   audio service and current-program service, and launches the app.
 */
 
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:audio_service/audio_service.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'navigation/apollo_home.dart';
 import 'services/audio_handler.dart';
+import 'services/program/current_program_service.dart';
 import 'services/chat/user_service.dart';
+import 'widgets/service_provider.dart';
 import 'firebase_options.dart';
 import 'constants/constants.dart';
-import 'package:flutter/services.dart';
-
-late final RadioAudioHandler audioHandler;
+import 'theme/app_theme.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -31,7 +32,7 @@ Future<void> main() async {
 
   await UserService.instance.init();
 
-  audioHandler = await AudioService.init(
+  final audioHandler = await AudioService.init(
     builder: () => RadioAudioHandler(),
     config: const AudioServiceConfig(
       androidNotificationChannelId: AppConstants.notificationChannelId,
@@ -40,26 +41,66 @@ Future<void> main() async {
     ),
   );
 
-  runApp(const ApolloApp());
+  final currentProgramService = CurrentProgramService();
+  await currentProgramService.start();
+
+  // Keep the audio handler in sync with the current program
+  final programSub = currentProgramService.currentProgram.listen((program) {
+    audioHandler.setCurrentProgram(
+      program.title ?? '',
+      imageUrl: program.imageUrl,
+    );
+  });
+
+  runApp(ApolloApp(
+    audioHandler: audioHandler,
+    currentProgramService: currentProgramService,
+    programSubscription: programSub,
+  ));
 }
 
-class ApolloApp extends StatelessWidget {
-  const ApolloApp({super.key});
+class ApolloApp extends StatefulWidget {
+  final RadioAudioHandler audioHandler;
+  final CurrentProgramService currentProgramService;
+  final StreamSubscription programSubscription;
+
+  const ApolloApp({
+    super.key,
+    required this.audioHandler,
+    required this.currentProgramService,
+    required this.programSubscription,
+  });
+
+  @override
+  State<ApolloApp> createState() => _ApolloAppState();
+}
+
+class _ApolloAppState extends State<ApolloApp> {
+  @override
+  void dispose() {
+    widget.programSubscription.cancel();
+    widget.currentProgramService.stop();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      title: 'Radio Apollo',
-      theme: ThemeData(
-        fontFamily: 'Sans',
-        scaffoldBackgroundColor: Colors.white,
-        colorScheme: ColorScheme.fromSeed(
-          seedColor: const Color(0xFF0A2342),
-          brightness: Brightness.light,
+    return ServiceProvider(
+      audioHandler: widget.audioHandler,
+      currentProgramService: widget.currentProgramService,
+      child: MaterialApp(
+        title: 'Radio Apollo',
+        theme: ThemeData(
+          fontFamily: 'Sans',
+          scaffoldBackgroundColor: AppColors.scaffoldBg,
+          colorScheme: ColorScheme.fromSeed(
+            seedColor: AppColors.primary,
+            brightness: Brightness.light,
+          ),
+          useMaterial3: true,
         ),
-        useMaterial3: true,
+        home: const ApolloHome(),
       ),
-      home: const ApolloHome(),
     );
   }
 }

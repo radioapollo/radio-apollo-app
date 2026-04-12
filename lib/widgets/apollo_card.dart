@@ -40,7 +40,7 @@ class ApolloCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final textColor = darkText ? Colors.white : Colors.black87;
+    final textColor = darkText ? AppColors.textOnDark : AppColors.textBody;
 
     return GestureDetector(
       onTap: onTap,

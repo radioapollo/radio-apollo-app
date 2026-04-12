@@ -10,7 +10,7 @@
 
 import 'package:flutter/material.dart';
 import 'package:audio_service/audio_service.dart';
-import '../main.dart';
+import '../widgets/service_provider.dart';
 import '../widgets/page_with_header.dart';
 import '../widgets/apollo_card.dart';
 import '../widgets/live_player_card.dart';
@@ -24,20 +24,21 @@ class HomeScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final services = ServiceProvider.of(context);
+
     return PageWithHeader(
       child: Column(
         children: [
           StreamBuilder<PlaybackState>(
-            stream: audioHandler.playbackState,
+            stream: services.audioHandler.playbackState,
             builder: (context, snapshot) => LivePlayerCard(
               isPlaying: snapshot.data?.playing ?? false,
-              onTap: audioHandler.toggle,
+              onTap: services.audioHandler.toggle,
             ),
           ),
           const SizedBox(height: AppDimensions.spaceLarge),
-          // Currently playing program card
           NowPlayingProgramCard(
-            onTap: () => onNavigate(1), // Navigate to Programs tab
+            onTap: () => onNavigate(1),
           ),
           const SizedBox(height: AppDimensions.space30),
           _buildRow([
@@ -79,13 +80,15 @@ class HomeScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildRow(List<Widget> children) => Row(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          Expanded(child: children[0]),
-          const SizedBox(width: AppDimensions.spaceXLarge),
-          Expanded(child: children[1]),
-        ],
+  Widget _buildRow(List<Widget> children) => IntrinsicHeight(
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Expanded(child: children[0]),
+            const SizedBox(width: AppDimensions.spaceXLarge),
+            Expanded(child: children[1]),
+          ],
+        ),
       );
 
   Widget _card({

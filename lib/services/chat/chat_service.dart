@@ -32,6 +32,9 @@ class ChatService {
 
   // ── Stream ────────────────────────────────────────────────────────────────
 
+  /// Returns a fresh stream each time, with the 24h cutoff recalculated.
+  /// This ensures that if the user navigates away and comes back,
+  /// the cutoff is always based on the current time.
   Stream<List<Message>> get messagesStream {
     final cutoff = DateTime.now().subtract(const Duration(hours: 24));
 
