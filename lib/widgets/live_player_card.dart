@@ -6,9 +6,10 @@
    - a play/pause button that controls the audio stream
    - the LIVE indicator and station name
    - the currently playing song, read from the audio handler's mediaItem stream
-   - a Chromecast button to cast the stream to nearby devices
+   - a Chromecast button to cast the stream to nearby devices (mobile only)
 */
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:audio_service/audio_service.dart';
 import 'package:flutter_chrome_cast/widgets.dart';
@@ -85,8 +86,8 @@ class LivePlayerCard extends StatelessWidget {
               ],
             ),
           ),
-          // Chromecast button
-          const GoogleCastMiniController(),
+          // Chromecast button (only on mobile — not available on web)
+          if (!kIsWeb) const GoogleCastMiniController(),
         ],
       ),
     );

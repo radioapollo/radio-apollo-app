@@ -11,6 +11,7 @@
 
 import 'dart:async';
 import 'package:connectivity_plus/connectivity_plus.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_chrome_cast/session.dart';
 import '../screens/home_screen.dart';
@@ -23,14 +24,14 @@ import '../services/chat/auth_service.dart';
 import '../services/cast_service.dart';
 import '../theme/app_theme.dart';
 
-class ApolloHome extends StatefulWidget {
-  const ApolloHome({super.key});
+class ApolloNav extends StatefulWidget {
+  const ApolloNav({super.key});
 
   @override
-  State<ApolloHome> createState() => _ApolloHomeState();
+  State<ApolloNav> createState() => _ApolloNavState();
 }
 
-class _ApolloHomeState extends State<ApolloHome> {
+class _ApolloNavState extends State<ApolloNav> {
   int _index = 0;
   bool _isOffline = false;
   StreamSubscription<List<ConnectivityResult>>? _connectivitySub;
@@ -52,11 +53,14 @@ class _ApolloHomeState extends State<ApolloHome> {
         .listen(_updateConnectivity);
 
     // When a Cast session starts, send the radio stream to the device
-    _castSessionSub = GoogleCastSessionManager.instance.currentSessionStream.listen((session) {
-      if (session != null) {
-        CastService.instance.castRadioStream();
-      }
-    });
+    // (Cast is only available on iOS and Android, not on web)
+    if (!kIsWeb) {
+      _castSessionSub = GoogleCastSessionManager.instance.currentSessionStream.listen((session) {
+        if (session != null) {
+          CastService.instance.castRadioStream();
+        }
+      });
+    }
   }
 
   @override
