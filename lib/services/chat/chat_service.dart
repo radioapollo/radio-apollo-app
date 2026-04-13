@@ -8,10 +8,17 @@
    - sending admin messages through a Cloud Function (token-based auth)
    - enforcing the 160 character limit
 
+   User messages are written directly to Firestore because the app
+   primarily targets iOS/Android where Cloud Function CORS is not an
+   issue. Firestore Security Rules validate every field on write.
+   The userSendMessage Cloud Function remains available as a fallback
+   and adds server-side rate limiting for web clients.
+
    Firestore collection: 'chat_messages'
    Document fields: { username, text, role, timestamp }
 */
 
+import 'dart:async';
 import 'dart:convert';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:http/http.dart' as http;
@@ -34,31 +41,41 @@ class ChatService {
   ChatService({required this.authService});
 
   // ── Stream ────────────────────────────────────────────────────────────────
+  // The cutoff is recomputed on every snapshot so the 24h window stays fresh
+  // even if the chat screen is left open for hours.
 
   Stream<List<Message>> get messagesStream {
-    final cutoff = DateTime.now().subtract(const Duration(hours: 24));
-
     return _db
         .collection(_collection)
-        .where('timestamp', isGreaterThan: Timestamp.fromDate(cutoff))
         .orderBy('timestamp', descending: false)
         .snapshots()
-        .map((snap) => snap.docs.map((doc) {
-              final data         = doc.data();
-              final ts           = data['timestamp'] as Timestamp?;
-              final dt           = ts?.toDate() ?? DateTime.now();
-              final msgUsername  = data['username'] as String? ?? 'Onbekend';
-              final localUsername = UserService.instance.username;
-              return Message(
-                role:          data['role'] as String? ?? 'user',
-                text:          data['text'] as String? ?? '',
-                time:          AppDateUtils.formatTime(dt),
-                username:      msgUsername,
-                isCurrentUser: localUsername != null &&
-                    msgUsername == localUsername &&
-                    (data['role'] as String? ?? 'user') != 'admin',
-              );
-            }).toList());
+        .map((snap) {
+          final cutoff = DateTime.now().subtract(const Duration(hours: 24));
+
+          return snap.docs
+              .where((doc) {
+                final ts = doc.data()['timestamp'] as Timestamp?;
+                if (ts == null) return true; // pending server timestamp
+                return ts.toDate().isAfter(cutoff);
+              })
+              .map((doc) {
+                final data         = doc.data();
+                final ts           = data['timestamp'] as Timestamp?;
+                final dt           = ts?.toDate() ?? DateTime.now();
+                final msgUsername  = data['username'] as String? ?? 'Onbekend';
+                final localUsername = UserService.instance.username;
+                return Message(
+                  role:          data['role'] as String? ?? 'user',
+                  text:          data['text'] as String? ?? '',
+                  time:          AppDateUtils.formatTime(dt),
+                  username:      msgUsername,
+                  isCurrentUser: localUsername != null &&
+                      msgUsername == localUsername &&
+                      (data['role'] as String? ?? 'user') != 'admin',
+                );
+              })
+              .toList();
+        });
   }
 
   // ── Send ──────────────────────────────────────────────────────────────────
@@ -88,12 +105,21 @@ class ChatService {
 
     final username = UserService.instance.username ?? 'Onbekend';
 
-    await _db.collection(_collection).add({
-      'username':  username,
-      'text':      text,
-      'role':      'user',
-      'timestamp': FieldValue.serverTimestamp(),
-    });
+    try {
+      await _db.collection(_collection).add({
+        'username':  username,
+        'text':      text,
+        'role':      'user',
+        'timestamp': FieldValue.serverTimestamp(),
+      });
+    } on FirebaseException catch (e) {
+      if (e.code == 'permission-denied') {
+        throw Exception('Bericht geweigerd. Probeer opnieuw.');
+      }
+      throw Exception('Bericht kon niet worden verzonden. Probeer opnieuw.');
+    } catch (_) {
+      throw Exception('Bericht kon niet worden verzonden. Controleer je netwerk.');
+    }
 
     _lastMessageSent = DateTime.now();
     return true;
@@ -109,20 +135,29 @@ class ChatService {
       'https://${AppConstants.region}-${AppConstants.projectId}.cloudfunctions.net/adminSendMessage',
     );
 
-    final response = await http.post(
-      uri,
-      headers: {'Content-Type': 'application/json'},
-      body: jsonEncode({
-        'token': token,
-        'text':  text,
-      }),
-    );
+    late final http.Response response;
+    try {
+      response = await http.post(
+        uri,
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode({
+          'token': token,
+          'text':  text,
+        }),
+      );
+    } catch (_) {
+      throw Exception('Bericht kon niet worden verzonden. Controleer je netwerk.');
+    }
 
     if (response.statusCode == 401) {
       authService.logout();
       throw Exception('Sessie verlopen. Log opnieuw in.');
     }
 
-    return response.statusCode == 200;
+    if (response.statusCode != 200) {
+      throw Exception('Bericht kon niet worden verzonden. Probeer opnieuw.');
+    }
+
+    return true;
   }
 }

@@ -3,6 +3,9 @@
    Initialises Firebase, loads the stored username, sets up the
    audio service, current-program service, and Cast context,
    then launches the app.
+
+   Includes a top-level error zone so uncaught async errors and
+   Flutter framework errors are logged instead of crashing the app.
 */
 
 import 'dart:async';
@@ -25,47 +28,89 @@ import 'theme/app_theme.dart';
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
+  // ── Top-level error handling ──────────────────────────────────────────────
+  // Catch Flutter framework errors (layout, build, rendering)
+  FlutterError.onError = (FlutterErrorDetails details) {
+    FlutterError.presentError(details);
+    debugPrint('[FlutterError] ${details.exceptionAsString()}');
+  };
+
+  // Catch uncaught async errors that escape try/catch blocks
+  PlatformDispatcher.instance.onError = (Object error, StackTrace stack) {
+    debugPrint('[UncaughtError] $error\n$stack');
+    return true; // Prevents the app from terminating
+  };
+
   await SystemChrome.setPreferredOrientations([
     DeviceOrientation.portraitUp,
     DeviceOrientation.portraitDown,
   ]);
 
-  await Firebase.initializeApp(
-    options: DefaultFirebaseOptions.currentPlatform,
-  );
+  // ── Firebase ──────────────────────────────────────────────────────────────
+  try {
+    await Firebase.initializeApp(
+      options: DefaultFirebaseOptions.currentPlatform,
+    );
+  } catch (e) {
+    debugPrint('[main] Firebase init failed: $e');
+    runApp(const _ErrorApp(message: 'Kan Firebase niet laden. Herstart de app.'));
+    return;
+  }
 
-  // Initialize Google Cast with the default media receiver
-  // (Cast is only available on iOS and Android, not on web)
+  // ── Google Cast (mobile only) ─────────────────────────────────────────────
   if (!kIsWeb) {
-    const appId = GoogleCastDiscoveryCriteria.kDefaultApplicationId;
-    GoogleCastOptions? castOptions;
+    try {
+      const appId = GoogleCastDiscoveryCriteria.kDefaultApplicationId;
+      GoogleCastOptions? castOptions;
 
-    if (Platform.isIOS) {
-      castOptions = IOSGoogleCastOptions(
-        GoogleCastDiscoveryCriteriaInitialize.initWithApplicationID(appId),
-      );
-    } else if (Platform.isAndroid) {
-      castOptions = GoogleCastOptionsAndroid(appId: appId);
-    }
+      if (Platform.isIOS) {
+        castOptions = IOSGoogleCastOptions(
+          GoogleCastDiscoveryCriteriaInitialize.initWithApplicationID(appId),
+        );
+      } else if (Platform.isAndroid) {
+        castOptions = GoogleCastOptionsAndroid(appId: appId);
+      }
 
-    if (castOptions != null) {
-      GoogleCastContext.instance.setSharedInstanceWithOptions(castOptions);
+      if (castOptions != null) {
+        GoogleCastContext.instance.setSharedInstanceWithOptions(castOptions);
+      }
+    } catch (e) {
+      // Cast is non-critical — log and continue
+      debugPrint('[main] Cast init failed (non-critical): $e');
     }
   }
 
-  await UserService.instance.init();
+  // ── User identity ─────────────────────────────────────────────────────────
+  try {
+    await UserService.instance.init();
+  } catch (e) {
+    debugPrint('[main] UserService init failed (non-critical): $e');
+  }
 
-  final audioHandler = await AudioService.init(
-    builder: () => RadioAudioHandler(),
-    config: const AudioServiceConfig(
-      androidNotificationChannelId: AppConstants.notificationChannelId,
-      androidNotificationChannelName: AppConstants.notificationChannelName,
-      androidNotificationOngoing: true,
-    ),
-  );
+  // ── Audio service ─────────────────────────────────────────────────────────
+  late final RadioAudioHandler audioHandler;
+  try {
+    audioHandler = await AudioService.init(
+      builder: () => RadioAudioHandler(),
+      config: const AudioServiceConfig(
+        androidNotificationChannelId: AppConstants.notificationChannelId,
+        androidNotificationChannelName: AppConstants.notificationChannelName,
+        androidNotificationOngoing: true,
+      ),
+    );
+  } catch (e) {
+    debugPrint('[main] AudioService init failed: $e');
+    runApp(const _ErrorApp(message: 'Audiodienst kon niet starten. Herstart de app.'));
+    return;
+  }
 
+  // ── Current program service ───────────────────────────────────────────────
   final currentProgramService = CurrentProgramService();
-  await currentProgramService.start();
+  try {
+    await currentProgramService.start();
+  } catch (e) {
+    debugPrint('[main] CurrentProgramService start failed (non-critical): $e');
+  }
 
   // Keep the audio handler in sync with the current program
   final programSub = currentProgramService.currentProgram.listen((program) {
@@ -81,6 +126,35 @@ Future<void> main() async {
     programSubscription: programSub,
   ));
 }
+
+// ── Fallback error screen ───────────────────────────────────────────────────
+// Shown when a critical service (Firebase, AudioService) fails to initialise.
+
+class _ErrorApp extends StatelessWidget {
+  final String message;
+  const _ErrorApp({required this.message});
+
+  @override
+  Widget build(BuildContext context) {
+    return MaterialApp(
+      home: Scaffold(
+        backgroundColor: Colors.white,
+        body: Center(
+          child: Padding(
+            padding: const EdgeInsets.all(32),
+            child: Text(
+              message,
+              textAlign: TextAlign.center,
+              style: const TextStyle(fontSize: 16, color: Colors.black87),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+// ── Main app widget ─────────────────────────────────────────────────────────
 
 class ApolloApp extends StatefulWidget {
   final RadioAudioHandler audioHandler;
