@@ -1,9 +1,13 @@
 /* Username Dialog
 
-   Shown the first time a user opens the chat screen.
+   Shown when the user opens the chat screen without a username.
 
    The user picks a display name (3–20 characters) which is then
    checked for uniqueness and saved via UserService.
+
+   The dialog is dismissible — users can tap "Later" to skip.
+   If dismissed, they can still read chat but cannot send messages
+   until they pick a username via the button in the title bar.
 */
 
 import 'package:flutter/material.dart';
@@ -17,7 +21,7 @@ class UsernameDialog extends StatefulWidget {
   static Future<String?> show(BuildContext context) {
     return showDialog<String>(
       context: context,
-      barrierDismissible: false,
+      barrierDismissible: true,
       builder: (_) => const UsernameDialog(),
     );
   }
@@ -112,6 +116,13 @@ class _UsernameDialogState extends State<UsernameDialog> {
         ],
       ),
       actions: [
+        TextButton(
+          onPressed: _loading ? null : () => Navigator.of(context).pop(null),
+          child: const Text(
+            'Later',
+            style: TextStyle(color: AppColors.textSecondary),
+          ),
+        ),
         TextButton(
           onPressed: _loading ? null : _submit,
           child: _loading

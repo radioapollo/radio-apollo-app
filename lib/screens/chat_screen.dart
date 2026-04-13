@@ -3,7 +3,9 @@
    Main chat screen where users talk to the studio in real time.
 
    Features:
-   - Username prompt on first visit, persisted across restarts
+   - Optional username prompt on first visit (can be skipped)
+   - Users without a username can read chat but not send messages
+   - "Kies een naam" button in the title bar to set a username later
    - Messages streamed live from Firestore (last 24 hours only)
    - 160 character limit with a countdown near the limit
    - Own messages on the right (blue), others on the left
@@ -97,10 +99,22 @@ class _ChatScreenState extends State<ChatScreen>
     });
   }
 
+  /// Initialises UserService and shows the username dialog if needed.
+  /// The dialog is now dismissible — if the user cancels, they can still
+  /// read the chat but cannot send messages until they pick a name.
   Future<void> _ensureUsername() async {
     await UserService.instance.init();
     if (!UserService.instance.hasUsername && mounted) {
       await UsernameDialog.show(context);
+      setState(() {});
+    }
+  }
+
+  /// Opens the username dialog on demand (e.g. from the title bar button
+  /// or the input-area prompt).
+  Future<void> _promptUsername() async {
+    final name = await UsernameDialog.show(context);
+    if (name != null && mounted) {
       setState(() {});
     }
   }
@@ -138,6 +152,10 @@ class _ChatScreenState extends State<ChatScreen>
   @override
   Widget build(BuildContext context) {
     super.build(context); // required by AutomaticKeepAliveClientMixin
+
+    final hasUsername = UserService.instance.hasUsername;
+    final isAdmin    = _authService.isAdmin;
+
     return SizedBox.expand(
       child: Container(
         decoration: const BoxDecoration(
@@ -154,16 +172,56 @@ class _ChatScreenState extends State<ChatScreen>
               ChatTitle(
                 authService: _authService,
                 onLogout: _onLogout,
+                onPickUsername: _promptUsername,
               ),
               const SizedBox(height: AppDimensions.spaceMedium),
               _buildChatList(),
-              ChatInputField(
-                controller: _controller,
-                charsLeft:  _charsLeft,
-                onSend:     _sendMessage,
-              ),
+
+              // ── Input area: real input or "pick a name" prompt ─────────────
+              if (hasUsername || isAdmin)
+                ChatInputField(
+                  controller: _controller,
+                  charsLeft:  _charsLeft,
+                  onSend:     _sendMessage,
+                )
+              else
+                _buildUsernamePrompt(),
             ],
           ),
+        ),
+      ),
+    );
+  }
+
+  // ── "Pick a name to chat" prompt (replaces input when no username) ────────
+
+  Widget _buildUsernamePrompt() {
+    return GestureDetector(
+      onTap: _promptUsername,
+      child: Container(
+        padding: const EdgeInsets.symmetric(
+          horizontal: AppDimensions.paddingMedium,
+          vertical:   AppDimensions.paddingSmall + 4,
+        ),
+        margin: const EdgeInsets.fromLTRB(
+          AppDimensions.paddingXLarge,
+          AppDimensions.spaceMedium,
+          AppDimensions.paddingXLarge,
+          AppDimensions.paddingXLarge,
+        ),
+        decoration: AppDecorations.chatInputFull(),
+        child: const Row(
+          children: [
+            Icon(Icons.person_add_alt_1, color: AppColors.textOnDarkMuted, size: 20),
+            SizedBox(width: 10),
+            Expanded(
+              child: Text(
+                'Kies een naam om mee te chatten',
+                style: TextStyle(color: AppColors.textOnDarkMuted, fontSize: 14),
+              ),
+            ),
+            Icon(Icons.arrow_forward_ios, color: AppColors.textOnDarkMuted, size: 14),
+          ],
         ),
       ),
     );
