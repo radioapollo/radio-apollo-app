@@ -19,6 +19,7 @@ dependencies:
   shared_preferences: ^2.3.0   # NEW — stores username locally on device
   cached_network_image: ^3.4.1
   connectivity_plus: ^6.0.0
+  flutter_chrome_cast: ^1.4.5
 
 dev_dependencies:
   flutter_test:

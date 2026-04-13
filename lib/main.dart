@@ -1,14 +1,17 @@
 /* Main Entry Point
 
    Initialises Firebase, loads the stored username, sets up the
-   audio service and current-program service, and launches the app.
+   audio service, current-program service, and Cast context,
+   then launches the app.
 */
 
 import 'dart:async';
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:audio_service/audio_service.dart';
 import 'package:firebase_core/firebase_core.dart';
+import 'package:flutter_chrome_cast/flutter_chrome_cast.dart';
 import 'navigation/apollo_home.dart';
 import 'services/audio_handler.dart';
 import 'services/program/current_program_service.dart';
@@ -29,6 +32,22 @@ Future<void> main() async {
   await Firebase.initializeApp(
     options: DefaultFirebaseOptions.currentPlatform,
   );
+
+  // Initialize Google Cast with the default media receiver
+  const appId = GoogleCastDiscoveryCriteria.kDefaultApplicationId;
+  GoogleCastOptions? castOptions;
+
+  if (Platform.isIOS) {
+    castOptions = IOSGoogleCastOptions(
+      GoogleCastDiscoveryCriteriaInitialize.initWithApplicationID(appId),
+    );
+  } else if (Platform.isAndroid) {
+    castOptions = GoogleCastOptionsAndroid(appId: appId);
+  }
+
+  if (castOptions != null) {
+    GoogleCastContext.instance.setSharedInstanceWithOptions(castOptions);
+  }
 
   await UserService.instance.init();
 

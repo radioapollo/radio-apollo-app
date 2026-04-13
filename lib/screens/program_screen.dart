@@ -30,7 +30,8 @@ class ProgramScreen extends StatefulWidget {
   State<ProgramScreen> createState() => _ProgramScreenState();
 }
 
-class _ProgramScreenState extends State<ProgramScreen> {
+class _ProgramScreenState extends State<ProgramScreen>
+    with AutomaticKeepAliveClientMixin {
   final _programService = ProgramService();
   final _scrollController = ScrollController();
   late List<String> _days;
@@ -38,6 +39,9 @@ class _ProgramScreenState extends State<ProgramScreen> {
   bool _hasScrolledToCurrent = false;
   bool _hasData = false;
   Timer? _timer;
+
+  @override
+  bool get wantKeepAlive => true;
 
   @override
   void initState() {
@@ -101,6 +105,7 @@ class _ProgramScreenState extends State<ProgramScreen> {
 
   @override
   Widget build(BuildContext context) {
+    super.build(context); // required by AutomaticKeepAliveClientMixin
     final selectedDay = _days[_selectedIndex];
     final isToday = _isToday();
 

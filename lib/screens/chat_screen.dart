@@ -42,7 +42,8 @@ class ChatScreen extends StatefulWidget {
   State<ChatScreen> createState() => _ChatScreenState();
 }
 
-class _ChatScreenState extends State<ChatScreen> {
+class _ChatScreenState extends State<ChatScreen>
+    with AutomaticKeepAliveClientMixin {
   final TextEditingController _controller      = TextEditingController();
   final ScrollController      _scrollController = ScrollController();
 
@@ -54,6 +55,9 @@ class _ChatScreenState extends State<ChatScreen> {
 
   ChatService get _chatService => widget.chatService;
   AuthService get _authService => widget.authService;
+
+  @override
+  bool get wantKeepAlive => true;
 
   // ── Lifecycle ─────────────────────────────────────────────────────────────
 
@@ -133,6 +137,7 @@ class _ChatScreenState extends State<ChatScreen> {
 
   @override
   Widget build(BuildContext context) {
+    super.build(context); // required by AutomaticKeepAliveClientMixin
     return SizedBox.expand(
       child: Container(
         decoration: const BoxDecoration(

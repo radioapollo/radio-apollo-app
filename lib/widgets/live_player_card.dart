@@ -6,10 +6,12 @@
    - a play/pause button that controls the audio stream
    - the LIVE indicator and station name
    - the currently playing song, read from the audio handler's mediaItem stream
+   - a Chromecast button to cast the stream to nearby devices
 */
 
 import 'package:flutter/material.dart';
 import 'package:audio_service/audio_service.dart';
+import 'package:flutter_chrome_cast/widgets.dart';
 import 'service_provider.dart';
 import '../theme/app_theme.dart';
 
@@ -63,30 +65,28 @@ class LivePlayerCard extends StatelessWidget {
                   builder: (context, snapshot) {
                     final item = snapshot.data;
                     final artist = item?.artist ?? '';
-                    final title = item?.title ?? 'Live radio speelt...';
-
-                    final showArtist =
-                        artist.isNotEmpty && artist != 'Live';
-
-                    return Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        if (showArtist)
-                          Text(artist,
-                              style: AppTextStyles.playerArtist,
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis),
-                        Text(title,
-                            style: AppTextStyles.playerSong,
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis),
-                      ],
+                    final title = item?.title ?? '';
+                    final display = artist.isNotEmpty && title.isNotEmpty
+                        ? '$artist - $title'
+                        : title.isNotEmpty
+                            ? title
+                            : 'Luister live';
+                    return Text(
+                      display,
+                      style: const TextStyle(
+                        color: AppColors.textOnDarkMuted,
+                        fontSize: 13,
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
                     );
                   },
                 ),
               ],
             ),
           ),
+          // Chromecast button
+          const GoogleCastMiniController(),
         ],
       ),
     );

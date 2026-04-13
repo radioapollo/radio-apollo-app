@@ -3,14 +3,16 @@
    Root scaffold of the app.
 
    Manages the bottom navigation bar and switches between the five
-   main screens using an IndexedStack so each screen keeps its state.
+   main screens using a PageView so users can swipe between tabs.
 
-   Also shows an offline banner when there is no network connection.
+   Also shows an offline banner when there is no network connection,
+   and listens for Cast sessions to start streaming to Chromecast.
 */
 
 import 'dart:async';
 import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_chrome_cast/session.dart';
 import '../screens/home_screen.dart';
 import '../screens/event_screen.dart';
 import '../screens/program_screen.dart';
@@ -18,6 +20,7 @@ import '../screens/info_screen.dart';
 import '../screens/chat_screen.dart';
 import '../services/chat/chat_service.dart';
 import '../services/chat/auth_service.dart';
+import '../services/cast_service.dart';
 import '../theme/app_theme.dart';
 
 class ApolloHome extends StatefulWidget {
@@ -31,8 +34,10 @@ class _ApolloHomeState extends State<ApolloHome> {
   int _index = 0;
   bool _isOffline = false;
   StreamSubscription<List<ConnectivityResult>>? _connectivitySub;
+  StreamSubscription? _castSessionSub;
   final AuthService _authService = AuthService.instance;
   late final ChatService _chatService;
+  late final PageController _pageController;
 
   // ── Lifecycle ─────────────────────────────────────────────────────────────
 
@@ -40,15 +45,25 @@ class _ApolloHomeState extends State<ApolloHome> {
   void initState() {
     super.initState();
     _chatService = ChatService(authService: _authService);
+    _pageController = PageController(initialPage: _index);
     _initConnectivity();
     _connectivitySub = Connectivity()
         .onConnectivityChanged
         .listen(_updateConnectivity);
+
+    // When a Cast session starts, send the radio stream to the device
+    _castSessionSub = GoogleCastSessionManager.instance.currentSessionStream.listen((session) {
+      if (session != null) {
+        CastService.instance.castRadioStream();
+      }
+    });
   }
 
   @override
   void dispose() {
+    _pageController.dispose();
     _connectivitySub?.cancel();
+    _castSessionSub?.cancel();
     super.dispose();
   }
 
@@ -67,7 +82,14 @@ class _ApolloHomeState extends State<ApolloHome> {
 
   // ── Navigation ────────────────────────────────────────────────────────────
 
-  void _switchTab(int newIndex) => setState(() => _index = newIndex);
+  void _switchTab(int newIndex) {
+    setState(() => _index = newIndex);
+    _pageController.animateToPage(
+      newIndex,
+      duration: const Duration(milliseconds: 300),
+      curve: Curves.easeInOut,
+    );
+  }
 
   // ── Build ─────────────────────────────────────────────────────────────────
 
@@ -78,8 +100,10 @@ class _ApolloHomeState extends State<ApolloHome> {
         children: [
           if (_isOffline) _buildOfflineBanner(),
           Expanded(
-            child: IndexedStack(
-              index: _index,
+            child: PageView(
+              controller: _pageController,
+              physics: const ClampingScrollPhysics(),
+              onPageChanged: (index) => setState(() => _index = index),
               children: [
                 HomeScreen(onNavigate: _switchTab),
                 ProgramScreen(isActive: _index == 1),
