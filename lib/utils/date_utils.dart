@@ -65,4 +65,26 @@ class AppDateUtils {
 
     return currentMinutes >= start && currentMinutes < end;
   }
+
+  static const _dutchMonths = {
+  'januari': 1, 'februari': 2, 'maart': 3, 'april': 4,
+  'mei': 5, 'juni': 6, 'juli': 7, 'augustus': 8,
+  'september': 9, 'oktober': 10, 'november': 11, 'december': 12,
+};
+
+  /// Parses a Dutch date string like "1 mei 2026" into a DateTime.
+  /// Returns null if the string can't be parsed (e.g. "to be announced").
+  static DateTime? parseDutchDate(String dateStr) {
+    final parts = dateStr.toLowerCase().split(' ');
+    if (parts.length != 3) return null;
+
+    // Handle "30/31" style — take the first day
+    final dayStr = parts[0].contains('/') ? parts[0].split('/')[0] : parts[0];
+    final day = int.tryParse(dayStr);
+    final month = _dutchMonths[parts[1]];
+    final year = int.tryParse(parts[2]);
+
+    if (day == null || month == null || year == null) return null;
+    return DateTime(year, month, day);
+  }
 }
