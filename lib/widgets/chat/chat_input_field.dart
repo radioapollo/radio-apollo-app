@@ -2,20 +2,24 @@
 
    The text input and send button at the bottom of the chat screen.
    Shows a character countdown when within 30 characters of the limit.
+
+   This is a pure presentation widget — it receives the max length
+   and character count from its parent rather than reading ChatService.
 */
 
 import 'package:flutter/material.dart';
-import '../../services/chat/chat_service.dart';
 import '../../theme/app_theme.dart';
 
 class ChatInputField extends StatelessWidget {
   final TextEditingController controller;
+  final int maxLength;
   final int charsLeft;
   final VoidCallback onSend;
 
   const ChatInputField({
     super.key,
     required this.controller,
+    required this.maxLength,
     required this.charsLeft,
     required this.onSend,
   });
@@ -46,7 +50,7 @@ class ChatInputField extends StatelessWidget {
                 TextField(
                   controller:  controller,
                   style:       AppTextStyles.inputText,
-                  maxLength:   ChatService.maxMessageLength,
+                  maxLength:   maxLength,
                   buildCounter: (_, {required currentLength,
                       required isFocused, maxLength}) => null,
                   decoration: const InputDecoration(

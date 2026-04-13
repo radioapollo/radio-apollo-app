@@ -2,6 +2,16 @@
 
    Main chat screen where users talk to the studio in real time.
 
+   This screen is an orchestrator — it manages the username flow,
+   admin state, and text input, then delegates all rendering to
+   dedicated child widgets:
+
+   - ChatHeader        → logo + long-press admin login
+   - ChatTitle         → title, username badge, logout / pick-name button
+   - ChatMessageList   → StreamBuilder with loading/error/empty states
+   - ChatInputField    → text field + send button
+   - UsernamePrompt    → tappable bar shown when no username is set
+
    Features:
    - Optional username prompt on first visit (can be skipped)
    - Users without a username can read chat but not send messages
@@ -20,7 +30,8 @@ import '../services/chat/user_service.dart';
 import '../widgets/chat/chat_header.dart';
 import '../widgets/chat/chat_title.dart';
 import '../widgets/chat/chat_input_field.dart';
-import '../widgets/chat/message_bubble.dart';
+import '../widgets/chat/chat_message_list.dart';
+import '../widgets/chat/username_prompt.dart';
 import '../widgets/chat/username_dialog.dart';
 import '../theme/app_theme.dart';
 import '../models/message.dart';
@@ -46,14 +57,12 @@ class ChatScreen extends StatefulWidget {
 
 class _ChatScreenState extends State<ChatScreen>
     with AutomaticKeepAliveClientMixin {
-  final TextEditingController _controller      = TextEditingController();
-  final ScrollController      _scrollController = ScrollController();
+  final TextEditingController _controller = TextEditingController();
 
   late final Stream<List<Message>> _messagesStream;
 
-  int  _charsLeft        = ChatService.maxMessageLength;
-  int  _lastMessageCount = 0;
-  bool _usernameChecked  = false;
+  int  _charsLeft       = ChatService.maxMessageLength;
+  bool _usernameChecked = false;
 
   ChatService get _chatService => widget.chatService;
   AuthService get _authService => widget.authService;
@@ -87,7 +96,6 @@ class _ChatScreenState extends State<ChatScreen>
   void dispose() {
     _controller.removeListener(_onTextChanged);
     _controller.dispose();
-    _scrollController.dispose();
     super.dispose();
   }
 
@@ -100,7 +108,7 @@ class _ChatScreenState extends State<ChatScreen>
   }
 
   /// Initialises UserService and shows the username dialog if needed.
-  /// The dialog is now dismissible — if the user cancels, they can still
+  /// The dialog is dismissible — if the user cancels, they can still
   /// read the chat but cannot send messages until they pick a name.
   Future<void> _ensureUsername() async {
     await UserService.instance.init();
@@ -124,20 +132,6 @@ class _ChatScreenState extends State<ChatScreen>
     final text = _controller.text;
     _controller.clear();
     await _chatService.sendMessage(text);
-    _scrollToBottom();
-  }
-
-  void _scrollToBottom() {
-    Future.delayed(const Duration(milliseconds: 150), () {
-      if (_scrollController.hasClients &&
-          _scrollController.position.hasContentDimensions) {
-        _scrollController.animateTo(
-          _scrollController.position.maxScrollExtent,
-          duration: const Duration(milliseconds: 300),
-          curve: Curves.easeOut,
-        );
-      }
-    });
   }
 
   void _onAdminLogin() => setState(() {});
@@ -170,117 +164,27 @@ class _ChatScreenState extends State<ChatScreen>
               ),
               const SizedBox(height: AppDimensions.spaceMedium),
               ChatTitle(
-                authService: _authService,
-                onLogout: _onLogout,
-                onPickUsername: _promptUsername,
+                isAdmin:        isAdmin,
+                username:       UserService.instance.username,
+                hasUsername:     hasUsername,
+                onLogout:       _onLogout,
+                onPickUsername:  _promptUsername,
               ),
               const SizedBox(height: AppDimensions.spaceMedium),
-              _buildChatList(),
+              ChatMessageList(messagesStream: _messagesStream),
 
               // ── Input area: real input or "pick a name" prompt ─────────────
               if (hasUsername || isAdmin)
                 ChatInputField(
                   controller: _controller,
+                  maxLength:  ChatService.maxMessageLength,
                   charsLeft:  _charsLeft,
                   onSend:     _sendMessage,
                 )
               else
-                _buildUsernamePrompt(),
+                UsernamePrompt(onTap: _promptUsername),
             ],
           ),
-        ),
-      ),
-    );
-  }
-
-  // ── "Pick a name to chat" prompt (replaces input when no username) ────────
-
-  Widget _buildUsernamePrompt() {
-    return GestureDetector(
-      onTap: _promptUsername,
-      child: Container(
-        padding: const EdgeInsets.symmetric(
-          horizontal: AppDimensions.paddingMedium,
-          vertical:   AppDimensions.paddingSmall + 4,
-        ),
-        margin: const EdgeInsets.fromLTRB(
-          AppDimensions.paddingXLarge,
-          AppDimensions.spaceMedium,
-          AppDimensions.paddingXLarge,
-          AppDimensions.paddingXLarge,
-        ),
-        decoration: AppDecorations.chatInputFull(),
-        child: const Row(
-          children: [
-            Icon(Icons.person_add_alt_1, color: AppColors.textOnDarkMuted, size: 20),
-            SizedBox(width: 10),
-            Expanded(
-              child: Text(
-                'Kies een naam om mee te chatten',
-                style: TextStyle(color: AppColors.textOnDarkMuted, fontSize: 14),
-              ),
-            ),
-            Icon(Icons.arrow_forward_ios, color: AppColors.textOnDarkMuted, size: 14),
-          ],
-        ),
-      ),
-    );
-  }
-
-  // ── Message list ──────────────────────────────────────────────────────────
-
-  Widget _buildChatList() {
-    return Expanded(
-      child: Container(
-        margin: const EdgeInsets.symmetric(
-            horizontal: AppDimensions.paddingXLarge),
-        padding: const EdgeInsets.all(AppDimensions.paddingSmall),
-        decoration: AppDecorations.chatList(),
-        child: StreamBuilder(
-          stream: _messagesStream,
-          builder: (context, snapshot) {
-            if (snapshot.connectionState == ConnectionState.waiting) {
-              return const Center(
-                child: CircularProgressIndicator(color: AppColors.loadingIndicator),
-              );
-            }
-            if (snapshot.hasError) {
-              return Center(
-                child: Text(
-                  'Fout bij laden:\n${snapshot.error}',
-                  style: const TextStyle(
-                      color: AppColors.textOnDarkMuted, fontSize: 13),
-                  textAlign: TextAlign.center,
-                ),
-              );
-            }
-
-            final messages = snapshot.data ?? [];
-            if (messages.isEmpty) {
-              return const Center(
-                child: Text(
-                  'Nog geen berichten.\nWees de eerste!',
-                  style: TextStyle(color: AppColors.loadingIndicator, fontSize: 14),
-                  textAlign: TextAlign.center,
-                ),
-              );
-            }
-
-            if (messages.length > _lastMessageCount) {
-              _lastMessageCount = messages.length;
-              WidgetsBinding.instance
-                  .addPostFrameCallback((_) => _scrollToBottom());
-            }
-
-            return ListView.builder(
-              controller: _scrollController,
-              padding: const EdgeInsets.only(
-                  bottom: AppDimensions.spaceMedium),
-              itemCount: messages.length,
-              itemBuilder: (_, index) =>
-                  MessageBubble(message: messages[index]),
-            );
-          },
         ),
       ),
     );
