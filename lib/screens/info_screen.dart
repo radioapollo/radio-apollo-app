@@ -4,7 +4,7 @@
 
    It includes:
    - a fixed header (logo + title)
-   - a scrollable content area with about text and sponsors
+   - a scrollable content area with about text, contact info, and sponsors
 */
 
 import 'package:cached_network_image/cached_network_image.dart';
@@ -13,11 +13,35 @@ import '../models/sponsor.dart';
 import '../services/info_service.dart';
 import '../theme/app_theme.dart';
 import '../constants/constants.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 class InfoScreen extends StatelessWidget {
   InfoScreen({super.key});
 
   final _infoService = InfoService();
+
+  // ── URL helpers ───────────────────────────────────────────────────────────
+
+  Future<void> _launchUrl(String url) async {
+    final uri = Uri.parse(url);
+    if (await canLaunchUrl(uri)) {
+      await launchUrl(uri, mode: LaunchMode.externalApplication);
+    }
+  }
+
+  Future<void> _launchPhone(String number) async {
+    final uri = Uri(scheme: 'tel', path: number);
+    if (await canLaunchUrl(uri)) {
+      await launchUrl(uri);
+    }
+  }
+
+  Future<void> _launchEmail(String email) async {
+    final uri = Uri(scheme: 'mailto', path: email);
+    if (await canLaunchUrl(uri)) {
+      await launchUrl(uri);
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -64,6 +88,7 @@ class InfoScreen extends StatelessWidget {
                     AppDimensions.paddingXLarge,
                   ),
                   children: [
+                    // ── About text ──────────────────────────────────────
                     StreamBuilder<String>(
                       stream: _infoService.aboutTextStream,
                       builder: (context, snapshot) {
@@ -82,6 +107,15 @@ class InfoScreen extends StatelessWidget {
                         return _buildInfoCard(snapshot.data!);
                       },
                     ),
+
+                    // ── Contact info ────────────────────────────────────
+                    const SizedBox(height: AppDimensions.space30),
+                    const Text('Contacteer ons',
+                        style: AppTextStyles.screenTitleSmall),
+                    const SizedBox(height: AppDimensions.spaceLarge - 1),
+                    _buildContactSection(),
+
+                    // ── Sponsors ────────────────────────────────────────
                     const SizedBox(height: AppDimensions.space30),
                     const Text('Sponsors',
                         style: AppTextStyles.screenTitleSmall),
@@ -134,11 +168,81 @@ class InfoScreen extends StatelessWidget {
     );
   }
 
+  // ── About card ──────────────────────────────────────────────────────────
+
   Widget _buildInfoCard(String text) => Container(
         padding: const EdgeInsets.all(AppDimensions.paddingLarge),
         decoration: AppDecorations.darkCard(),
         child: Text(text, style: AppTextStyles.darkCardBody),
       );
+
+  // ── Contact section ───────────────────────────────────────────────────────
+
+  Widget _buildContactSection() => Container(
+        padding: const EdgeInsets.all(AppDimensions.paddingLarge),
+        decoration: AppDecorations.darkCard(),
+        child: Column(
+          children: [
+            _buildContactRow(
+              icon: Icons.email_outlined,
+              label: 'info@radioapollo.be',
+              onTap: () => _launchEmail('info@radioapollo.be'),
+            ),
+            const SizedBox(height: AppDimensions.spaceLarge),
+            _buildContactRow(
+              icon: Icons.phone_outlined,
+              label: '014/26.16.16',
+              onTap: () => _launchPhone('003214261616'),
+            ),
+            const SizedBox(height: AppDimensions.spaceLarge),
+            _buildContactRow(
+              icon: Icons.location_on_outlined,
+              label: 'Lindestraat 7a, 2222 Wiekevorst',
+              onTap: () => _launchUrl('https://g.co/kgs/3MCbeHw'),
+            ),
+            const SizedBox(height: AppDimensions.spaceLarge),
+            _buildContactRow(
+              icon: Icons.facebook,
+              label: 'Radio Apollo op Facebook',
+              onTap: () => _launchUrl(
+                  'https://www.facebook.com/people/Radio-Apollo/100039974545481/'),
+            ),
+          ],
+        ),
+      );
+
+  Widget _buildContactRow({
+    required IconData icon,
+    required String label,
+    required VoidCallback onTap,
+  }) =>
+      GestureDetector(
+        onTap: onTap,
+        child: Row(
+          children: [
+            Icon(icon,
+                size: AppDimensions.iconLarge,
+                color: AppColors.iconOnDarkMuted),
+            const SizedBox(width: AppDimensions.spaceLarge),
+            Expanded(
+              child: Text(
+                label,
+                style: AppTextStyles.darkCardSubtitle.copyWith(
+                  decoration: TextDecoration.underline,
+                  decorationColor: AppColors.textOnDarkMedium,
+                ),
+              ),
+            ),
+            const Icon(
+              Icons.open_in_new,
+              size: 16,
+              color: AppColors.iconOnDarkMuted,
+            ),
+          ],
+        ),
+      );
+
+  // ── Sponsor card ──────────────────────────────────────────────────────────
 
   Widget _buildSponsorCard(Sponsor sponsor) => Container(
       margin: const EdgeInsets.only(bottom: AppDimensions.spaceXLarge),

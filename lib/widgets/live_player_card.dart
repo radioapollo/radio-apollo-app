@@ -1,95 +1,241 @@
 /* Live Player Card Widget
 
-   This widget displays the live radio player on the home screen.
+   This widget combines the live radio player and the currently airing
+   program info into a single, visually rich card on the home screen.
 
    It shows:
-   - a play/pause button that controls the audio stream
-   - the LIVE indicator and station name
-   - the currently playing song, read from the audio handler's mediaItem stream
-   - a Chromecast button to cast the stream to nearby devices (mobile only)
+   - the program background image (faded, decorative)
+   - a LIVE badge with the current time slot
+   - the program title (instead of "Radio Apollo")
+   - the presenter name
+   - the currently playing song (from the audio handler's mediaItem stream)
+   - a play/pause button
+   - a Chromecast button (mobile only)
+
+   The entire card is tappable to navigate to the programs screen.
 */
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:audio_service/audio_service.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter_chrome_cast/widgets.dart';
 import 'service_provider.dart';
+import '../services/program/current_program_service.dart';
 import '../theme/app_theme.dart';
 
 class LivePlayerCard extends StatelessWidget {
   final bool isPlaying;
-  final VoidCallback onTap;
+  final VoidCallback onPlayPause;
+  final VoidCallback? onTap;
 
   const LivePlayerCard({
     super.key,
     required this.isPlaying,
-    required this.onTap,
+    required this.onPlayPause,
+    this.onTap,
   });
 
   @override
   Widget build(BuildContext context) {
-    final audioHandler = ServiceProvider.of(context).audioHandler;
+    final services = ServiceProvider.of(context);
+    final audioHandler = services.audioHandler;
+    final cpService = services.currentProgramService;
 
-    return Container(
-      padding: const EdgeInsets.all(AppDimensions.paddingXLarge),
-      decoration: AppDecorations.livePlayerCard(),
-      child: Row(
-        children: [
-          GestureDetector(
-            onTap: onTap,
-            child: Icon(
-              isPlaying
-                  ? Icons.pause_circle_filled
-                  : Icons.play_circle_fill,
-              color: AppColors.textOnDark,
-              size: AppDimensions.iconPlayPause,
-            ),
-          ),
-          const SizedBox(width: AppDimensions.paddingLarge),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
+    return StreamBuilder<CurrentProgram>(
+      stream: cpService.currentProgram,
+      initialData: cpService.lastProgram,
+      builder: (context, programSnapshot) {
+        final program = programSnapshot.data;
+        final hasProgram = program != null && program.hasData;
+
+        return GestureDetector(
+          onTap: onTap,
+          child: Container(
+            clipBehavior: Clip.antiAlias,
+            decoration: AppDecorations.livePlayerCard(),
+            child: Stack(
               children: [
-                Container(
-                  padding: const EdgeInsets.symmetric(
-                      horizontal: 10, vertical: 4),
-                  decoration: AppDecorations.liveBadge(),
-                  child:
-                      const Text('● LIVE', style: AppTextStyles.liveLabel),
-                ),
-                const SizedBox(height: AppDimensions.spaceSmall),
-                const Text('RADIO APOLLO',
-                    style: AppTextStyles.stationName),
-                const SizedBox(height: AppDimensions.spaceSmall),
-                StreamBuilder<MediaItem?>(
-                  stream: audioHandler.mediaItem,
-                  builder: (context, snapshot) {
-                    final item = snapshot.data;
-                    final artist = item?.artist ?? '';
-                    final title = item?.title ?? '';
-                    final display = artist.isNotEmpty && title.isNotEmpty
-                        ? '$artist - $title'
-                        : title.isNotEmpty
-                            ? title
-                            : 'Luister live';
-                    return Text(
-                      display,
-                      style: const TextStyle(
-                        color: AppColors.textOnDarkMuted,
-                        fontSize: 13,
+                // ── Background program image ────────────────────────
+                if (hasProgram &&
+                    program.imageUrl != null &&
+                    program.imageUrl!.isNotEmpty) ...[
+                  Positioned.fill(
+                    child: Opacity(
+                      opacity: 0.35,
+                      child: CachedNetworkImage(
+                        imageUrl: program.imageUrl!,
+                        fit: BoxFit.cover,
+                        errorWidget: (_, __, ___) => const SizedBox.shrink(),
                       ),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                    );
-                  },
+                    ),
+                  ),
+                  // Gradient overlay for text readability
+                  Positioned.fill(
+                    child: DecoratedBox(
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          begin: Alignment.centerLeft,
+                          end: Alignment.centerRight,
+                          colors: [
+                            AppColors.navyDark,
+                            AppColors.navyDark.withValues(alpha: 0.85),
+                            AppColors.navyDark.withValues(alpha: 0.3),
+                          ],
+                          stops: const [0.0, 0.45, 1.0],
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+
+                // ── Foreground content ──────────────────────────────
+                Padding(
+                  padding: const EdgeInsets.all(AppDimensions.paddingXLarge),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      // Row: LIVE badge + time slot + tap indicator
+                      Row(
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 10, vertical: 4),
+                            decoration: AppDecorations.liveBadge(),
+                            child: const Text('● LIVE',
+                                style: AppTextStyles.liveLabel),
+                          ),
+                          if (hasProgram && program.timeSlot != null) ...[
+                            const SizedBox(width: AppDimensions.spaceSmall),
+                            Text(
+                              program.timeSlot!,
+                              style: AppTextStyles.darkCardTime,
+                            ),
+                          ],
+                          const Spacer(),
+                          if (onTap != null)
+                            const Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Text(
+                                  'Programma',
+                                  style: TextStyle(
+                                    color: AppColors.textOnDarkMuted,
+                                    fontSize: 12,
+                                  ),
+                                ),
+                                SizedBox(width: 2),
+                                Icon(
+                                  Icons.chevron_right,
+                                  color: AppColors.textOnDarkMuted,
+                                  size: 18,
+                                ),
+                              ],
+                            ),
+                        ],
+                      ),
+
+                      const SizedBox(height: AppDimensions.spaceMedium),
+
+                      // Row: play button + program info
+                      Row(
+                        children: [
+                          // Play/pause button (left side)
+                          Column(
+                            children: [
+                              GestureDetector(
+                                onTap: onPlayPause,
+                                child: Icon(
+                                  isPlaying
+                                      ? Icons.pause_circle_filled
+                                      : Icons.play_circle_fill,
+                                  color: AppColors.textOnDark,
+                                  size: AppDimensions.iconPlayPause,
+                                ),
+                              ),
+                              // Chromecast button (mobile only)
+                              if (!kIsWeb)
+                                const Padding(
+                                  padding: EdgeInsets.only(
+                                      top: AppDimensions.spaceXSmall),
+                                  child: GoogleCastMiniController(),
+                                ),
+                            ],
+                          ),
+
+                          const SizedBox(width: AppDimensions.paddingLarge),
+
+                          // Program info (right side)
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                // Program title or fallback
+                                Text(
+                                  hasProgram
+                                      ? program.title!
+                                      : 'RADIO APOLLO',
+                                  style: AppTextStyles.stationName,
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+
+                                // Presenter
+                                if (hasProgram &&
+                                    program.presenter != null &&
+                                    program.presenter!.isNotEmpty)
+                                  Padding(
+                                    padding: const EdgeInsets.only(
+                                        top: AppDimensions.spaceXSmall),
+                                    child: Text(
+                                      program.presenter!,
+                                      style: AppTextStyles.darkCardSubtitle,
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis,
+                                    ),
+                                  ),
+
+                                // Currently playing song
+                                Padding(
+                                  padding: const EdgeInsets.only(
+                                      top: AppDimensions.spaceSmall),
+                                  child: StreamBuilder<MediaItem?>(
+                                    stream: audioHandler.mediaItem,
+                                    builder: (context, snapshot) {
+                                      final item = snapshot.data;
+                                      final artist = item?.artist ?? '';
+                                      final title = item?.title ?? '';
+                                      final display =
+                                          artist.isNotEmpty && title.isNotEmpty
+                                              ? '$artist - $title'
+                                              : title.isNotEmpty
+                                                  ? title
+                                                  : 'Luister live';
+                                      return Text(
+                                        display,
+                                        style: const TextStyle(
+                                          color: AppColors.textOnDarkMuted,
+                                          fontSize: 13,
+                                        ),
+                                        maxLines: 1,
+                                        overflow: TextOverflow.ellipsis,
+                                      );
+                                    },
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
                 ),
               ],
             ),
           ),
-          // Chromecast button (only on mobile — not available on web)
-          if (!kIsWeb) const GoogleCastMiniController(),
-        ],
-      ),
+        );
+      },
     );
   }
 }

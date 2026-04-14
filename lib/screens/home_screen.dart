@@ -3,8 +3,7 @@
    This is the main landing page of the application.
 
    It displays:
-   - the live radio player
-   - the currently playing program (title, presenter, time)
+   - the combined live radio player + current program card
    - quick navigation cards to the schedule, info, events, and chat
 */
 
@@ -14,7 +13,6 @@ import '../widgets/service_provider.dart';
 import '../widgets/page_with_header.dart';
 import '../widgets/apollo_card.dart';
 import '../widgets/live_player_card.dart';
-import '../widgets/now_playing_program_card.dart';
 import '../theme/app_theme.dart';
 
 class HomeScreen extends StatelessWidget {
@@ -33,12 +31,9 @@ class HomeScreen extends StatelessWidget {
             stream: services.audioHandler.playbackState,
             builder: (context, snapshot) => LivePlayerCard(
               isPlaying: snapshot.data?.playing ?? false,
-              onTap: services.audioHandler.toggle,
+              onPlayPause: services.audioHandler.toggle,
+              onTap: () => onNavigate(1),
             ),
-          ),
-          const SizedBox(height: AppDimensions.spaceLarge),
-          NowPlayingProgramCard(
-            onTap: () => onNavigate(1),
           ),
           const SizedBox(height: AppDimensions.space30),
           _buildRow([
