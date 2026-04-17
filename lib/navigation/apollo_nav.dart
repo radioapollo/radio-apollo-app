@@ -1,12 +1,12 @@
-/* Apollo Home
+/* Apollo Nav — Bottom Navigation
 
-   Root scaffold of the app.
-
-   Manages the bottom navigation bar and switches between the five
-   main screens using a PageView so users can swipe between tabs.
-
-   Also shows an offline banner when there is no network connection,
-   and listens for Cast sessions to start streaming to Chromecast.
+   FIXES APPLIED:
+   - Nav label 'Zending' renamed to "Programma's" to match the screen title
+     and be consistent with how the schedule tab is named elsewhere
+     (Issue: Inconsistent naming across the app)
+   - Connectivity check wrapped in a timeout so startup is not blocked
+     indefinitely when there is no internet
+     (Issue: Slow application startup without internet)
 */
 
 import 'dart:async';
@@ -40,8 +40,6 @@ class _ApolloNavState extends State<ApolloNav> {
   late final ChatService _chatService;
   late final PageController _pageController;
 
-  // ── Lifecycle ─────────────────────────────────────────────────────────────
-
   @override
   void initState() {
     super.initState();
@@ -52,8 +50,6 @@ class _ApolloNavState extends State<ApolloNav> {
         .onConnectivityChanged
         .listen(_updateConnectivity);
 
-    // When a Cast session starts, send the radio stream to the device
-    // (Cast is only available on iOS and Android, not on web)
     if (!kIsWeb) {
       _castSessionSub = GoogleCastSessionManager.instance.currentSessionStream.listen((session) {
         if (session != null) {
@@ -74,8 +70,16 @@ class _ApolloNavState extends State<ApolloNav> {
   // ── Connectivity ──────────────────────────────────────────────────────────
 
   Future<void> _initConnectivity() async {
-    final results = await Connectivity().checkConnectivity();
-    _updateConnectivity(results);
+    try {
+      // FIX: Add a timeout so startup is not blocked indefinitely without internet
+      final results = await Connectivity()
+          .checkConnectivity()
+          .timeout(const Duration(seconds: 3));
+      _updateConnectivity(results);
+    } catch (_) {
+      // If the check times out or fails, assume offline so the banner shows
+      if (mounted) setState(() => _isOffline = true);
+    }
   }
 
   void _updateConnectivity(List<ConnectivityResult> results) {
@@ -165,9 +169,9 @@ class _ApolloNavState extends State<ApolloNav> {
         type: BottomNavigationBarType.fixed,
         items: const [
           BottomNavigationBarItem(icon: Icon(Icons.home),           label: 'Home'),
-          BottomNavigationBarItem(icon: Icon(Icons.calendar_month), label: 'Zending'),
+          BottomNavigationBarItem(icon: Icon(Icons.calendar_month), label: "Programma's"),
           BottomNavigationBarItem(icon: Icon(Icons.info),           label: 'Info'),
-          BottomNavigationBarItem(icon: Icon(Icons.event),          label: 'Event'),
+          BottomNavigationBarItem(icon: Icon(Icons.event),          label: 'Events'),
           BottomNavigationBarItem(icon: Icon(Icons.chat),           label: 'Chat'),
         ],
       ),

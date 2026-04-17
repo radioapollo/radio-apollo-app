@@ -1,11 +1,10 @@
 /* Day Selector Widget
 
-   This widget displays a horizontal scrollable list of days
-   used in the program schedule screen.
-
-   Users can select a day to view the radio programs
-   scheduled for that specific day. The selected day is
-   automatically scrolled into the center of the screen.
+   FIXES APPLIED:
+   - Day labels no longer clip on smaller screens or with longer day names.
+     Items now size themselves to their text content (intrinsic width)
+     instead of using a fixed AppDimensions.daySelectorItemWidth.
+     The row remains horizontally scrollable.
 */
 
 import 'package:flutter/material.dart';
@@ -55,12 +54,16 @@ class _DaySelectorState extends State<DaySelector> {
         !_scrollController.position.hasContentDimensions) return;
 
     final screenWidth = MediaQuery.of(context).size.width;
+
+    // FIX: Use a generous estimated item width for scroll calculation.
+    // The actual render width is intrinsic so we can't know it exactly,
+    // but estimating from the longest day name keeps the centering close.
+    const estimatedItemWidth = 90.0;
     final offset =
         (widget.selectedIndex *
-                (AppDimensions.daySelectorItemWidth +
-                    AppDimensions.daySelectorSpacing)) -
+                (estimatedItemWidth + AppDimensions.daySelectorSpacing)) -
             (screenWidth / 2) +
-            (AppDimensions.daySelectorItemWidth / 2);
+            (estimatedItemWidth / 2);
 
     _scrollController.animateTo(
       offset.clamp(0, _scrollController.position.maxScrollExtent),
@@ -74,9 +77,9 @@ class _DaySelectorState extends State<DaySelector> {
     return SizedBox(
       height: AppDimensions.daySelectorHeight,
       child: ListView.builder(
-        controller: _scrollController,
+        controller:     _scrollController,
         scrollDirection: Axis.horizontal,
-        itemCount: widget.days.length,
+        itemCount:      widget.days.length,
         itemBuilder: (context, index) {
           final isSelected = index == widget.selectedIndex;
           return Padding(
@@ -85,7 +88,10 @@ class _DaySelectorState extends State<DaySelector> {
             child: GestureDetector(
               onTap: () => widget.onDaySelected(index),
               child: Container(
-                width: AppDimensions.daySelectorItemWidth,
+                // FIX: Remove fixed width — let the container size to its content.
+                // This prevents text clipping on smaller screens or longer labels.
+                padding: const EdgeInsets.symmetric(
+                    horizontal: 16, vertical: 0),
                 alignment: Alignment.center,
                 decoration: BoxDecoration(
                   color: isSelected
@@ -94,8 +100,11 @@ class _DaySelectorState extends State<DaySelector> {
                   borderRadius:
                       BorderRadius.circular(AppDimensions.radiusPill),
                 ),
-                child: Text(widget.days[index],
-                    style: AppTextStyles.dayLabel),
+                child: Text(
+                  widget.days[index],
+                  style: AppTextStyles.dayLabel,
+                  softWrap: false, // keep label on one line
+                ),
               ),
             ),
           );

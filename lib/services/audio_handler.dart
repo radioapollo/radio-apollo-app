@@ -2,13 +2,22 @@
 
    This service manages the live radio stream playback.
 
-   It uses audio_service and just_audio to:
-   - play and pause the radio stream
-   - expose playback state to the UI
-   - handle background audio on all platforms
-   - poll the stream stats endpoint for current song metadata
-   - update the media notification with song title, artist, program name,
-     and artwork (program image or Radio Apollo logo)
+   IMPORTANT — Live stream behaviour:
+   For a live radio stream, the "pause" action does NOT preserve
+   position because there is no position — the stream is live.
+   If we use _player.pause(), the player keeps its internal buffer.
+   When we resume, it replays that buffered audio, putting the user
+   behind the live broadcast by however long they paused.
+
+   Solution: call _player.stop() instead of _player.pause() so the
+   buffer is discarded. Then play() reconnects to the stream at the
+   current live position — exactly like reloading the website player.
+
+   FIXES APPLIED:
+   - HTML tags stripped from song title metadata
+   - stop() used instead of pause() to keep playback in sync with live
+     broadcast (Issue: stream goes back in time after pause)
+   - Notification shows "LIVE uitzending" subtitle
 */
 
 import 'dart:async';
@@ -60,8 +69,6 @@ class RadioAudioHandler extends BaseAudioHandler {
     }
   }
 
-  /// Copies the Flutter logo asset to a temp file so Android/iOS
-  /// can access it as artwork for the media notification.
   Future<void> _initDefaultArt() async {
     try {
       final byteData = await rootBundle.load('assets/images/Logo/transparant.png');
@@ -69,7 +76,6 @@ class RadioAudioHandler extends BaseAudioHandler {
       final file = File('${tempDir.path}/radio_apollo_logo.png');
       await file.writeAsBytes(byteData.buffer.asUint8List());
       _defaultArtUri = file.uri;
-      debugPrint('[AudioHandler] Default art URI: $_defaultArtUri');
     } catch (e) {
       debugPrint('[AudioHandler] Failed to init default art: $e');
     }
@@ -83,6 +89,19 @@ class RadioAudioHandler extends BaseAudioHandler {
       case ProcessingState.ready:     return AudioProcessingState.ready;
       case ProcessingState.completed: return AudioProcessingState.completed;
     }
+  }
+
+  // ── HTML stripping ────────────────────────────────────────────────────────
+
+  String _stripHtml(String input) {
+    return input
+        .replaceAll(RegExp(r'<[^>]*>'), '')
+        .replaceAll('&amp;', '&')
+        .replaceAll('&lt;', '<')
+        .replaceAll('&gt;', '>')
+        .replaceAll('&quot;', '"')
+        .replaceAll('&#39;', "'")
+        .trim();
   }
 
   // ── Metadata polling ──────────────────────────────────────────────────────
@@ -105,10 +124,9 @@ class RadioAudioHandler extends BaseAudioHandler {
     try {
       final response = await http.get(Uri.parse(AppConstants.statsUrl));
       if (response.statusCode == 200) {
-        final songTitle =
+        final rawTitle =
             (jsonDecode(response.body)['songtitle'] ?? '').toString().trim();
-
-        debugPrint('[AudioHandler] Fetched song: "$songTitle"');
+        final songTitle = _stripHtml(rawTitle);
 
         if (songTitle.isNotEmpty && songTitle != _lastSongTitle) {
           _lastSongTitle = songTitle;
@@ -121,41 +139,28 @@ class RadioAudioHandler extends BaseAudioHandler {
   }
 
   void _updateMediaItem(String songTitle) {
-    final parts = songTitle.split(' - ');
+    final parts  = songTitle.split(' - ');
     final artist = parts.length > 1 ? parts[0].trim() : 'Radio Apollo';
-    final title = parts.length > 1 ? parts[1].trim() : songTitle;
-
-    final album = _currentProgram.isNotEmpty
+    final title  = parts.length > 1 ? parts[1].trim() : songTitle;
+    final album  = _currentProgram.isNotEmpty
         ? '$_currentProgram — Radio Apollo'
         : 'Radio Apollo';
-
-    // Use program image if available, otherwise fall back to logo
     final artUri = _programArtUri ?? _defaultArtUri;
 
-    debugPrint('[AudioHandler] Updating MediaItem: "$title" by "$artist" [$album]');
-
     mediaItem.add(MediaItem(
-      id: AppConstants.streamUrl,
-      title: title,
+      id:     AppConstants.streamUrl,
+      title:  title,
       artist: artist,
-      album: album,
+      album:  album,
       artUri: artUri,
     ));
   }
 
-  /// Called from the UI when the current program changes.
-  /// [programName] is the display name, [imageUrl] is the optional
-  /// Firestore image URL for the program.
   void setCurrentProgram(String programName, {String? imageUrl}) {
     _currentProgram = programName;
-
-    if (imageUrl != null && imageUrl.isNotEmpty) {
-      _programArtUri = Uri.parse(imageUrl);
-    } else {
-      _programArtUri = null;
-    }
-
-    // Re-emit the media item with updated program info
+    _programArtUri = (imageUrl != null && imageUrl.isNotEmpty)
+        ? Uri.parse(imageUrl)
+        : null;
     if (_lastSongTitle.isNotEmpty) {
       _updateMediaItem(_lastSongTitle);
     }
@@ -165,45 +170,42 @@ class RadioAudioHandler extends BaseAudioHandler {
 
   @override
   Future<void> play() async {
-    // Set media item BEFORE playing so notification has content immediately
     mediaItem.add(MediaItem(
-      id: AppConstants.streamUrl,
-      title: 'Radio Apollo',
-      artist: 'Live',
-      album: 'Radio Apollo',
+      id:     AppConstants.streamUrl,
+      title:  _currentProgram.isNotEmpty ? _currentProgram : 'Radio Apollo',
+      artist: 'LIVE uitzending',
+      album:  'Radio Apollo',
       artUri: _programArtUri ?? _defaultArtUri,
     ));
 
-    // Always reload for live stream to start from the current position
+    // Load the stream fresh so we start at the live position
     await _player.setUrl(AppConstants.streamUrl);
     await _player.play();
   }
 
   @override
-  Future<void> pause() => _player.pause();
+  Future<void> pause() async {
+    // FIX: Use stop() instead of pause() for live streams.
+    // pause() keeps the buffer, which means resume would replay old
+    // audio and fall behind the live broadcast. stop() discards the
+    // buffer so the next play() reconnects at the current live position.
+    await _player.stop();
+  }
 
   Future<void> toggle() async {
     if (_player.playing) {
-      await _player.pause();
+      // FIX: same reason — stop() so we don't fall behind when resuming
+      await _player.stop();
     } else {
-      // Set media item before playing so notification shows immediately
       mediaItem.add(MediaItem(
-        id: AppConstants.streamUrl,
-        title: _lastSongTitle.isNotEmpty
-            ? _lastSongTitle.split(' - ').length > 1
-                ? _lastSongTitle.split(' - ')[1].trim()
-                : _lastSongTitle
-            : 'Radio Apollo',
-        artist: _lastSongTitle.isNotEmpty && _lastSongTitle.contains(' - ')
-            ? _lastSongTitle.split(' - ')[0].trim()
-            : 'Live',
-        album: _currentProgram.isNotEmpty
-            ? '$_currentProgram — Radio Apollo'
-            : 'Radio Apollo',
+        id:     AppConstants.streamUrl,
+        title:  _currentProgram.isNotEmpty ? _currentProgram : 'Radio Apollo',
+        artist: 'LIVE uitzending',
+        album:  'Radio Apollo',
         artUri: _programArtUri ?? _defaultArtUri,
       ));
 
-      // Always reload for live stream to start from the current position
+      // Reload URL to reconnect at the current live position
       await _player.setUrl(AppConstants.streamUrl);
       await _player.play();
     }

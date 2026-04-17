@@ -2,8 +2,10 @@
 
    Shown when the admin long-presses the logo.
 
-   Sends the password to AuthService for verification.
-   Shows a snackbar on failure, closes the dialog on success.
+   FIXES APPLIED:
+   - Login button disabled while a request is in-flight (Issue: App crash when spamming admin login)
+   - Loading indicator shown instead of button text during request (Issue: Delayed error feedback)
+   - Error shown inline in the dialog instead of closing first (Issue: Inconsistent snackbar usage)
 */
 
 import 'package:flutter/material.dart';
@@ -39,6 +41,8 @@ class AdminLoginDialog extends StatefulWidget {
 
 class _AdminLoginDialogState extends State<AdminLoginDialog> {
   final _controller = TextEditingController();
+  String? _error;
+  bool _loading = false; // FIX: track loading state to disable the button
 
   @override
   void dispose() {
@@ -49,6 +53,11 @@ class _AdminLoginDialogState extends State<AdminLoginDialog> {
   // ── Submit ────────────────────────────────────────────────────────────────
 
   Future<void> _submit() async {
+    // FIX: Prevent double-tap / spam by ignoring if already loading
+    if (_loading) return;
+
+    setState(() { _loading = true; _error = null; });
+
     try {
       await widget.authService.login(_controller.text);
       if (mounted) {
@@ -57,11 +66,12 @@ class _AdminLoginDialogState extends State<AdminLoginDialog> {
       }
     } catch (e) {
       if (mounted) {
-        final message = e.toString().replaceFirst('Exception: ', '');
-        Navigator.pop(context);
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(message)),
-        );
+        // FIX: Show error inline in the dialog instead of closing and using a snackbar.
+        // This is consistent with how other dialogs handle errors in the app.
+        setState(() {
+          _loading = false;
+          _error = e.toString().replaceFirst('Exception: ', '');
+        });
       }
     }
   }
@@ -72,21 +82,39 @@ class _AdminLoginDialogState extends State<AdminLoginDialog> {
   Widget build(BuildContext context) {
     return AlertDialog(
       title: const Text('Admin Login'),
-      content: TextField(
-        controller:  _controller,
-        obscureText: true,
-        autofocus:   true,
-        decoration:  const InputDecoration(hintText: 'Wachtwoord'),
-        onSubmitted: (_) => _submit(),
+      content: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          TextField(
+            controller:  _controller,
+            obscureText: true,
+            autofocus:   true,
+            enabled:     !_loading, // FIX: disable input while loading
+            decoration:  InputDecoration(
+              hintText:  'Wachtwoord',
+              // FIX: show error inline with enough space for the full message
+              errorText:     _error,
+              errorMaxLines: 3,
+            ),
+            onSubmitted: (_) => _submit(),
+          ),
+        ],
       ),
       actions: [
         TextButton(
-          onPressed: () => Navigator.pop(context),
+          // FIX: disable cancel button while loading to prevent orphaned requests
+          onPressed: _loading ? null : () => Navigator.pop(context),
           child: const Text('Annuleren'),
         ),
         TextButton(
-          onPressed: _submit,
-          child: const Text('Login'),
+          // FIX: disable login button while loading — prevents spam/crash
+          onPressed: _loading ? null : _submit,
+          child: _loading
+              ? const SizedBox(
+                  width: 18, height: 18,
+                  child: CircularProgressIndicator(strokeWidth: 2),
+                )
+              : const Text('Login'),
         ),
       ],
     );

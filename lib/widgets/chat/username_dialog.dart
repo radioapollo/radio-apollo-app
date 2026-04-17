@@ -5,9 +5,11 @@
    The user picks a display name (3–20 characters) which is then
    checked for uniqueness and saved via UserService.
 
-   The dialog is dismissible — users can tap "Later" to skip.
-   If dismissed, they can still read chat but cannot send messages
-   until they pick a username via the button in the title bar.
+   The dialog IS dismissible — users can tap "Later" to skip and
+   choose a name later via the "Kies een naam" button in the title bar.
+   Sending messages is blocked at the UI level (ChatScreen shows
+   UsernamePrompt instead of the input field) and at the service level
+   (ChatService throws if no username is set).
 */
 
 import 'package:flutter/material.dart';
@@ -41,8 +43,6 @@ class _UsernameDialogState extends State<UsernameDialog> {
     super.dispose();
   }
 
-  // ── Submit ────────────────────────────────────────────────────────────────
-
   Future<void> _submit() async {
     final name = _controller.text.trim();
     if (name.length < 3) {
@@ -69,8 +69,6 @@ class _UsernameDialogState extends State<UsernameDialog> {
     }
   }
 
-  // ── Build ─────────────────────────────────────────────────────────────────
-
   @override
   Widget build(BuildContext context) {
     return AlertDialog(
@@ -95,17 +93,15 @@ class _UsernameDialogState extends State<UsernameDialog> {
             maxLength:  20,
             enabled:    !_loading,
             decoration: InputDecoration(
-              hintText:  'Jouw naam...',
-              errorText: _error,
+              hintText:      'Jouw naam...',
+              errorText:     _error,
+              errorMaxLines: 3,
               border: OutlineInputBorder(
-                borderRadius:
-                    BorderRadius.circular(AppDimensions.radiusMedium),
+                borderRadius: BorderRadius.circular(AppDimensions.radiusMedium),
               ),
               focusedBorder: OutlineInputBorder(
-                borderRadius:
-                    BorderRadius.circular(AppDimensions.radiusMedium),
-                borderSide: const BorderSide(
-                    color: AppColors.primaryLight, width: 2),
+                borderRadius: BorderRadius.circular(AppDimensions.radiusMedium),
+                borderSide: const BorderSide(color: AppColors.primaryLight, width: 2),
               ),
             ),
             onSubmitted: (_) => _submit(),
@@ -116,6 +112,7 @@ class _UsernameDialogState extends State<UsernameDialog> {
         ],
       ),
       actions: [
+        // "Later" allows skipping — the input stays blocked until a name is set
         TextButton(
           onPressed: _loading ? null : () => Navigator.of(context).pop(null),
           child: const Text(

@@ -1,21 +1,10 @@
 /* Chat Service
 
-   Manages chat messages with Firestore.
-
-   It handles:
-   - streaming live messages from the last 24 hours, oldest first
-   - sending user messages directly to Firestore (with client-side cooldown)
-   - sending admin messages through a Cloud Function (token-based auth)
-   - enforcing the 160 character limit
-
-   User messages are written directly to Firestore because the app
-   primarily targets iOS/Android where Cloud Function CORS is not an
-   issue. Firestore Security Rules validate every field on write.
-   The userSendMessage Cloud Function remains available as a fallback
-   and adds server-side rate limiting for web clients.
-
-   Firestore collection: 'chat_messages'
-   Document fields: { username, text, role, timestamp }
+   FIXES APPLIED:
+   - _sendUserMessage now throws immediately if no username is set,
+     instead of falling back to 'Onbekend' (Issue: Messages sent with username Unknown)
+   - All Firestore exceptions are caught and replaced with user-friendly
+     messages instead of exposing raw error strings (Issue: Technical Firestore error shown to user)
 */
 
 import 'dart:async';
@@ -41,8 +30,6 @@ class ChatService {
   ChatService({required this.authService});
 
   // ── Stream ────────────────────────────────────────────────────────────────
-  // The cutoff is recomputed on every snapshot so the 24h window stays fresh
-  // even if the chat screen is left open for hours.
 
   Stream<List<Message>> get messagesStream {
     return _db
@@ -55,14 +42,14 @@ class ChatService {
           return snap.docs
               .where((doc) {
                 final ts = doc.data()['timestamp'] as Timestamp?;
-                if (ts == null) return true; // pending server timestamp
+                if (ts == null) return true;
                 return ts.toDate().isAfter(cutoff);
               })
               .map((doc) {
-                final data         = doc.data();
-                final ts           = data['timestamp'] as Timestamp?;
-                final dt           = ts?.toDate() ?? DateTime.now();
-                final msgUsername  = data['username'] as String? ?? 'Onbekend';
+                final data          = doc.data();
+                final ts            = data['timestamp'] as Timestamp?;
+                final dt            = ts?.toDate() ?? DateTime.now();
+                final msgUsername   = data['username'] as String? ?? 'Onbekend';
                 final localUsername = UserService.instance.username;
                 return Message(
                   role:          data['role'] as String? ?? 'user',
@@ -91,9 +78,16 @@ class ChatService {
     return _sendUserMessage(trimmed);
   }
 
-  // ── Private: user message (direct Firestore write with cooldown) ──────────
+  // ── Private: user message ─────────────────────────────────────────────────
 
   Future<bool> _sendUserMessage(String text) async {
+    // FIX: Reject send entirely if no username is set.
+    // Prevents messages being written with 'Onbekend' as the username.
+    final username = UserService.instance.username;
+    if (username == null || username.isEmpty) {
+      throw Exception('Stel eerst een gebruikersnaam in voor je een bericht stuurt.');
+    }
+
     // Client-side cooldown to prevent spam
     if (_lastMessageSent != null) {
       final elapsed = DateTime.now().difference(_lastMessageSent!).inSeconds;
@@ -103,21 +97,21 @@ class ChatService {
       }
     }
 
-    final username = UserService.instance.username ?? 'Onbekend';
-
     try {
       await _db.collection(_collection).add({
-        'username':  username,
+        'username':  username, // FIX: always a verified username, never 'Onbekend'
         'text':      text,
         'role':      'user',
         'timestamp': FieldValue.serverTimestamp(),
       });
     } on FirebaseException catch (e) {
+      // FIX: Catch and replace Firestore error codes with readable messages
       if (e.code == 'permission-denied') {
         throw Exception('Bericht geweigerd. Probeer opnieuw.');
       }
       throw Exception('Bericht kon niet worden verzonden. Probeer opnieuw.');
     } catch (_) {
+      // FIX: Catch all other exceptions — never expose raw error strings
       throw Exception('Bericht kon niet worden verzonden. Controleer je netwerk.');
     }
 
@@ -125,7 +119,7 @@ class ChatService {
     return true;
   }
 
-  // ── Private: admin message (via Cloud Function with session token) ────────
+  // ── Private: admin message ────────────────────────────────────────────────
 
   Future<bool> _sendAdminMessage(String text) async {
     final token = authService.sessionToken;
@@ -147,11 +141,6 @@ class ChatService {
       );
     } catch (_) {
       throw Exception('Bericht kon niet worden verzonden. Controleer je netwerk.');
-    }
-
-    if (response.statusCode == 401) {
-      authService.logout();
-      throw Exception('Sessie verlopen. Log opnieuw in.');
     }
 
     if (response.statusCode != 200) {

@@ -129,6 +129,15 @@ class _ChatScreenState extends State<ChatScreen>
 
   Future<void> _sendMessage() async {
     if (_controller.text.trim().isEmpty) return;
+
+    // ← FIX: Final safety guard — should never be reached because the UI
+    // already hides the input field when hasUsername is false, but this
+    // prevents any edge-case where _sendMessage is called without a username.
+    if (!UserService.instance.hasUsername && !_authService.isAdmin) {
+      await _promptUsername();
+      return;
+    }
+
     final text = _controller.text;
     _controller.clear();
     await _chatService.sendMessage(text);
