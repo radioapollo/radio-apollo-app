@@ -29,16 +29,15 @@ Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
   // ── Top-level error handling ──────────────────────────────────────────────
-  // Catch Flutter framework errors (layout, build, rendering)
+
   FlutterError.onError = (FlutterErrorDetails details) {
     FlutterError.presentError(details);
     debugPrint('[FlutterError] ${details.exceptionAsString()}');
   };
 
-  // Catch uncaught async errors that escape try/catch blocks
   PlatformDispatcher.instance.onError = (Object error, StackTrace stack) {
     debugPrint('[UncaughtError] $error\n$stack');
-    return true; // Prevents the app from terminating
+    return true;
   };
 
   await SystemChrome.setPreferredOrientations([
@@ -47,6 +46,7 @@ Future<void> main() async {
   ]);
 
   // ── Firebase ──────────────────────────────────────────────────────────────
+
   try {
     await Firebase.initializeApp(
       options: DefaultFirebaseOptions.currentPlatform,
@@ -57,7 +57,8 @@ Future<void> main() async {
     return;
   }
 
-  // ── Google Cast (mobile only) ─────────────────────────────────────────────
+  // ── Google Cast ───────────────────────────────────────────────────────────
+
   if (!kIsWeb) {
     try {
       const appId = GoogleCastDiscoveryCriteria.kDefaultApplicationId;
@@ -75,19 +76,20 @@ Future<void> main() async {
         GoogleCastContext.instance.setSharedInstanceWithOptions(castOptions);
       }
     } catch (e) {
-      // Cast is non-critical — log and continue
-      debugPrint('[main] Cast init failed (non-critical): $e');
+      debugPrint('[main] Cast init failed: $e');
     }
   }
 
   // ── User identity ─────────────────────────────────────────────────────────
+
   try {
     await UserService.instance.init();
   } catch (e) {
-    debugPrint('[main] UserService init failed (non-critical): $e');
+    debugPrint('[main] UserService init failed: $e');
   }
 
   // ── Audio service ─────────────────────────────────────────────────────────
+
   late final RadioAudioHandler audioHandler;
   try {
     audioHandler = await AudioService.init(
@@ -105,14 +107,14 @@ Future<void> main() async {
   }
 
   // ── Current program service ───────────────────────────────────────────────
+
   final currentProgramService = CurrentProgramService();
   try {
     await currentProgramService.start();
   } catch (e) {
-    debugPrint('[main] CurrentProgramService start failed (non-critical): $e');
+    debugPrint('[main] CurrentProgramService start failed: $e');
   }
 
-  // Keep the audio handler in sync with the current program
   final programSub = currentProgramService.currentProgram.listen((program) {
     audioHandler.setCurrentProgram(
       program.title ?? '',
@@ -128,7 +130,6 @@ Future<void> main() async {
 }
 
 // ── Fallback error screen ───────────────────────────────────────────────────
-// Shown when a critical service (Firebase, AudioService) fails to initialise.
 
 class _ErrorApp extends StatelessWidget {
   final String message;

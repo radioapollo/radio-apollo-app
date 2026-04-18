@@ -31,10 +31,10 @@ class EventService {
           final dateB = AppDateUtils.parseDutchDate(b.date);
 
           if (dateA == null && dateB == null) return 0;
-          if (dateA == null) return 1;  // TBA last
+          if (dateA == null) return 1;
           if (dateB == null) return -1;
 
-          return dateA.compareTo(dateB); // Most recent first
+          return dateA.compareTo(dateB);
         });
 
         return events;

@@ -4,17 +4,18 @@
 
    It contains:
    - the role of the sender (user or admin)
-   - the display username (new — shown next to other people's bubbles)
+   - the display username
    - the message text
    - the time it was sent (formatted HH:mm string)
+   - whether this device was the sender
 */
 
 class Message {
   final String  role;
   final String  text;
   final String  time;
-  final String? username;     // display name shown above other people's bubbles
-  final bool    isCurrentUser; // true when this message was sent by this device
+  final String? username;
+  final bool    isCurrentUser;
 
   const Message({
     required this.role,

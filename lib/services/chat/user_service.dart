@@ -33,9 +33,6 @@ class UserService {
     final prefs = await SharedPreferences.getInstance();
     _username = prefs.getString(_key);
 
-    // Verify the username still exists in Firestore.
-    // Since usernames are now permanent, the doc should always exist.
-    // If it somehow doesn't, re-claim it silently.
     if (_username != null && _username!.isNotEmpty) {
       final docId = _username!.toLowerCase();
       final doc = await _db.collection('usernames').doc(docId).get();
@@ -46,7 +43,6 @@ class UserService {
             'claimedAt': FieldValue.serverTimestamp(),
           });
         } catch (_) {
-          // If re-claim fails (e.g. someone else took it), clear local state
           _username = null;
           await prefs.remove(_key);
         }
@@ -54,14 +50,13 @@ class UserService {
     }
   }
 
- Future<void> setUsername(String name) async {
+  Future<void> setUsername(String name) async {
     final trimmed = name.trim();
     if (trimmed.isEmpty) return;
 
     final docId = trimmed.toLowerCase();
     final docRef = _db.collection('usernames').doc(docId);
 
-    // Check if the username is already taken before attempting a write
     final existing = await docRef.get();
     if (existing.exists) {
       throw Exception('Deze naam is al in gebruik. Kies een andere.');
@@ -81,15 +76,12 @@ class UserService {
         });
       });
     } catch (e) {
-      // If it's already our friendly message, rethrow it
       if (e is Exception && e.toString().contains('al in gebruik')) {
         rethrow;
       }
-      // Any other error (permission denied, network, etc.)
       throw Exception('Deze naam is al in gebruik. Kies een andere.');
     }
 
-    // Save locally only after the transaction succeeded
     final prefs = await SharedPreferences.getInstance();
     await prefs.setString(_key, trimmed);
     _username = trimmed;

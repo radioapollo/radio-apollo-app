@@ -1,24 +1,19 @@
 /* Audio Handler
 
-   This service manages the live radio stream playback.
+   Manages the live radio stream playback and the system media notification.
 
-   IMPORTANT — Live stream behaviour:
-   For a live radio stream, the "pause" action does NOT preserve
-   position because there is no position — the stream is live.
-   If we use _player.pause(), the player keeps its internal buffer.
-   When we resume, it replays that buffered audio, putting the user
-   behind the live broadcast by however long they paused.
+   Notes on live-stream behaviour:
+   Pausing a live stream would keep the player's buffer, which makes the
+   user fall behind the live broadcast when they resume. This handler uses
+   stop() in place of pause() and reloads the URL on resume so playback
+   always jumps back to the current live position.
 
-   Solution: call _player.stop() instead of _player.pause() so the
-   buffer is discarded. Then play() reconnects to the stream at the
-   current live position — exactly like reloading the website player.
-
-   FIXES APPLIED:
-   - HTML tags stripped from song title metadata
-   - stop() used instead of pause() to keep playback in sync with live
-     broadcast (Issue: stream goes back in time after pause)
-   - Notification shows "LIVE uitzending" subtitle
-   - Duplicated play/resume logic extracted into _startPlayback()
+   It handles:
+   - stream playback with just_audio
+   - publishing PlaybackState and MediaItem for audio_service
+   - fetching the current song title every 10 seconds from the stats endpoint
+   - stripping HTML entities from the song title metadata
+   - showing a default logo as notification artwork when no program image is set
 */
 
 import 'dart:async';
@@ -70,11 +65,11 @@ class RadioAudioHandler extends BaseAudioHandler {
     }
   }
 
+  // ── Default artwork ───────────────────────────────────────────────────────
+
   Future<void> _initDefaultArt() async {
     try {
       final byteData = await rootBundle.load('assets/images/Logo/transparant.png');
-      // systemTemp is still a safe location for a tiny static asset;
-      // it's wrapped in try/catch so any path failure is non-fatal.
       final tempDir = Directory.systemTemp;
       final file = File('${tempDir.path}/radio_apollo_logo.png');
       await file.writeAsBytes(byteData.buffer.asUint8List());
@@ -143,6 +138,8 @@ class RadioAudioHandler extends BaseAudioHandler {
     }
   }
 
+  // ── Media item ────────────────────────────────────────────────────────────
+
   void _updateMediaItem(String songTitle) {
     final parts  = songTitle.split(' - ');
     final artist = parts.length > 1 ? parts[0].trim() : 'Radio Apollo';
@@ -173,8 +170,6 @@ class RadioAudioHandler extends BaseAudioHandler {
 
   // ── Playback controls ─────────────────────────────────────────────────────
 
-  /// FIX: extracted shared playback-start logic. Called from both play()
-  /// and the resume branch of toggle() — keeps MediaItem and setUrl in one place.
   Future<void> _startPlayback() async {
     mediaItem.add(MediaItem(
       id:     AppConstants.streamUrl,
@@ -184,7 +179,6 @@ class RadioAudioHandler extends BaseAudioHandler {
       artUri: _programArtUri ?? _defaultArtUri,
     ));
 
-    // Load the stream fresh so we start at the live position
     await _player.setUrl(AppConstants.streamUrl);
     await _player.play();
   }
@@ -194,10 +188,6 @@ class RadioAudioHandler extends BaseAudioHandler {
 
   @override
   Future<void> pause() async {
-    // FIX: Use stop() instead of pause() for live streams.
-    // pause() keeps the buffer, which means resume would replay old
-    // audio and fall behind the live broadcast. stop() discards the
-    // buffer so the next play() reconnects at the current live position.
     await _player.stop();
   }
 

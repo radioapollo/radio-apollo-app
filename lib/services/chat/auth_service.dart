@@ -8,12 +8,6 @@
    - storing the returned session token (never the password)
    - providing the token to ChatService for server-side admin messages
    - logging out by resetting the role and clearing the token
-
-   FIXES APPLIED:
-   - HTTP request now has an explicit timeout so a hung function
-     server no longer wedges the admin login dialog indefinitely.
-   - Uses AppConstants.cloudFunctionUrl() helper — no more duplicated
-     URL strings across services.
 */
 
 import 'dart:async';
@@ -70,7 +64,7 @@ class AuthService {
     } else {
       _role = 'user';
       _sessionToken = null;
-      throw Exception('Invalid password');
+      throw Exception('Wachtwoord is niet juist.');
     }
   }
 

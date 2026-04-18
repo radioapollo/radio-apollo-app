@@ -8,10 +8,6 @@
    displays the correct program name and artwork.
 
    Consumers listen to [currentProgram] for updates.
-
-   FIXES APPLIED:
-   - Uses a cheap one-shot .get() fetch via getProgramsForDayOnce
-     instead of opening a live stream just to read .first every minute.
 */
 
 import 'dart:async';
@@ -20,7 +16,6 @@ import 'package:shared_preferences/shared_preferences.dart';
 import '../../utils/date_utils.dart';
 import 'program_service.dart';
 
-/// Lightweight data class for the currently airing program.
 class CurrentProgram {
   final String? title;
   final String? presenter;
@@ -43,27 +38,23 @@ class CurrentProgramService {
   CurrentProgramService({ProgramService? programService})
       : _programService = programService ?? ProgramService();
 
-  // Cache keys
+  // ── Cache keys ────────────────────────────────────────────────────────────
+
   static const _keyTitle     = 'now_playing_title';
   static const _keyPresenter = 'now_playing_presenter';
   static const _keyTimeSlot  = 'now_playing_time_slot';
   static const _keyImageUrl  = 'now_playing_image_url';
 
   Timer? _timer;
-
   final _controller = StreamController<CurrentProgram>.broadcast();
 
-  /// Stream that emits whenever the current program changes.
   Stream<CurrentProgram> get currentProgram => _controller.stream;
 
   CurrentProgram _lastProgram = const CurrentProgram();
-
-  /// The most recently resolved program (for synchronous access).
   CurrentProgram get lastProgram => _lastProgram;
 
   // ── Lifecycle ─────────────────────────────────────────────────────────────
 
-  /// Call once to start polling. Loads cached data first, then fetches live.
   Future<void> start() async {
     await _loadCachedProgram();
     await _fetchCurrentProgram();
@@ -73,7 +64,6 @@ class CurrentProgramService {
     );
   }
 
-  /// Call to stop polling (e.g. in dispose).
   void stop() {
     _timer?.cancel();
     _timer = null;
@@ -118,7 +108,6 @@ class CurrentProgramService {
       final todayName =
           ProgramService.weekdays[DateTime.now().weekday - 1];
 
-      // FIX: one-shot .get() instead of opening a live stream per poll.
       final programs = await _programService.getProgramsForDayOnce(todayName);
 
       CurrentProgram result = const CurrentProgram();

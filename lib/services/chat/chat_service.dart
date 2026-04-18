@@ -1,10 +1,12 @@
 /* Chat Service
 
-   FIXES APPLIED:
-   - _sendUserMessage now throws immediately if no username is set,
-     instead of falling back to 'Onbekend' (Issue: Messages sent with username Unknown)
-   - All Firestore exceptions are caught and replaced with user-friendly
-     messages instead of exposing raw error strings (Issue: Technical Firestore error shown to user)
+   Handles sending and receiving chat messages.
+
+   It handles:
+   - streaming messages from Firestore (last 24 hours)
+   - sending user messages directly to Firestore with a client-side cooldown
+   - sending admin messages via the Cloud Function using the session token
+   - mapping Firestore exceptions to user-friendly error messages
 */
 
 import 'dart:async';
@@ -78,17 +80,14 @@ class ChatService {
     return _sendUserMessage(trimmed);
   }
 
-  // ── Private: user message ─────────────────────────────────────────────────
+  // ── User message ──────────────────────────────────────────────────────────
 
   Future<bool> _sendUserMessage(String text) async {
-    // FIX: Reject send entirely if no username is set.
-    // Prevents messages being written with 'Onbekend' as the username.
     final username = UserService.instance.username;
     if (username == null || username.isEmpty) {
       throw Exception('Stel eerst een gebruikersnaam in voor je een bericht stuurt.');
     }
 
-    // Client-side cooldown to prevent spam
     if (_lastMessageSent != null) {
       final elapsed = DateTime.now().difference(_lastMessageSent!).inSeconds;
       if (elapsed < _cooldownSeconds) {
@@ -99,19 +98,17 @@ class ChatService {
 
     try {
       await _db.collection(_collection).add({
-        'username':  username, // FIX: always a verified username, never 'Onbekend'
+        'username':  username,
         'text':      text,
         'role':      'user',
         'timestamp': FieldValue.serverTimestamp(),
       });
     } on FirebaseException catch (e) {
-      // FIX: Catch and replace Firestore error codes with readable messages
       if (e.code == 'permission-denied') {
         throw Exception('Bericht geweigerd. Probeer opnieuw.');
       }
       throw Exception('Bericht kon niet worden verzonden. Probeer opnieuw.');
     } catch (_) {
-      // FIX: Catch all other exceptions — never expose raw error strings
       throw Exception('Bericht kon niet worden verzonden. Controleer je netwerk.');
     }
 
@@ -119,15 +116,13 @@ class ChatService {
     return true;
   }
 
-  // ── Private: admin message ────────────────────────────────────────────────
+  // ── Admin message ─────────────────────────────────────────────────────────
 
   Future<bool> _sendAdminMessage(String text) async {
     final token = authService.sessionToken;
     if (token == null) return false;
 
-    final uri = Uri.parse(
-      'https://${AppConstants.region}-${AppConstants.projectId}.cloudfunctions.net/adminSendMessage',
-    );
+    final uri = Uri.parse(AppConstants.cloudFunctionUrl('adminSendMessage'));
 
     late final http.Response response;
     try {
