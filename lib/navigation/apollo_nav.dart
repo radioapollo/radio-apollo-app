@@ -171,7 +171,7 @@ class _ApolloNavState extends State<ApolloNav> {
           BottomNavigationBarItem(icon: Icon(Icons.home),           label: 'Home'),
           BottomNavigationBarItem(icon: Icon(Icons.calendar_month), label: "Programma's"),
           BottomNavigationBarItem(icon: Icon(Icons.info),           label: 'Info'),
-          BottomNavigationBarItem(icon: Icon(Icons.event),          label: 'Events'),
+          BottomNavigationBarItem(icon: Icon(Icons.event),          label: 'Evenementen'),
           BottomNavigationBarItem(icon: Icon(Icons.chat),           label: 'Chat'),
         ],
       ),

@@ -22,6 +22,10 @@ class AppConstants {
   static const String notificationChannelName = 'Radio Apollo';
 
   static const String projectId = 'radio-apollo-90693';
-  
-  static const String region = 'europe-west1';
+  static const String region    = 'europe-west1';
+
+  /// Build a Cloud Functions URL for the given function name.
+  /// Eliminates the duplicated URL construction in ChatService / AuthService.
+  static String cloudFunctionUrl(String functionName) =>
+      'https://$region-$projectId.cloudfunctions.net/$functionName';
 }

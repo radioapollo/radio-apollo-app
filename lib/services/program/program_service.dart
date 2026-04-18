@@ -20,29 +20,63 @@ class ProgramService {
 
   static String getWeekdayName(int weekday) => weekdays[weekday - 1];
 
+  /// Safe string read that never throws on a missing field.
+  static String _s(Map<String, dynamic> data, String key) {
+    final v = data[key];
+    return v is String ? v : '';
+  }
+
   Stream<List<Map<String, String>>> getProgramsForDay(String day) {
     return _db
         .collection('programmatie')
         .where('day', isEqualTo: day)
         .snapshots()
         .map((snapshot) {
-          final docs = snapshot.docs;
+          // FIX: read via .data() with safe defaults — a missing startTime
+          // on any single doc no longer blows up the whole stream.
+          final docs = snapshot.docs.toList();
           docs.sort((a, b) =>
-              (a['startTime'] as String).compareTo(b['startTime'] as String));
-          return docs
-              .map((doc) {
-                    final data = doc.data();
-                    return {
-                      'time': '${doc['startTime']} - ${doc['endTime']}',
-                      'title': doc['title'] as String,
-                      'desc': doc['presenter'] as String,
-                      'imageUrl': data.containsKey('imageUrl')
-                          ? (doc['imageUrl'] as String? ?? '')
-                          : '',
-                    };
-                  })
-              .toList();
+              _s(a.data(), 'startTime').compareTo(_s(b.data(), 'startTime')));
+          return docs.map((doc) {
+            final data = doc.data();
+            final startTime = _s(data, 'startTime');
+            final endTime = _s(data, 'endTime');
+            return {
+              'time': '$startTime - $endTime',
+              'title': _s(data, 'title'),
+              'desc': _s(data, 'presenter'),
+              'imageUrl': _s(data, 'imageUrl'),
+            };
+          }).toList();
         });
+  }
+
+  /// One-shot fetch for today's schedule (cheaper than opening a live stream
+  /// just to read `.first`). Used by CurrentProgramService.
+  Future<List<Map<String, String>>> getProgramsForDayOnce(String day) async {
+    try {
+      final snap = await _db
+          .collection('programmatie')
+          .where('day', isEqualTo: day)
+          .get();
+
+      final docs = snap.docs.toList();
+      docs.sort((a, b) =>
+          _s(a.data(), 'startTime').compareTo(_s(b.data(), 'startTime')));
+      return docs.map((doc) {
+        final data = doc.data();
+        final startTime = _s(data, 'startTime');
+        final endTime = _s(data, 'endTime');
+        return {
+          'time': '$startTime - $endTime',
+          'title': _s(data, 'title'),
+          'desc': _s(data, 'presenter'),
+          'imageUrl': _s(data, 'imageUrl'),
+        };
+      }).toList();
+    } catch (_) {
+      return const [];
+    }
   }
 
   List<String> getShiftedDays(int selectedIndex) {

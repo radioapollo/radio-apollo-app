@@ -10,6 +10,11 @@
    - parsing "HH:mm" time strings into minutes (used for current-program detection)
    - checking whether a time range covers the current moment
    - formatting schedule times (converting "24:00" to "00:00")
+
+   FIXES APPLIED:
+   - parseTimeToMinutes now returns null instead of throwing on malformed
+     input, so a single malformed Firestore document no longer crashes the
+     schedule screen with a FormatException.
 */
 
 class AppDateUtils {
@@ -39,24 +44,34 @@ class AppDateUtils {
   }
 
   /// Formats a start–end pair into a display string like "08:00 - 10:00".
+  /// Returns a placeholder if either value is empty/malformed.
   static String formatTimeRange(String start, String end) {
+    if (start.isEmpty || end.isEmpty) return '--:-- - --:--';
     return '${formatScheduleTime(start)} - ${formatScheduleTime(end)}';
   }
 
   /// Parses a "HH:mm" string into total minutes since midnight.
-  static int parseTimeToMinutes(String time) {
+  /// Returns null on malformed input instead of throwing.
+  static int? parseTimeToMinutes(String time) {
+    if (time.isEmpty) return null;
     final parts = time.split(':');
-    return int.parse(parts[0]) * 60 + int.parse(parts[1]);
+    if (parts.length != 2) return null;
+    final h = int.tryParse(parts[0]);
+    final m = int.tryParse(parts[1]);
+    if (h == null || m == null) return null;
+    return h * 60 + m;
   }
 
   /// Returns true when the current moment falls inside [startTime]–[endTime].
-  /// Handles overnight ranges (e.g. 23:00 – 02:00).
+  /// Handles overnight ranges (e.g. 23:00 – 02:00). Returns false safely on
+  /// malformed input.
   static bool isCurrentTimeInRange(String startTime, String endTime) {
+    final start = parseTimeToMinutes(startTime);
+    final end   = parseTimeToMinutes(endTime);
+    if (start == null || end == null) return false;
+
     final now = DateTime.now();
     final currentMinutes = now.hour * 60 + now.minute;
-
-    final start = parseTimeToMinutes(startTime);
-    final end = parseTimeToMinutes(endTime);
 
     if (end <= start) {
       // Overnight range
@@ -67,23 +82,19 @@ class AppDateUtils {
   }
 
   static const _dutchMonths = {
-  'januari': 1, 'februari': 2, 'maart': 3, 'april': 4,
-  'mei': 5, 'juni': 6, 'juli': 7, 'augustus': 8,
-  'september': 9, 'oktober': 10, 'november': 11, 'december': 12,
-};
+    'januari': 1, 'februari': 2, 'maart': 3, 'april': 4,
+    'mei': 5, 'juni': 6, 'juli': 7, 'augustus': 8,
+    'september': 9, 'oktober': 10, 'november': 11, 'december': 12,
+  };
 
   /// Parses a Dutch date string like "1 mei 2026" into a DateTime.
   /// Returns null if the string can't be parsed (e.g. "to be announced").
-  static DateTime? parseDutchDate(String dateStr) {
-    final parts = dateStr.toLowerCase().split(' ');
+  static DateTime? parseDutchDate(String input) {
+    final parts = input.trim().toLowerCase().split(RegExp(r'\s+'));
     if (parts.length != 3) return null;
-
-    // Handle "30/31" style — take the first day
-    final dayStr = parts[0].contains('/') ? parts[0].split('/')[0] : parts[0];
-    final day = int.tryParse(dayStr);
+    final day   = int.tryParse(parts[0]);
     final month = _dutchMonths[parts[1]];
-    final year = int.tryParse(parts[2]);
-
+    final year  = int.tryParse(parts[2]);
     if (day == null || month == null || year == null) return null;
     return DateTime(year, month, day);
   }

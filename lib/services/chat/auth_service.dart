@@ -8,8 +8,15 @@
    - storing the returned session token (never the password)
    - providing the token to ChatService for server-side admin messages
    - logging out by resetting the role and clearing the token
+
+   FIXES APPLIED:
+   - HTTP request now has an explicit timeout so a hung function
+     server no longer wedges the admin login dialog indefinitely.
+   - Uses AppConstants.cloudFunctionUrl() helper — no more duplicated
+     URL strings across services.
 */
 
+import 'dart:async';
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 import '../../constants/constants.dart';
@@ -20,26 +27,37 @@ class AuthService {
   static final AuthService instance = AuthService._();
 
   String  _role = 'user';
-  String? _sessionToken;   // short-lived token from server, cleared on logout
+  String? _sessionToken;
 
   // ── Getters ───────────────────────────────────────────────────────────────
 
-  String  get currentRole    => _role;
-  bool    get isAdmin        => _role == 'admin';
-  String? get sessionToken   => _sessionToken;
+  String  get currentRole  => _role;
+  bool    get isAdmin      => _role == 'admin';
+  String? get sessionToken => _sessionToken;
 
   // ── Login / logout ────────────────────────────────────────────────────────
 
   Future<void> login(String password) async {
-    final uri = Uri.parse(
-      'https://${AppConstants.region}-${AppConstants.projectId}.cloudfunctions.net/adminLogin',
-    );
+    final uri = Uri.parse(AppConstants.cloudFunctionUrl('adminLogin'));
 
-    final response = await http.post(
-      uri,
-      headers: {'Content-Type': 'application/json'},
-      body: jsonEncode({'password': password}),
-    );
+    late final http.Response response;
+    try {
+      response = await http
+          .post(
+            uri,
+            headers: {'Content-Type': 'application/json'},
+            body: jsonEncode({'password': password}),
+          )
+          .timeout(const Duration(seconds: 15));
+    } on TimeoutException {
+      _role = 'user';
+      _sessionToken = null;
+      throw Exception('Server antwoordt niet. Probeer het later opnieuw.');
+    } catch (_) {
+      _role = 'user';
+      _sessionToken = null;
+      throw Exception('Controleer je netwerkverbinding en probeer opnieuw.');
+    }
 
     if (response.statusCode == 200) {
       final body = jsonDecode(response.body);

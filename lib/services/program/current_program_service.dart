@@ -8,6 +8,10 @@
    displays the correct program name and artwork.
 
    Consumers listen to [currentProgram] for updates.
+
+   FIXES APPLIED:
+   - Uses a cheap one-shot .get() fetch via getProgramsForDayOnce
+     instead of opening a live stream just to read .first every minute.
 */
 
 import 'dart:async';
@@ -73,7 +77,7 @@ class CurrentProgramService {
   void stop() {
     _timer?.cancel();
     _timer = null;
-    _controller.close();
+    if (!_controller.isClosed) _controller.close();
   }
 
   // ── Cache ─────────────────────────────────────────────────────────────────
@@ -114,14 +118,17 @@ class CurrentProgramService {
       final todayName =
           ProgramService.weekdays[DateTime.now().weekday - 1];
 
-      final programs =
-          await _programService.getProgramsForDay(todayName).first;
+      // FIX: one-shot .get() instead of opening a live stream per poll.
+      final programs = await _programService.getProgramsForDayOnce(todayName);
 
       CurrentProgram result = const CurrentProgram();
 
       for (final p in programs) {
-        final timeParts = p['time']!.split(' - ');
+        final time = p['time'] ?? '';
+        final timeParts = time.split(' - ');
         if (timeParts.length == 2 &&
+            timeParts[0].isNotEmpty &&
+            timeParts[1].isNotEmpty &&
             AppDateUtils.isCurrentTimeInRange(timeParts[0], timeParts[1])) {
           result = CurrentProgram(
             title:     p['title'],

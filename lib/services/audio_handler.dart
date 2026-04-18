@@ -18,6 +18,7 @@
    - stop() used instead of pause() to keep playback in sync with live
      broadcast (Issue: stream goes back in time after pause)
    - Notification shows "LIVE uitzending" subtitle
+   - Duplicated play/resume logic extracted into _startPlayback()
 */
 
 import 'dart:async';
@@ -72,6 +73,8 @@ class RadioAudioHandler extends BaseAudioHandler {
   Future<void> _initDefaultArt() async {
     try {
       final byteData = await rootBundle.load('assets/images/Logo/transparant.png');
+      // systemTemp is still a safe location for a tiny static asset;
+      // it's wrapped in try/catch so any path failure is non-fatal.
       final tempDir = Directory.systemTemp;
       final file = File('${tempDir.path}/radio_apollo_logo.png');
       await file.writeAsBytes(byteData.buffer.asUint8List());
@@ -122,7 +125,9 @@ class RadioAudioHandler extends BaseAudioHandler {
 
   Future<void> _fetchAndUpdateMetadata() async {
     try {
-      final response = await http.get(Uri.parse(AppConstants.statsUrl));
+      final response = await http
+          .get(Uri.parse(AppConstants.statsUrl))
+          .timeout(const Duration(seconds: 8));
       if (response.statusCode == 200) {
         final rawTitle =
             (jsonDecode(response.body)['songtitle'] ?? '').toString().trim();
@@ -168,8 +173,9 @@ class RadioAudioHandler extends BaseAudioHandler {
 
   // ── Playback controls ─────────────────────────────────────────────────────
 
-  @override
-  Future<void> play() async {
+  /// FIX: extracted shared playback-start logic. Called from both play()
+  /// and the resume branch of toggle() — keeps MediaItem and setUrl in one place.
+  Future<void> _startPlayback() async {
     mediaItem.add(MediaItem(
       id:     AppConstants.streamUrl,
       title:  _currentProgram.isNotEmpty ? _currentProgram : 'Radio Apollo',
@@ -184,6 +190,9 @@ class RadioAudioHandler extends BaseAudioHandler {
   }
 
   @override
+  Future<void> play() => _startPlayback();
+
+  @override
   Future<void> pause() async {
     // FIX: Use stop() instead of pause() for live streams.
     // pause() keeps the buffer, which means resume would replay old
@@ -194,20 +203,9 @@ class RadioAudioHandler extends BaseAudioHandler {
 
   Future<void> toggle() async {
     if (_player.playing) {
-      // FIX: same reason — stop() so we don't fall behind when resuming
       await _player.stop();
     } else {
-      mediaItem.add(MediaItem(
-        id:     AppConstants.streamUrl,
-        title:  _currentProgram.isNotEmpty ? _currentProgram : 'Radio Apollo',
-        artist: 'LIVE uitzending',
-        album:  'Radio Apollo',
-        artUri: _programArtUri ?? _defaultArtUri,
-      ));
-
-      // Reload URL to reconnect at the current live position
-      await _player.setUrl(AppConstants.streamUrl);
-      await _player.play();
+      await _startPlayback();
     }
   }
 

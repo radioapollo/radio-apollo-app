@@ -5,6 +5,8 @@
      instead of raw exception strings (Issue: Technical Firestore error shown to user)
    - Empty state and error state have distinct messages so users are not
      misled during network failures (Issue: Misleading messages during network failures)
+   - Auto-scroll bookkeeping no longer calls setState during build — all
+     mutations deferred to addPostFrameCallback.
 */
 
 import 'package:flutter/material.dart';
@@ -63,6 +65,7 @@ class _ChatMessageListState extends State<ChatMessageList> {
   }
 
   Future<void> _scrollToBottom() async {
+    if (!mounted) return;
     setState(() => _hasNewMessages = false);
 
     WidgetsBinding.instance.addPostFrameCallback((_) async {
@@ -74,6 +77,21 @@ class _ChatMessageListState extends State<ChatMessageList> {
         duration: const Duration(milliseconds: 300),
         curve: Curves.easeOut,
       );
+    });
+  }
+
+  /// FIX: all state mutations (counter update + new-messages flag) happen
+  /// after the frame completes, never during build.
+  void _handleMessageCountChange(int newCount) {
+    if (newCount == _lastMessageCount) return;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      _lastMessageCount = newCount;
+      if (_isNearBottom) {
+        _scrollToBottom();
+      } else {
+        setState(() => _hasNewMessages = true);
+      }
     });
   }
 
@@ -100,7 +118,6 @@ class _ChatMessageListState extends State<ChatMessageList> {
 
                   // FIX: Distinguish network/Firestore errors from empty state
                   if (snapshot.hasError) {
-                    // Determine whether this looks like a network/permission error
                     final err = snapshot.error.toString().toLowerCase();
                     final isNetwork = err.contains('network') ||
                         err.contains('unavailable') ||
@@ -120,7 +137,6 @@ class _ChatMessageListState extends State<ChatMessageList> {
                             ),
                             const SizedBox(height: AppDimensions.spaceSmall),
                             Text(
-                              // FIX: User-friendly message instead of raw exception
                               isNetwork
                                   ? 'Geen internetverbinding.\nControleer je netwerk en probeer opnieuw.'
                                   : 'Berichten konden niet worden geladen.\nProbeer het later opnieuw.',
@@ -134,7 +150,7 @@ class _ChatMessageListState extends State<ChatMessageList> {
                     );
                   }
 
-                  // FIX: Explicit empty state — clearly different from an error
+                  // Empty state
                   if (!snapshot.hasData || snapshot.data!.isEmpty) {
                     return const Center(
                       child: Text(
@@ -149,16 +165,8 @@ class _ChatMessageListState extends State<ChatMessageList> {
                   // ── Message list ──────────────────────────────────────────
                   final messages = snapshot.data!;
 
-                  // Auto-scroll when new messages arrive and user is near bottom
-                  if (messages.length != _lastMessageCount) {
-                    _lastMessageCount = messages.length;
-                    if (_isNearBottom) {
-                      WidgetsBinding.instance
-                          .addPostFrameCallback((_) => _scrollToBottom());
-                    } else {
-                      setState(() => _hasNewMessages = true);
-                    }
-                  }
+                  // FIX: defer the diff handling; no setState during build.
+                  _handleMessageCountChange(messages.length);
 
                   return ListView.builder(
                     controller: _scrollController,
