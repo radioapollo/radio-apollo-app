@@ -127,12 +127,12 @@ class _ChatScreenState extends State<ChatScreen>
     }
   }
 
+  /// Safety guard: should never be reached because the UI hides the input
+  /// field when hasUsername is false, but guards against any edge-case
+  /// where _sendMessage is somehow called without a username.
   Future<void> _sendMessage() async {
     if (_controller.text.trim().isEmpty) return;
 
-    // ← FIX: Final safety guard — should never be reached because the UI
-    // already hides the input field when hasUsername is false, but this
-    // prevents any edge-case where _sendMessage is called without a username.
     if (!UserService.instance.hasUsername && !_authService.isAdmin) {
       await _promptUsername();
       return;
@@ -157,7 +157,7 @@ class _ChatScreenState extends State<ChatScreen>
     super.build(context); // required by AutomaticKeepAliveClientMixin
 
     final hasUsername = UserService.instance.hasUsername;
-    final isAdmin    = _authService.isAdmin;
+    final isAdmin     = _authService.isAdmin;
 
     return SizedBox.expand(
       child: Container(
@@ -168,21 +168,21 @@ class _ChatScreenState extends State<ChatScreen>
           child: Column(
             children: [
               ChatHeader(
-                authService: _authService,
+                authService:  _authService,
                 onAdminLogin: _onAdminLogin,
               ),
               const SizedBox(height: AppDimensions.spaceMedium),
               ChatTitle(
                 isAdmin:        isAdmin,
                 username:       UserService.instance.username,
-                hasUsername:     hasUsername,
+                hasUsername:    hasUsername,
                 onLogout:       _onLogout,
-                onPickUsername:  _promptUsername,
+                onPickUsername: _promptUsername,
               ),
               const SizedBox(height: AppDimensions.spaceMedium),
               ChatMessageList(messagesStream: _messagesStream),
 
-              // ── Input area: real input or "pick a name" prompt ─────────────
+              // ── Input area: real input or "pick a name" prompt ──────────
               if (hasUsername || isAdmin)
                 ChatInputField(
                   controller: _controller,

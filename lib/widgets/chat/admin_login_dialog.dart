@@ -1,18 +1,20 @@
 /* Admin Login Dialog
 
-   Shown when the admin long-presses the logo.
+   Shown when the admin long-presses the logo on the chat screen.
 
-   FIXES APPLIED:
-   - Login button disabled while a request is in-flight (Issue: App crash when spamming admin login)
-   - Loading indicator shown instead of button text during request (Issue: Delayed error feedback)
-   - Error shown inline in the dialog instead of closing first (Issue: Inconsistent snackbar usage)
+   It handles:
+   - accepting a password
+   - calling AuthService.login() and showing a loading state
+   - surfacing server errors inline inside the dialog
+   - disabling all actions while a request is in flight so the user
+     cannot spam the login button or cancel an in-flight request
 */
 
 import 'package:flutter/material.dart';
 import '../../services/chat/auth_service.dart';
 
 class AdminLoginDialog extends StatefulWidget {
-  final AuthService authService;
+  final AuthService  authService;
   final VoidCallback onSuccess;
 
   const AdminLoginDialog({
@@ -23,14 +25,14 @@ class AdminLoginDialog extends StatefulWidget {
 
   static Future<void> show(
     BuildContext context, {
-    required AuthService authService,
+    required AuthService  authService,
     required VoidCallback onSuccess,
   }) {
     return showDialog(
       context: context,
       builder: (_) => AdminLoginDialog(
         authService: authService,
-        onSuccess: onSuccess,
+        onSuccess:   onSuccess,
       ),
     );
   }
@@ -42,7 +44,7 @@ class AdminLoginDialog extends StatefulWidget {
 class _AdminLoginDialogState extends State<AdminLoginDialog> {
   final _controller = TextEditingController();
   String? _error;
-  bool _loading = false; // FIX: track loading state to disable the button
+  bool    _loading = false;
 
   @override
   void dispose() {
@@ -53,7 +55,6 @@ class _AdminLoginDialogState extends State<AdminLoginDialog> {
   // ── Submit ────────────────────────────────────────────────────────────────
 
   Future<void> _submit() async {
-    // FIX: Prevent double-tap / spam by ignoring if already loading
     if (_loading) return;
 
     setState(() { _loading = true; _error = null; });
@@ -66,11 +67,9 @@ class _AdminLoginDialogState extends State<AdminLoginDialog> {
       }
     } catch (e) {
       if (mounted) {
-        // FIX: Show error inline in the dialog instead of closing and using a snackbar.
-        // This is consistent with how other dialogs handle errors in the app.
         setState(() {
           _loading = false;
-          _error = e.toString().replaceFirst('Exception: ', '');
+          _error   = e.toString().replaceFirst('Exception: ', '');
         });
       }
     }
@@ -89,10 +88,9 @@ class _AdminLoginDialogState extends State<AdminLoginDialog> {
             controller:  _controller,
             obscureText: true,
             autofocus:   true,
-            enabled:     !_loading, // FIX: disable input while loading
+            enabled:     !_loading,
             decoration:  InputDecoration(
-              hintText:  'Wachtwoord',
-              // FIX: show error inline with enough space for the full message
+              hintText:      'Wachtwoord',
               errorText:     _error,
               errorMaxLines: 3,
             ),
@@ -102,12 +100,10 @@ class _AdminLoginDialogState extends State<AdminLoginDialog> {
       ),
       actions: [
         TextButton(
-          // FIX: disable cancel button while loading to prevent orphaned requests
           onPressed: _loading ? null : () => Navigator.pop(context),
           child: const Text('Annuleren'),
         ),
         TextButton(
-          // FIX: disable login button while loading — prevents spam/crash
           onPressed: _loading ? null : _submit,
           child: _loading
               ? const SizedBox(
