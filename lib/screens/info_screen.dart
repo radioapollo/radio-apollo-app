@@ -5,6 +5,7 @@
    It includes:
    - a fixed header (logo + title)
    - a scrollable content area with about text, contact info, and sponsors
+   - the app version number shown at the bottom
 */
 
 import 'package:cached_network_image/cached_network_image.dart';
@@ -155,6 +156,18 @@ class InfoScreen extends StatelessWidget {
                           color: AppColors.creditText,
                           fontSize: 12,
                           fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                    ),
+
+                    // ── Version number ──────────────────────────────────
+                    const SizedBox(height: AppDimensions.spaceSmall),
+                    Center(
+                      child: Text(
+                        'Versie ${AppConstants.appVersion}',
+                        style: const TextStyle(
+                          color: AppColors.creditText,
+                          fontSize: 11,
                         ),
                       ),
                     ),

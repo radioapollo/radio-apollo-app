@@ -11,6 +11,7 @@
    - checking whether a time range covers the current moment
    - formatting schedule times (converting "24:00" to "00:00")
    - parsing Dutch date strings for the events list
+     Supports "30 mei 2026" and "30/31 mei 2026" (multi-day events)
 */
 
 class AppDateUtils {
@@ -81,9 +82,14 @@ class AppDateUtils {
   static DateTime? parseDutchDate(String input) {
     final parts = input.trim().toLowerCase().split(RegExp(r'\s+'));
     if (parts.length != 3) return null;
-    final day   = int.tryParse(parts[0]);
-    final month = _dutchMonths[parts[1]];
-    final year  = int.tryParse(parts[2]);
+
+    // Support multi-day formats like "30/31" or "30-31" — use the first day
+    // so that events like "30/31 mei 2026" sort on the 30th.
+    final dayRaw = parts[0].split(RegExp(r'[/\-]')).first;
+    final day    = int.tryParse(dayRaw);
+    final month  = _dutchMonths[parts[1]];
+    final year   = int.tryParse(parts[2]);
+
     if (day == null || month == null || year == null) return null;
     return DateTime(year, month, day);
   }

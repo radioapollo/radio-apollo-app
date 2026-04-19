@@ -3,7 +3,9 @@
    Provides a data stream for the Event screen.
 
    It handles:
-   - streaming events from Firestore ordered by date
+   - streaming events from Firestore
+   - filtering out events that are already in the past (before today)
+   - sorting the remaining events by date, earliest first
 */
 
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -17,6 +19,9 @@ class EventService {
       .collection('evenementen')
       .snapshots()
       .map((snap) {
+        final today = DateTime.now();
+        final todayStart = DateTime(today.year, today.month, today.day);
+
         final events = snap.docs
             .map((doc) => Event(
                   title:    doc['title']    ?? '',
@@ -24,6 +29,15 @@ class EventService {
                   location: doc['location'] ?? '',
                   what:     doc['what']     ?? '',
                 ))
+            // ── Remove events whose date has already passed ─────────────
+            // Events with an unparseable date are kept so they stay
+            // visible instead of silently disappearing.
+            .where((e) {
+              final d = AppDateUtils.parseDutchDate(e.date);
+              if (d == null) return true;
+              final eventDay = DateTime(d.year, d.month, d.day);
+              return !eventDay.isBefore(todayStart);
+            })
             .toList();
 
         events.sort((a, b) {
