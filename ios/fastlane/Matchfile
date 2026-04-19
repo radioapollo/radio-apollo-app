@@ -1,0 +1,9 @@
+# Matchfile — tells `fastlane match` where to find the certificates repo.
+# The real URL comes from the MATCH_GIT_URL env var in CI. For local use,
+# uncomment and fill in:
+#
+# git_url("git@github.com:YOUR-GITHUB-USER/radio-apollo-certificates.git")
+
+storage_mode("git")
+type("appstore")
+app_identifier(["be.radioapollo.app"])

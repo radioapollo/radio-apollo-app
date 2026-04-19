@@ -1,0 +1,3 @@
+app_identifier("be.radioapollo.app")
+# apple_id and team_id are resolved via the App Store Connect API key
+# so we do not hardcode them here — this keeps the file CI-safe.

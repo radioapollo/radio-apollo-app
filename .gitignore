@@ -126,7 +126,6 @@ ios/fastlane/test_output
 ios/fastlane/README.md
 ios/fastlane/AuthKey*.p8
 ios/fastlane/.env*
-ios/fastlane/*
 
 # Ruby / Bundler
 ios/vendor/
@@ -135,5 +134,3 @@ ios/Gemfile.lock
 
 # Build outputs
 ios/build/
-
-android/key.properties.template

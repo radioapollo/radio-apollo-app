@@ -8,6 +8,25 @@
   "client": [
     {
       "client_info": {
+        "mobilesdk_app_id": "1:1086114344104:android:68f2f4083cd7bdd50e269d",
+        "android_client_info": {
+          "package_name": "be.radioapollo.app"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyD3HVP4-KLyWUGpuRbyy96KN--3A92lbCw"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    },
+    {
+      "client_info": {
         "mobilesdk_app_id": "1:1086114344104:android:302a3c8314c08a540e269d",
         "android_client_info": {
           "package_name": "com.example.flutter_application_1"

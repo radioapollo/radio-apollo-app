@@ -1,0 +1,74 @@
+# ─────────────────────────────────────────────────────────────────────────────
+# Fastfile — Radio Apollo iOS
+# ─────────────────────────────────────────────────────────────────────────────
+#
+# Lanes:
+#   fastlane beta   — fetch signing assets via Match, build a signed IPA,
+#                     upload it to TestFlight.
+#
+# Environment variables expected (set by CI, or put in a local .env for
+# manual runs):
+#   MATCH_PASSWORD                    Passphrase for the Match repo
+#   MATCH_GIT_URL                     SSH URL of the certificates repo
+#   APP_STORE_CONNECT_KEY_ID          Key ID from App Store Connect
+#   APP_STORE_CONNECT_ISSUER_ID       Issuer ID from App Store Connect
+#   APP_STORE_CONNECT_API_KEY_PATH    Path to the .p8 file on disk
+
+default_platform(:ios)
+
+APP_IDENTIFIER = "be.radioapollo.app"
+SCHEME         = "Runner"
+WORKSPACE      = "Runner.xcworkspace"
+
+platform :ios do
+
+  before_all do
+    setup_ci if ENV["CI"]
+  end
+
+  desc "Build a signed IPA and upload it to TestFlight"
+  lane :beta do
+    api_key = app_store_connect_api_key(
+      key_id:      ENV["APP_STORE_CONNECT_KEY_ID"],
+      issuer_id:   ENV["APP_STORE_CONNECT_ISSUER_ID"],
+      key_filepath: ENV["APP_STORE_CONNECT_API_KEY_PATH"],
+      in_house:    false
+    )
+
+    # Fetch the distribution certificate and provisioning profile from the
+    # Match repo. `readonly: true` means this lane never tries to create
+    # new certificates — that's a one-time action you do locally.
+    match(
+      type:          "appstore",
+      app_identifier: APP_IDENTIFIER,
+      readonly:      true,
+      git_url:       ENV["MATCH_GIT_URL"],
+      api_key:       api_key
+    )
+
+    # Bump the build number to the next TestFlight build number + 1,
+    # so every CI upload gets a unique, monotonically increasing value.
+    increment_build_number(
+      build_number: latest_testflight_build_number(
+        app_identifier: APP_IDENTIFIER,
+        api_key:        api_key
+      ) + 1,
+      xcodeproj: "Runner.xcodeproj"
+    )
+
+    build_app(
+      workspace:  WORKSPACE,
+      scheme:     SCHEME,
+      configuration: "Release",
+      export_method: "app-store",
+      output_directory: "build",
+      clean:       true
+    )
+
+    upload_to_testflight(
+      api_key:                      api_key,
+      skip_waiting_for_build_processing: true,
+      skip_submission:              true
+    )
+  end
+end
