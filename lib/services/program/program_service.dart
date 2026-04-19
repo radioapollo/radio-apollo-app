@@ -15,8 +15,13 @@ class ProgramService {
   final _db = FirebaseFirestore.instance;
 
   static const List<String> weekdays = [
-    'Maandag', 'Dinsdag', 'Woensdag', 'Donderdag',
-    'Vrijdag', 'Zaterdag', 'Zondag',
+    'Maandag',
+    'Dinsdag',
+    'Woensdag',
+    'Donderdag',
+    'Vrijdag',
+    'Zaterdag',
+    'Zondag',
   ];
 
   static String getWeekdayName(int weekday) => weekdays[weekday - 1];
@@ -30,11 +35,11 @@ class ProgramService {
 
   static Map<String, String> _mapDoc(Map<String, dynamic> data) {
     final startTime = _s(data, 'startTime');
-    final endTime   = _s(data, 'endTime');
+    final endTime = _s(data, 'endTime');
     return {
-      'time':     '$startTime - $endTime',
-      'title':    _s(data, 'title'),
-      'desc':     _s(data, 'presenter'),
+      'time': '$startTime - $endTime',
+      'title': _s(data, 'title'),
+      'desc': _s(data, 'presenter'),
       'imageUrl': _s(data, 'imageUrl'),
     };
   }
@@ -48,8 +53,10 @@ class ProgramService {
         .snapshots()
         .map((snapshot) {
           final docs = snapshot.docs.toList();
-          docs.sort((a, b) =>
-              _s(a.data(), 'startTime').compareTo(_s(b.data(), 'startTime')));
+          docs.sort(
+            (a, b) =>
+                _s(a.data(), 'startTime').compareTo(_s(b.data(), 'startTime')),
+          );
           return docs.map((doc) => _mapDoc(doc.data())).toList();
         });
   }
@@ -64,8 +71,10 @@ class ProgramService {
           .get();
 
       final docs = snap.docs.toList();
-      docs.sort((a, b) =>
-          _s(a.data(), 'startTime').compareTo(_s(b.data(), 'startTime')));
+      docs.sort(
+        (a, b) =>
+            _s(a.data(), 'startTime').compareTo(_s(b.data(), 'startTime')),
+      );
       return docs.map((doc) => _mapDoc(doc.data())).toList();
     } catch (_) {
       return const [];

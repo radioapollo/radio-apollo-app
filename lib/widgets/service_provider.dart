@@ -24,8 +24,8 @@ class ServiceProvider extends InheritedWidget {
   });
 
   static ServiceProvider of(BuildContext context) {
-    final result =
-        context.dependOnInheritedWidgetOfExactType<ServiceProvider>();
+    final result = context
+        .dependOnInheritedWidgetOfExactType<ServiceProvider>();
     assert(result != null, 'No ServiceProvider found in context');
     return result!;
   }

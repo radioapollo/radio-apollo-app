@@ -37,35 +37,34 @@ class ApolloNav extends StatefulWidget {
 }
 
 class _ApolloNavState extends State<ApolloNav> {
-  int  _index     = 0;
+  int _index = 0;
   bool _isOffline = false;
 
   StreamSubscription<List<ConnectivityResult>>? _connectivitySub;
-  StreamSubscription?                           _castSessionSub;
+  StreamSubscription? _castSessionSub;
 
-  final AuthService      _authService = AuthService.instance;
+  final AuthService _authService = AuthService.instance;
   late final ChatService _chatService;
   late final PageController _pageController;
 
   @override
   void initState() {
     super.initState();
-    _chatService    = ChatService(authService: _authService);
+    _chatService = ChatService(authService: _authService);
     _pageController = PageController(initialPage: _index);
 
     _initConnectivity();
-    _connectivitySub = Connectivity()
-        .onConnectivityChanged
-        .listen(_updateConnectivity);
+    _connectivitySub = Connectivity().onConnectivityChanged.listen(
+      _updateConnectivity,
+    );
 
     if (!kIsWeb) {
-      _castSessionSub = GoogleCastSessionManager.instance
-          .currentSessionStream
+      _castSessionSub = GoogleCastSessionManager.instance.currentSessionStream
           .listen((session) {
-        if (session != null) {
-          CastService.instance.castRadioStream();
-        }
-      });
+            if (session != null) {
+              CastService.instance.castRadioStream();
+            }
+          });
     }
   }
 
@@ -81,9 +80,9 @@ class _ApolloNavState extends State<ApolloNav> {
 
   Future<void> _initConnectivity() async {
     try {
-      final results = await Connectivity()
-          .checkConnectivity()
-          .timeout(const Duration(seconds: 3));
+      final results = await Connectivity().checkConnectivity().timeout(
+        const Duration(seconds: 3),
+      );
       _updateConnectivity(results);
     } catch (_) {
       // If the check times out or fails, assume offline so the banner shows
@@ -93,8 +92,9 @@ class _ApolloNavState extends State<ApolloNav> {
 
   void _updateConnectivity(List<ConnectivityResult> results) {
     if (!mounted) return;
-    setState(() =>
-        _isOffline = results.every((r) => r == ConnectivityResult.none));
+    setState(
+      () => _isOffline = results.every((r) => r == ConnectivityResult.none),
+    );
   }
 
   // ── Navigation ────────────────────────────────────────────────────────────
@@ -104,7 +104,7 @@ class _ApolloNavState extends State<ApolloNav> {
     _pageController.animateToPage(
       newIndex,
       duration: const Duration(milliseconds: 300),
-      curve:    Curves.easeInOut,
+      curve: Curves.easeInOut,
     );
   }
 
@@ -118,8 +118,8 @@ class _ApolloNavState extends State<ApolloNav> {
           if (_isOffline) _buildOfflineBanner(),
           Expanded(
             child: PageView(
-              controller:    _pageController,
-              physics:       const ClampingScrollPhysics(),
+              controller: _pageController,
+              physics: const ClampingScrollPhysics(),
               onPageChanged: (index) => setState(() => _index = index),
               children: [
                 HomeScreen(onNavigate: _switchTab),
@@ -129,7 +129,7 @@ class _ApolloNavState extends State<ApolloNav> {
                 ChatScreen(
                   chatService: _chatService,
                   authService: _authService,
-                  isActive:    _index == 4,
+                  isActive: _index == 4,
                 ),
               ],
             ),
@@ -143,31 +143,32 @@ class _ApolloNavState extends State<ApolloNav> {
   // ── Offline banner ────────────────────────────────────────────────────────
 
   Widget _buildOfflineBanner() => Container(
-        width:   double.infinity,
-        color:   AppColors.offlineBannerBg,
-        padding: const EdgeInsets.symmetric(
-          horizontal: AppDimensions.paddingXLarge,
-          vertical:   AppDimensions.paddingSmall,
-        ),
-        child: const SafeArea(
-          bottom: false,
-          child: Row(
-            children: [
-              Icon(Icons.wifi_off,
-                  size:  AppDimensions.iconMedium,
-                  color: AppColors.offlineIcon),
-              SizedBox(width: AppDimensions.spaceSmall),
-              Expanded(
-                child: Text(
-                  'Je bent offline – gegevens kunnen verouderd zijn.',
-                  style: TextStyle(
-                      fontSize: 12, color: AppColors.offlineText),
-                ),
-              ),
-            ],
+    width: double.infinity,
+    color: AppColors.offlineBannerBg,
+    padding: const EdgeInsets.symmetric(
+      horizontal: AppDimensions.paddingXLarge,
+      vertical: AppDimensions.paddingSmall,
+    ),
+    child: const SafeArea(
+      bottom: false,
+      child: Row(
+        children: [
+          Icon(
+            Icons.wifi_off,
+            size: AppDimensions.iconMedium,
+            color: AppColors.offlineIcon,
           ),
-        ),
-      );
+          SizedBox(width: AppDimensions.spaceSmall),
+          Expanded(
+            child: Text(
+              'Je bent offline – gegevens kunnen verouderd zijn.',
+              style: TextStyle(fontSize: 12, color: AppColors.offlineText),
+            ),
+          ),
+        ],
+      ),
+    ),
+  );
 
   // ── Bottom nav ────────────────────────────────────────────────────────────
 
@@ -175,19 +176,25 @@ class _ApolloNavState extends State<ApolloNav> {
     return Container(
       decoration: AppDecorations.bottomNav,
       child: BottomNavigationBar(
-        currentIndex:        _index,
-        onTap:               _switchTab,
-        backgroundColor:     AppColors.white,
-        elevation:           0,
-        selectedItemColor:   AppColors.primaryMid,
+        currentIndex: _index,
+        onTap: _switchTab,
+        backgroundColor: AppColors.white,
+        elevation: 0,
+        selectedItemColor: AppColors.primaryMid,
         unselectedItemColor: AppColors.navUnselected,
-        type:                BottomNavigationBarType.fixed,
+        type: BottomNavigationBarType.fixed,
         items: const [
-          BottomNavigationBarItem(icon: Icon(Icons.home),           label: 'Home'),
-          BottomNavigationBarItem(icon: Icon(Icons.calendar_month), label: "Programma's"),
-          BottomNavigationBarItem(icon: Icon(Icons.info),           label: 'Info'),
-          BottomNavigationBarItem(icon: Icon(Icons.event),          label: 'Evenementen'),
-          BottomNavigationBarItem(icon: Icon(Icons.chat),           label: 'Chat'),
+          BottomNavigationBarItem(icon: Icon(Icons.home), label: 'Home'),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.calendar_month),
+            label: "Programma's",
+          ),
+          BottomNavigationBarItem(icon: Icon(Icons.info), label: 'Info'),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.event),
+            label: 'Evenementen',
+          ),
+          BottomNavigationBarItem(icon: Icon(Icons.chat), label: 'Chat'),
         ],
       ),
     );

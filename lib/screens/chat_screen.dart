@@ -62,11 +62,11 @@ class _ChatScreenState extends State<ChatScreen>
 
   late final Stream<List<Message>> _messagesStream;
 
-  int  _charsLeft           = ChatService.maxMessageLength;
-  bool _usernameChecked     = false;
-  bool _sending             = false;
-  int  _cooldownRemaining   = 0;
-  bool _showCooldownHint    = false;
+  int _charsLeft = ChatService.maxMessageLength;
+  bool _usernameChecked = false;
+  bool _sending = false;
+  int _cooldownRemaining = 0;
+  bool _showCooldownHint = false;
   Timer? _cooldownTicker;
   Timer? _hintDismissTimer;
 
@@ -221,11 +221,11 @@ class _ChatScreenState extends State<ChatScreen>
   void _showError(String message) {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        content:         Text(message),
+        content: Text(message),
         backgroundColor: AppColors.live,
-        behavior:        SnackBarBehavior.floating,
-        duration:        const Duration(seconds: 4),
-        margin:          const EdgeInsets.all(AppDimensions.paddingLarge),
+        behavior: SnackBarBehavior.floating,
+        duration: const Duration(seconds: 4),
+        margin: const EdgeInsets.all(AppDimensions.paddingLarge),
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(AppDimensions.radiusMedium),
         ),
@@ -247,7 +247,7 @@ class _ChatScreenState extends State<ChatScreen>
     super.build(context); // required by AutomaticKeepAliveClientMixin
 
     final hasUsername = UserService.instance.hasUsername;
-    final isAdmin     = _authService.isAdmin;
+    final isAdmin = _authService.isAdmin;
 
     return SizedBox.expand(
       child: Container(
@@ -258,15 +258,15 @@ class _ChatScreenState extends State<ChatScreen>
           child: Column(
             children: [
               ChatHeader(
-                authService:  _authService,
+                authService: _authService,
                 onAdminLogin: _onAdminLogin,
               ),
               const SizedBox(height: AppDimensions.spaceMedium),
               ChatTitle(
-                isAdmin:        isAdmin,
-                username:       UserService.instance.username,
-                hasUsername:    hasUsername,
-                onLogout:       _onLogout,
+                isAdmin: isAdmin,
+                username: UserService.instance.username,
+                hasUsername: hasUsername,
+                onLogout: _onLogout,
                 onPickUsername: _promptUsername,
               ),
               const SizedBox(height: AppDimensions.spaceMedium),
@@ -275,13 +275,13 @@ class _ChatScreenState extends State<ChatScreen>
               // ── Input area: real input or "pick a name" prompt ──────────
               if (hasUsername || isAdmin)
                 ChatInputField(
-                  controller:        _controller,
-                  maxLength:         ChatService.maxMessageLength,
-                  charsLeft:         _charsLeft,
-                  onSend:            _sendMessage,
-                  isSending:         _sending,
+                  controller: _controller,
+                  maxLength: ChatService.maxMessageLength,
+                  charsLeft: _charsLeft,
+                  onSend: _sendMessage,
+                  isSending: _sending,
                   cooldownRemaining: _cooldownRemaining,
-                  showCooldownHint:  _showCooldownHint,
+                  showCooldownHint: _showCooldownHint,
                 )
               else
                 UsernamePrompt(onTap: _promptUsername),

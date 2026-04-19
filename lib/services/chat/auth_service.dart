@@ -20,13 +20,13 @@ class AuthService {
 
   static final AuthService instance = AuthService._();
 
-  String  _role = 'user';
+  String _role = 'user';
   String? _sessionToken;
 
   // ── Getters ───────────────────────────────────────────────────────────────
 
-  String  get currentRole  => _role;
-  bool    get isAdmin      => _role == 'admin';
+  String get currentRole => _role;
+  bool get isAdmin => _role == 'admin';
   String? get sessionToken => _sessionToken;
 
   // ── Login / logout ────────────────────────────────────────────────────────

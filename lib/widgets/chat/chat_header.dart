@@ -35,10 +35,10 @@ class ChatHeader extends StatelessWidget {
           onLongPress: authService.isAdmin
               ? null
               : () => AdminLoginDialog.show(
-                    context,
-                    authService: authService,
-                    onSuccess: onAdminLogin,
-                  ),
+                  context,
+                  authService: authService,
+                  onSuccess: onAdminLogin,
+                ),
           child: Image.asset(
             AppAssets.logo,
             height: AppDimensions.logoHeight,

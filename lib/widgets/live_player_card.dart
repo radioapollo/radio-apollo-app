@@ -100,10 +100,14 @@ class LivePlayerCard extends StatelessWidget {
                         children: [
                           Container(
                             padding: const EdgeInsets.symmetric(
-                                horizontal: 10, vertical: 4),
+                              horizontal: 10,
+                              vertical: 4,
+                            ),
                             decoration: AppDecorations.liveBadge(),
-                            child: const Text('● LIVE',
-                                style: AppTextStyles.liveLabel),
+                            child: const Text(
+                              '● LIVE',
+                              style: AppTextStyles.liveLabel,
+                            ),
                           ),
                           if (hasProgram && program.timeSlot != null) ...[
                             const SizedBox(width: AppDimensions.spaceSmall),
@@ -157,7 +161,8 @@ class LivePlayerCard extends StatelessWidget {
                               if (!kIsWeb)
                                 const Padding(
                                   padding: EdgeInsets.only(
-                                      top: AppDimensions.spaceXSmall),
+                                    top: AppDimensions.spaceXSmall,
+                                  ),
                                   child: GoogleCastMiniController(),
                                 ),
                             ],
@@ -172,9 +177,7 @@ class LivePlayerCard extends StatelessWidget {
                               children: [
                                 // Program title or fallback
                                 Text(
-                                  hasProgram
-                                      ? program.title!
-                                      : 'RADIO APOLLO',
+                                  hasProgram ? program.title! : 'RADIO APOLLO',
                                   style: AppTextStyles.stationName,
                                   maxLines: 1,
                                   overflow: TextOverflow.ellipsis,
@@ -186,7 +189,8 @@ class LivePlayerCard extends StatelessWidget {
                                     program.presenter!.isNotEmpty)
                                   Padding(
                                     padding: const EdgeInsets.only(
-                                        top: AppDimensions.spaceXSmall),
+                                      top: AppDimensions.spaceXSmall,
+                                    ),
                                     child: Text(
                                       program.presenter!,
                                       style: AppTextStyles.darkCardSubtitle,
@@ -198,7 +202,8 @@ class LivePlayerCard extends StatelessWidget {
                                 // Currently playing song
                                 Padding(
                                   padding: const EdgeInsets.only(
-                                      top: AppDimensions.spaceSmall),
+                                    top: AppDimensions.spaceSmall,
+                                  ),
                                   child: StreamBuilder<MediaItem?>(
                                     stream: audioHandler.mediaItem,
                                     builder: (context, snapshot) {
@@ -207,10 +212,10 @@ class LivePlayerCard extends StatelessWidget {
                                       final title = item?.title ?? '';
                                       final display =
                                           artist.isNotEmpty && title.isNotEmpty
-                                              ? '$artist - $title'
-                                              : title.isNotEmpty
-                                                  ? title
-                                                  : 'Luister live';
+                                          ? '$artist - $title'
+                                          : title.isNotEmpty
+                                          ? title
+                                          : 'Luister live';
                                       return Text(
                                         display,
                                         style: const TextStyle(

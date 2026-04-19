@@ -22,8 +22,8 @@ class UpcomingBadge extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final urgent = event.isWithinOneWeek;
-    final label  = urgent ? 'Bijna' : 'Binnenkort';
-    final color  = urgent ? AppColors.live : AppColors.primaryLight;
+    final label = urgent ? 'Bijna' : 'Binnenkort';
+    final color = urgent ? AppColors.live : AppColors.primaryLight;
 
     final badge = Container(
       margin: const EdgeInsets.only(left: AppDimensions.spaceSmall),
@@ -66,7 +66,7 @@ class _PulsingBadge extends StatefulWidget {
 class _PulsingBadgeState extends State<_PulsingBadge>
     with SingleTickerProviderStateMixin {
   late final AnimationController _controller;
-  late final Animation<double>   _animation;
+  late final Animation<double> _animation;
 
   @override
   void initState() {
@@ -76,9 +76,10 @@ class _PulsingBadgeState extends State<_PulsingBadge>
       vsync: this,
     )..repeat(reverse: true);
 
-    _animation = Tween<double>(begin: 1.0, end: 1.06).animate(
-      CurvedAnimation(parent: _controller, curve: Curves.easeInOut),
-    );
+    _animation = Tween<double>(
+      begin: 1.0,
+      end: 1.06,
+    ).animate(CurvedAnimation(parent: _controller, curve: Curves.easeInOut));
   }
 
   @override

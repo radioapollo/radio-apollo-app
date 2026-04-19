@@ -66,7 +66,8 @@ class ProgramCard extends StatelessWidget {
   Widget _buildImage() {
     const double size = 48;
     const borderRadius = BorderRadius.all(
-        Radius.circular(AppDimensions.radiusSmall + 2));
+      Radius.circular(AppDimensions.radiusSmall + 2),
+    );
 
     if (imageUrl.isNotEmpty) {
       return ClipRRect(
@@ -103,8 +104,11 @@ class ProgramCard extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(AppDimensions.paddingSmall),
       decoration: AppDecorations.programIconBg,
-      child: const Icon(Icons.radio,
-          color: AppColors.textOnDark, size: AppDimensions.iconXLarge),
+      child: const Icon(
+        Icons.radio,
+        color: AppColors.textOnDark,
+        size: AppDimensions.iconXLarge,
+      ),
     );
   }
 
@@ -119,9 +123,11 @@ class ProgramCard extends StatelessWidget {
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          const Icon(Icons.circle,
-              color: AppColors.liveDot,
-              size: AppDimensions.nuBezigIconSize),
+          const Icon(
+            Icons.circle,
+            color: AppColors.liveDot,
+            size: AppDimensions.nuBezigIconSize,
+          ),
           const SizedBox(width: AppDimensions.nuBezigIconSpacing),
           Text('NU BEZIG', style: AppTextStyles.nuBezigLabel),
         ],

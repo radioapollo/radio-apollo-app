@@ -20,32 +20,33 @@ class MessageBubble extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isCurrentUser = message.isCurrentUser;
-    final isAdmin       = message.role == 'admin';
-    final isUser        = isCurrentUser;
+    final isAdmin = message.role == 'admin';
+    final isUser = isCurrentUser;
 
     return Container(
       margin: EdgeInsets.only(
-        top:    AppDimensions.spaceSmall,
+        top: AppDimensions.spaceSmall,
         bottom: AppDimensions.spaceSmall,
-        left:   isCurrentUser ? 80 : 0,
-        right:  isCurrentUser ? 0  : 80,
+        left: isCurrentUser ? 80 : 0,
+        right: isCurrentUser ? 0 : 80,
       ),
       child: Column(
-        crossAxisAlignment:
-            isCurrentUser ? CrossAxisAlignment.end : CrossAxisAlignment.start,
+        crossAxisAlignment: isCurrentUser
+            ? CrossAxisAlignment.end
+            : CrossAxisAlignment.start,
         children: [
           // ── Username label above other people's bubbles ──────────────────
           if (!isUser && message.username != null)
             Padding(
               padding: const EdgeInsets.only(
-                left:   AppDimensions.spaceSmall,
+                left: AppDimensions.spaceSmall,
                 bottom: AppDimensions.spaceXSmall,
               ),
               child: Text(
                 message.username!,
                 style: const TextStyle(
-                  color:      AppColors.usernameLabel,
-                  fontSize:   11,
+                  color: AppColors.usernameLabel,
+                  fontSize: 11,
                   fontWeight: FontWeight.w600,
                 ),
               ),
@@ -53,9 +54,11 @@ class MessageBubble extends StatelessWidget {
 
           // ── Bubble ───────────────────────────────────────────────────────
           Container(
-            padding:    const EdgeInsets.all(AppDimensions.paddingSmall),
+            padding: const EdgeInsets.all(AppDimensions.paddingSmall),
             decoration: AppDecorations.chatBubble(
-                isAdmin: isAdmin, isUser: isUser),
+              isAdmin: isAdmin,
+              isUser: isUser,
+            ),
             child: Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -65,7 +68,7 @@ class MessageBubble extends StatelessWidget {
                     child: Icon(
                       Icons.radio,
                       color: AppColors.textSecondary,
-                      size:  AppDimensions.iconMedium,
+                      size: AppDimensions.iconMedium,
                     ),
                   ),
                 Expanded(

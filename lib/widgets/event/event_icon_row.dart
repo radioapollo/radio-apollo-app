@@ -12,8 +12,8 @@ import '../../theme/app_theme.dart';
 
 class EventIconRow extends StatelessWidget {
   final IconData icon;
-  final String   label;
-  final Color?   accent;
+  final String label;
+  final Color? accent;
 
   const EventIconRow({
     super.key,
@@ -26,9 +26,11 @@ class EventIconRow extends StatelessWidget {
   Widget build(BuildContext context) {
     return Row(
       children: [
-        Icon(icon,
-            size:  AppDimensions.iconSmall,
-            color: accent ?? AppColors.textMeta),
+        Icon(
+          icon,
+          size: AppDimensions.iconSmall,
+          color: accent ?? AppColors.textMeta,
+        ),
         const SizedBox(width: AppDimensions.spaceXSmall),
         Expanded(
           child: Text(
@@ -37,8 +39,7 @@ class EventIconRow extends StatelessWidget {
             overflow: TextOverflow.ellipsis,
             style: AppTextStyles.cardMeta.copyWith(
               color: accent,
-              fontWeight:
-                  accent != null ? FontWeight.w600 : FontWeight.normal,
+              fontWeight: accent != null ? FontWeight.w600 : FontWeight.normal,
             ),
           ),
         ),

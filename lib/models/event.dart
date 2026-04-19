@@ -34,7 +34,7 @@ class Event {
     if (d == null) return null;
     final today = DateTime.now();
     final eventDay = DateTime(d.year, d.month, d.day);
-    final nowDay   = DateTime(today.year, today.month, today.day);
+    final nowDay = DateTime(today.year, today.month, today.day);
     return eventDay.difference(nowDay).inDays;
   }
 

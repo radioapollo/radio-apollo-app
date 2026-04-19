@@ -13,8 +13,8 @@ import 'package:flutter/material.dart';
 import '../../theme/app_theme.dart';
 
 class DaySelector extends StatefulWidget {
-  final List<String>  days;
-  final int           selectedIndex;
+  final List<String> days;
+  final int selectedIndex;
   final Function(int) onDaySelected;
 
   const DaySelector({
@@ -67,14 +67,14 @@ class _DaySelectorState extends State<DaySelector> {
     const estimatedItemWidth = 90.0;
     final offset =
         (widget.selectedIndex *
-                (estimatedItemWidth + AppDimensions.daySelectorSpacing)) -
-            (screenWidth / 2) +
-            (estimatedItemWidth / 2);
+            (estimatedItemWidth + AppDimensions.daySelectorSpacing)) -
+        (screenWidth / 2) +
+        (estimatedItemWidth / 2);
 
     _scrollController.animateTo(
       offset.clamp(0, _scrollController.position.maxScrollExtent),
       duration: const Duration(milliseconds: 300),
-      curve:    Curves.easeOut,
+      curve: Curves.easeOut,
     );
   }
 
@@ -85,32 +85,34 @@ class _DaySelectorState extends State<DaySelector> {
     return SizedBox(
       height: AppDimensions.daySelectorHeight,
       child: ListView.builder(
-        controller:      _scrollController,
+        controller: _scrollController,
         scrollDirection: Axis.horizontal,
-        itemCount:       widget.days.length,
+        itemCount: widget.days.length,
         itemBuilder: (context, index) {
           final isSelected = index == widget.selectedIndex;
           return Padding(
             padding: const EdgeInsets.only(
-                right: AppDimensions.daySelectorSpacing),
+              right: AppDimensions.daySelectorSpacing,
+            ),
             child: GestureDetector(
               onTap: () => widget.onDaySelected(index),
               child: Container(
                 // Intrinsic width — container sizes to its text content.
                 // Prevents clipping on smaller screens or longer labels.
                 padding: const EdgeInsets.symmetric(
-                    horizontal: 16, vertical: 0),
+                  horizontal: 16,
+                  vertical: 0,
+                ),
                 alignment: Alignment.center,
                 decoration: BoxDecoration(
                   color: isSelected
                       ? AppColors.steelLight
                       : AppColors.steelMedium,
-                  borderRadius:
-                      BorderRadius.circular(AppDimensions.radiusPill),
+                  borderRadius: BorderRadius.circular(AppDimensions.radiusPill),
                 ),
                 child: Text(
                   widget.days[index],
-                  style:    AppTextStyles.dayLabel,
+                  style: AppTextStyles.dayLabel,
                   softWrap: false, // keep label on one line
                 ),
               ),

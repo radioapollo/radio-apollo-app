@@ -11,11 +11,11 @@
 */
 
 class Message {
-  final String  role;
-  final String  text;
-  final String  time;
+  final String role;
+  final String text;
+  final String time;
   final String? username;
-  final bool    isCurrentUser;
+  final bool isCurrentUser;
 
   const Message({
     required this.role,

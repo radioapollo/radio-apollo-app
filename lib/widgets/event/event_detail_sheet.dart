@@ -32,7 +32,7 @@ class EventDetailSheet extends StatelessWidget {
   }
 
   Color? get _accentColor {
-    if (event.isWithinOneWeek)  return AppColors.live;
+    if (event.isWithinOneWeek) return AppColors.live;
     if (event.isWithinTwoWeeks) return AppColors.primaryLight;
     return null;
   }
@@ -40,12 +40,12 @@ class EventDetailSheet extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isUpcoming = event.isWithinTwoWeeks;
-    final accent     = _accentColor;
+    final accent = _accentColor;
 
     return DraggableScrollableSheet(
       initialChildSize: 0.4,
-      minChildSize:     0.25,
-      maxChildSize:     0.85,
+      minChildSize: 0.25,
+      maxChildSize: 0.85,
       expand: false,
       builder: (context, scrollController) => SingleChildScrollView(
         controller: scrollController,
@@ -62,8 +62,8 @@ class EventDetailSheet extends StatelessWidget {
             _buildTitle(),
             const SizedBox(height: AppDimensions.spaceLarge),
             EventIconRow(
-              icon:   Icons.access_time,
-              label:  event.date,
+              icon: Icons.access_time,
+              label: event.date,
               accent: isUpcoming ? accent : null,
             ),
             const SizedBox(height: AppDimensions.spaceSmall),
@@ -81,7 +81,7 @@ class EventDetailSheet extends StatelessWidget {
   Widget _buildDragHandle(Color? accent) {
     return Center(
       child: Container(
-        width:  40,
+        width: 40,
         height: 4,
         margin: const EdgeInsets.only(bottom: AppDimensions.spaceLarge),
         decoration: BoxDecoration(

@@ -15,20 +15,20 @@ import '../utils/date_utils.dart';
 class EventService {
   final _db = FirebaseFirestore.instance;
 
-  Stream<List<Event>> get eventsStream => _db
-      .collection('evenementen')
-      .snapshots()
-      .map((snap) {
+  Stream<List<Event>> get eventsStream =>
+      _db.collection('evenementen').snapshots().map((snap) {
         final today = DateTime.now();
         final todayStart = DateTime(today.year, today.month, today.day);
 
         final events = snap.docs
-            .map((doc) => Event(
-                  title:    doc['title']    ?? '',
-                  date:     doc['date']     ?? '',
-                  location: doc['location'] ?? '',
-                  what:     doc['what']     ?? '',
-                ))
+            .map(
+              (doc) => Event(
+                title: doc['title'] ?? '',
+                date: doc['date'] ?? '',
+                location: doc['location'] ?? '',
+                what: doc['what'] ?? '',
+              ),
+            )
             // ── Remove events whose date has already passed ─────────────
             // Events with an unparseable date are kept so they stay
             // visible instead of silently disappearing.

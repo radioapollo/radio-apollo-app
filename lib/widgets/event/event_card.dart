@@ -19,26 +19,22 @@ import 'event_icon_row.dart';
 import 'upcoming_badge.dart';
 
 class EventCard extends StatelessWidget {
-  final Event        event;
+  final Event event;
   final VoidCallback onTap;
 
-  const EventCard({
-    super.key,
-    required this.event,
-    required this.onTap,
-  });
+  const EventCard({super.key, required this.event, required this.onTap});
 
   Color? get _accentColor {
-    if (event.isWithinOneWeek)  return AppColors.live;
+    if (event.isWithinOneWeek) return AppColors.live;
     if (event.isWithinTwoWeeks) return AppColors.primaryLight;
     return null;
   }
 
   @override
   Widget build(BuildContext context) {
-    final isUrgent   = event.isWithinOneWeek;
+    final isUrgent = event.isWithinOneWeek;
     final isUpcoming = event.isWithinTwoWeeks;
-    final accent     = _accentColor;
+    final accent = _accentColor;
 
     return Padding(
       padding: const EdgeInsets.only(bottom: AppDimensions.spaceLarge),
@@ -46,9 +42,9 @@ class EventCard extends StatelessWidget {
         onTap: onTap,
         child: _buildCard(
           context,
-          isUrgent:   isUrgent,
+          isUrgent: isUrgent,
           isUpcoming: isUpcoming,
-          accent:     accent,
+          accent: accent,
         ),
       ),
     );
@@ -58,23 +54,25 @@ class EventCard extends StatelessWidget {
 
   Widget _buildCard(
     BuildContext context, {
-    required bool   isUrgent,
-    required bool   isUpcoming,
+    required bool isUrgent,
+    required bool isUpcoming,
     required Color? accent,
   }) {
     return Container(
       clipBehavior: Clip.antiAlias,
       decoration: BoxDecoration(
-        color:        AppColors.white,
+        color: AppColors.white,
         borderRadius: BorderRadius.circular(AppDimensions.radiusMedium),
         border: Border.all(
-            color: AppColors.divider, width: AppDimensions.borderThin),
+          color: AppColors.divider,
+          width: AppDimensions.borderThin,
+        ),
         boxShadow: isUpcoming && accent != null
             ? [
                 BoxShadow(
-                  color:     accent.withValues(alpha: 0.18),
+                  color: accent.withValues(alpha: 0.18),
                   blurRadius: 12,
-                  offset:     const Offset(0, 4),
+                  offset: const Offset(0, 4),
                 ),
               ]
             : null,
@@ -85,14 +83,20 @@ class EventCard extends StatelessWidget {
             padding: const EdgeInsets.all(AppDimensions.paddingLarge),
             child: Row(
               children: [
-                _buildIcon(isUrgent: isUrgent, isUpcoming: isUpcoming, accent: accent),
+                _buildIcon(
+                  isUrgent: isUrgent,
+                  isUpcoming: isUpcoming,
+                  accent: accent,
+                ),
                 const SizedBox(width: AppDimensions.spaceLarge),
-                Expanded(child: _buildInfo(isUpcoming: isUpcoming, accent: accent)),
+                Expanded(
+                  child: _buildInfo(isUpcoming: isUpcoming, accent: accent),
+                ),
                 const SizedBox(width: AppDimensions.spaceSmall),
                 Icon(
                   Icons.chevron_right,
                   color: isUpcoming ? accent : AppColors.chevronIcon,
-                  size:  AppDimensions.iconMedium,
+                  size: AppDimensions.iconMedium,
                 ),
               ],
             ),
@@ -106,8 +110,8 @@ class EventCard extends StatelessWidget {
   // ── Leading icon ──────────────────────────────────────────────────────────
 
   Widget _buildIcon({
-    required bool   isUrgent,
-    required bool   isUpcoming,
+    required bool isUrgent,
+    required bool isUpcoming,
     required Color? accent,
   }) {
     return Container(
@@ -121,7 +125,7 @@ class EventCard extends StatelessWidget {
             ? [
                 BoxShadow(
                   color: AppColors.live.withValues(alpha: 0.4),
-                  blurRadius:  12,
+                  blurRadius: 12,
                   spreadRadius: 2,
                 ),
               ]
@@ -130,7 +134,7 @@ class EventCard extends StatelessWidget {
       child: Icon(
         Icons.event,
         color: isUpcoming ? accent : AppColors.primaryLight,
-        size:  AppDimensions.iconLarge,
+        size: AppDimensions.iconLarge,
       ),
     );
   }
@@ -140,7 +144,7 @@ class EventCard extends StatelessWidget {
   Widget _buildInfo({required bool isUpcoming, required Color? accent}) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
-      mainAxisSize:       MainAxisSize.min,
+      mainAxisSize: MainAxisSize.min,
       children: [
         Row(
           children: [
@@ -150,8 +154,7 @@ class EventCard extends StatelessWidget {
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
                 style: AppTextStyles.cardTitle.copyWith(
-                  fontWeight:
-                      isUpcoming ? FontWeight.w800 : FontWeight.w700,
+                  fontWeight: isUpcoming ? FontWeight.w800 : FontWeight.w700,
                 ),
               ),
             ),
@@ -160,8 +163,8 @@ class EventCard extends StatelessWidget {
         ),
         const SizedBox(height: AppDimensions.spaceXSmall),
         EventIconRow(
-          icon:   Icons.access_time,
-          label:  event.date,
+          icon: Icons.access_time,
+          label: event.date,
           accent: isUpcoming ? accent : null,
         ),
         const SizedBox(height: 2),
@@ -169,7 +172,7 @@ class EventCard extends StatelessWidget {
         const SizedBox(height: AppDimensions.spaceSmall),
         Text(
           event.what,
-          style:    AppTextStyles.cardSubtitle,
+          style: AppTextStyles.cardSubtitle,
           maxLines: 2,
           overflow: TextOverflow.ellipsis,
         ),
@@ -181,15 +184,15 @@ class EventCard extends StatelessWidget {
 
   Widget _buildAccentBar(Color accent) {
     return Positioned(
-      left:   0,
-      top:    0,
+      left: 0,
+      top: 0,
       bottom: 0,
       child: Container(
         width: 5,
         decoration: BoxDecoration(
           color: accent,
           borderRadius: const BorderRadius.only(
-            topLeft:    Radius.circular(AppDimensions.radiusMedium),
+            topLeft: Radius.circular(AppDimensions.radiusMedium),
             bottomLeft: Radius.circular(AppDimensions.radiusMedium),
           ),
         ),

@@ -58,7 +58,7 @@ class AppDateUtils {
 
   static bool isCurrentTimeInRange(String startTime, String endTime) {
     final start = parseTimeToMinutes(startTime);
-    final end   = parseTimeToMinutes(endTime);
+    final end = parseTimeToMinutes(endTime);
     if (start == null || end == null) return false;
 
     final now = DateTime.now();
@@ -74,9 +74,18 @@ class AppDateUtils {
   // ── Dutch date parsing ────────────────────────────────────────────────────
 
   static const _dutchMonths = {
-    'januari': 1, 'februari': 2, 'maart': 3, 'april': 4,
-    'mei': 5, 'juni': 6, 'juli': 7, 'augustus': 8,
-    'september': 9, 'oktober': 10, 'november': 11, 'december': 12,
+    'januari': 1,
+    'februari': 2,
+    'maart': 3,
+    'april': 4,
+    'mei': 5,
+    'juni': 6,
+    'juli': 7,
+    'augustus': 8,
+    'september': 9,
+    'oktober': 10,
+    'november': 11,
+    'december': 12,
   };
 
   static DateTime? parseDutchDate(String input) {
@@ -86,9 +95,9 @@ class AppDateUtils {
     // Support multi-day formats like "30/31" or "30-31" — use the first day
     // so that events like "30/31 mei 2026" sort on the 30th.
     final dayRaw = parts[0].split(RegExp(r'[/\-]')).first;
-    final day    = int.tryParse(dayRaw);
-    final month  = _dutchMonths[parts[1]];
-    final year   = int.tryParse(parts[2]);
+    final day = int.tryParse(dayRaw);
+    final month = _dutchMonths[parts[1]];
+    final year = int.tryParse(parts[2]);
 
     if (day == null || month == null || year == null) return null;
     return DateTime(year, month, day);

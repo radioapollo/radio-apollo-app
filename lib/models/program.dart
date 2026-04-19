@@ -7,12 +7,12 @@
    - the time it airs
    - a short description
 */
- 
+
 class Program {
   final String time;
   final String title;
   final String subtitle;
- 
+
   const Program({
     required this.time,
     required this.title,

@@ -11,10 +11,7 @@ import '../../theme/app_theme.dart';
 class UsernamePrompt extends StatelessWidget {
   final VoidCallback onTap;
 
-  const UsernamePrompt({
-    super.key,
-    required this.onTap,
-  });
+  const UsernamePrompt({super.key, required this.onTap});
 
   @override
   Widget build(BuildContext context) {
@@ -23,7 +20,7 @@ class UsernamePrompt extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.symmetric(
           horizontal: AppDimensions.paddingMedium,
-          vertical:   AppDimensions.paddingSmall + 4,
+          vertical: AppDimensions.paddingSmall + 4,
         ),
         margin: const EdgeInsets.fromLTRB(
           AppDimensions.paddingXLarge,
@@ -34,18 +31,26 @@ class UsernamePrompt extends StatelessWidget {
         decoration: AppDecorations.chatInputFull(),
         child: const Row(
           children: [
-            Icon(Icons.person_add_alt_1,
-                color: AppColors.textOnDarkMuted, size: 20),
+            Icon(
+              Icons.person_add_alt_1,
+              color: AppColors.textOnDarkMuted,
+              size: 20,
+            ),
             SizedBox(width: 10),
             Expanded(
               child: Text(
                 'Kies een naam om mee te chatten',
                 style: TextStyle(
-                    color: AppColors.textOnDarkMuted, fontSize: 14),
+                  color: AppColors.textOnDarkMuted,
+                  fontSize: 14,
+                ),
               ),
             ),
-            Icon(Icons.arrow_forward_ios,
-                color: AppColors.textOnDarkMuted, size: 14),
+            Icon(
+              Icons.arrow_forward_ios,
+              color: AppColors.textOnDarkMuted,
+              size: 14,
+            ),
           ],
         ),
       ),

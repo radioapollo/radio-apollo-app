@@ -55,31 +55,35 @@ class ApolloCard extends StatelessWidget {
   }
 
   Widget _buildVertical(Color textColor) => Column(
-        mainAxisSize: MainAxisSize.max,
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(title,
-              style: AppTextStyles.apolloCardTitle.copyWith(color: textColor)),
-          const SizedBox(height: AppDimensions.paddingSmall),
-          Icon(icon, size: AppDimensions.iconXXLarge, color: textColor),
-          const SizedBox(height: AppDimensions.paddingSmall),
-          Text(subtitle,
-              maxLines: 2,
-              overflow: TextOverflow.ellipsis,
-              style: AppTextStyles.cardSubtitle.copyWith(color: textColor)),
-        ],
-      );
+    mainAxisSize: MainAxisSize.max,
+    crossAxisAlignment: CrossAxisAlignment.start,
+    children: [
+      Text(
+        title,
+        style: AppTextStyles.apolloCardTitle.copyWith(color: textColor),
+      ),
+      const SizedBox(height: AppDimensions.paddingSmall),
+      Icon(icon, size: AppDimensions.iconXXLarge, color: textColor),
+      const SizedBox(height: AppDimensions.paddingSmall),
+      Text(
+        subtitle,
+        maxLines: 2,
+        overflow: TextOverflow.ellipsis,
+        style: AppTextStyles.cardSubtitle.copyWith(color: textColor),
+      ),
+    ],
+  );
 
   Widget _buildHorizontal(Color textColor) => Row(
-        children: [
-          Icon(icon, size: AppDimensions.iconPlayer, color: textColor),
-          const SizedBox(width: AppDimensions.paddingSmall),
-          Expanded(
-            child: Text(
-              '$title\n$subtitle',
-              style: AppTextStyles.apolloCardSubtitle.copyWith(color: textColor),
-            ),
-          ),
-        ],
-      );
+    children: [
+      Icon(icon, size: AppDimensions.iconPlayer, color: textColor),
+      const SizedBox(width: AppDimensions.paddingSmall),
+      Expanded(
+        child: Text(
+          '$title\n$subtitle',
+          style: AppTextStyles.apolloCardSubtitle.copyWith(color: textColor),
+        ),
+      ),
+    ],
+  );
 }

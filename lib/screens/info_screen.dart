@@ -62,7 +62,7 @@ class InfoScreen extends StatelessWidget {
           Image.asset(
             AppAssets.logo,
             height: AppDimensions.logoHeight,
-            fit:    BoxFit.contain,
+            fit: BoxFit.contain,
           ),
           const SizedBox(height: AppDimensions.spaceMedium),
           const Text('Over Radio Apollo', style: AppTextStyles.screenTitle),
@@ -115,9 +115,7 @@ class InfoScreen extends StatelessWidget {
             child: CircularProgressIndicator(color: AppColors.navyMedium),
           );
         }
-        if (snapshot.hasError ||
-            !snapshot.hasData ||
-            snapshot.data!.isEmpty) {
+        if (snapshot.hasError || !snapshot.hasData || snapshot.data!.isEmpty) {
           return const SizedBox.shrink();
         }
         return AboutCard(text: snapshot.data!);
@@ -137,17 +135,19 @@ class InfoScreen extends StatelessWidget {
           );
         }
         if (snapshot.hasError) {
-          return const Text('Fout bij het laden van sponsors.',
-              style: AppTextStyles.noDataText);
+          return const Text(
+            'Fout bij het laden van sponsors.',
+            style: AppTextStyles.noDataText,
+          );
         }
         if (!snapshot.hasData || snapshot.data!.isEmpty) {
-          return const Text('Geen sponsors gevonden.',
-              style: AppTextStyles.noDataText);
+          return const Text(
+            'Geen sponsors gevonden.',
+            style: AppTextStyles.noDataText,
+          );
         }
         return Column(
-          children: snapshot.data!
-              .map((s) => SponsorCard(sponsor: s))
-              .toList(),
+          children: snapshot.data!.map((s) => SponsorCard(sponsor: s)).toList(),
         );
       },
     );

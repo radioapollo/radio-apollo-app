@@ -14,7 +14,7 @@ import 'package:flutter/material.dart';
 import '../../services/chat/auth_service.dart';
 
 class AdminLoginDialog extends StatefulWidget {
-  final AuthService  authService;
+  final AuthService authService;
   final VoidCallback onSuccess;
 
   const AdminLoginDialog({
@@ -25,15 +25,13 @@ class AdminLoginDialog extends StatefulWidget {
 
   static Future<void> show(
     BuildContext context, {
-    required AuthService  authService,
+    required AuthService authService,
     required VoidCallback onSuccess,
   }) {
     return showDialog(
       context: context,
-      builder: (_) => AdminLoginDialog(
-        authService: authService,
-        onSuccess:   onSuccess,
-      ),
+      builder: (_) =>
+          AdminLoginDialog(authService: authService, onSuccess: onSuccess),
     );
   }
 
@@ -44,7 +42,7 @@ class AdminLoginDialog extends StatefulWidget {
 class _AdminLoginDialogState extends State<AdminLoginDialog> {
   final _controller = TextEditingController();
   String? _error;
-  bool    _loading = false;
+  bool _loading = false;
 
   @override
   void dispose() {
@@ -57,7 +55,10 @@ class _AdminLoginDialogState extends State<AdminLoginDialog> {
   Future<void> _submit() async {
     if (_loading) return;
 
-    setState(() { _loading = true; _error = null; });
+    setState(() {
+      _loading = true;
+      _error = null;
+    });
 
     try {
       await widget.authService.login(_controller.text);
@@ -69,7 +70,7 @@ class _AdminLoginDialogState extends State<AdminLoginDialog> {
       if (mounted) {
         setState(() {
           _loading = false;
-          _error   = e.toString().replaceFirst('Exception: ', '');
+          _error = e.toString().replaceFirst('Exception: ', '');
         });
       }
     }
@@ -85,13 +86,13 @@ class _AdminLoginDialogState extends State<AdminLoginDialog> {
         mainAxisSize: MainAxisSize.min,
         children: [
           TextField(
-            controller:  _controller,
+            controller: _controller,
             obscureText: true,
-            autofocus:   true,
-            enabled:     !_loading,
-            decoration:  InputDecoration(
-              hintText:      'Wachtwoord',
-              errorText:     _error,
+            autofocus: true,
+            enabled: !_loading,
+            decoration: InputDecoration(
+              hintText: 'Wachtwoord',
+              errorText: _error,
               errorMaxLines: 3,
             ),
             onSubmitted: (_) => _submit(),
@@ -107,7 +108,8 @@ class _AdminLoginDialogState extends State<AdminLoginDialog> {
           onPressed: _loading ? null : _submit,
           child: _loading
               ? const SizedBox(
-                  width: 18, height: 18,
+                  width: 18,
+                  height: 18,
                   child: CircularProgressIndicator(strokeWidth: 2),
                 )
               : const Text('Login'),

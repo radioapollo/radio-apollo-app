@@ -60,15 +60,17 @@ class UpcomingEventSnackbar {
     return SnackBar(
       content: Row(
         children: [
-          const Icon(Icons.event_available,
-              color: AppColors.textOnDark,
-              size:  AppDimensions.iconMedium),
+          const Icon(
+            Icons.event_available,
+            color: AppColors.textOnDark,
+            size: AppDimensions.iconMedium,
+          ),
           const SizedBox(width: AppDimensions.spaceMedium),
           Expanded(
             child: Text(
               _labelFor(event),
               style: const TextStyle(
-                color:      AppColors.textOnDark,
+                color: AppColors.textOnDark,
                 fontWeight: FontWeight.w600,
               ),
             ),
@@ -76,9 +78,9 @@ class UpcomingEventSnackbar {
         ],
       ),
       backgroundColor: AppColors.primaryMid,
-      behavior:        SnackBarBehavior.floating,
-      duration:        const Duration(seconds: 4),
-      margin:          const EdgeInsets.all(AppDimensions.paddingLarge),
+      behavior: SnackBarBehavior.floating,
+      duration: const Duration(seconds: 4),
+      margin: const EdgeInsets.all(AppDimensions.paddingLarge),
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(AppDimensions.radiusMedium),
       ),

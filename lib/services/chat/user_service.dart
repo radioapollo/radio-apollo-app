@@ -24,8 +24,8 @@ class UserService {
 
   // ── Getters ───────────────────────────────────────────────────────────────
 
-  String? get username    => _username;
-  bool    get hasUsername => _username != null && _username!.isNotEmpty;
+  String? get username => _username;
+  bool get hasUsername => _username != null && _username!.isNotEmpty;
 
   // ── Storage ───────────────────────────────────────────────────────────────
 

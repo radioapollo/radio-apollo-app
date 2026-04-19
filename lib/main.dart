@@ -53,7 +53,9 @@ Future<void> main() async {
     );
   } catch (e) {
     debugPrint('[main] Firebase init failed: $e');
-    runApp(const _ErrorApp(message: 'Kan Firebase niet laden. Herstart de app.'));
+    runApp(
+      const _ErrorApp(message: 'Kan Firebase niet laden. Herstart de app.'),
+    );
     return;
   }
 
@@ -102,7 +104,11 @@ Future<void> main() async {
     );
   } catch (e) {
     debugPrint('[main] AudioService init failed: $e');
-    runApp(const _ErrorApp(message: 'Audiodienst kon niet starten. Herstart de app.'));
+    runApp(
+      const _ErrorApp(
+        message: 'Audiodienst kon niet starten. Herstart de app.',
+      ),
+    );
     return;
   }
 
@@ -122,11 +128,13 @@ Future<void> main() async {
     );
   });
 
-  runApp(ApolloApp(
-    audioHandler: audioHandler,
-    currentProgramService: currentProgramService,
-    programSubscription: programSub,
-  ));
+  runApp(
+    ApolloApp(
+      audioHandler: audioHandler,
+      currentProgramService: currentProgramService,
+      programSubscription: programSub,
+    ),
+  );
 }
 
 // ── Fallback error screen ───────────────────────────────────────────────────

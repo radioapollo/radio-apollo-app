@@ -40,18 +40,15 @@ class RadioAudioHandler extends BaseAudioHandler {
     _player.playerStateStream.listen((state) {
       final playing = state.playing;
 
-      playbackState.add(PlaybackState(
-        controls: [
-          if (playing) MediaControl.pause else MediaControl.play,
-        ],
-        systemActions: const {
-          MediaAction.play,
-          MediaAction.pause,
-        },
-        playing: playing,
-        processingState: _mapState(state.processingState),
-        updatePosition: Duration.zero,
-      ));
+      playbackState.add(
+        PlaybackState(
+          controls: [if (playing) MediaControl.pause else MediaControl.play],
+          systemActions: const {MediaAction.play, MediaAction.pause},
+          playing: playing,
+          processingState: _mapState(state.processingState),
+          updatePosition: Duration.zero,
+        ),
+      );
 
       if (playing) {
         _startMetadataPolling();
@@ -69,7 +66,9 @@ class RadioAudioHandler extends BaseAudioHandler {
 
   Future<void> _initDefaultArt() async {
     try {
-      final byteData = await rootBundle.load('assets/images/Logo/transparant.png');
+      final byteData = await rootBundle.load(
+        'assets/images/Logo/transparant.png',
+      );
       final tempDir = Directory.systemTemp;
       final file = File('${tempDir.path}/radio_apollo_logo.png');
       await file.writeAsBytes(byteData.buffer.asUint8List());
@@ -81,11 +80,16 @@ class RadioAudioHandler extends BaseAudioHandler {
 
   AudioProcessingState _mapState(ProcessingState state) {
     switch (state) {
-      case ProcessingState.idle:      return AudioProcessingState.idle;
-      case ProcessingState.loading:   return AudioProcessingState.loading;
-      case ProcessingState.buffering: return AudioProcessingState.buffering;
-      case ProcessingState.ready:     return AudioProcessingState.ready;
-      case ProcessingState.completed: return AudioProcessingState.completed;
+      case ProcessingState.idle:
+        return AudioProcessingState.idle;
+      case ProcessingState.loading:
+        return AudioProcessingState.loading;
+      case ProcessingState.buffering:
+        return AudioProcessingState.buffering;
+      case ProcessingState.ready:
+        return AudioProcessingState.ready;
+      case ProcessingState.completed:
+        return AudioProcessingState.completed;
     }
   }
 
@@ -124,8 +128,9 @@ class RadioAudioHandler extends BaseAudioHandler {
           .get(Uri.parse(AppConstants.statsUrl))
           .timeout(const Duration(seconds: 8));
       if (response.statusCode == 200) {
-        final rawTitle =
-            (jsonDecode(response.body)['songtitle'] ?? '').toString().trim();
+        final rawTitle = (jsonDecode(response.body)['songtitle'] ?? '')
+            .toString()
+            .trim();
         final songTitle = _stripHtml(rawTitle);
 
         if (songTitle.isNotEmpty && songTitle != _lastSongTitle) {
@@ -141,21 +146,23 @@ class RadioAudioHandler extends BaseAudioHandler {
   // ── Media item ────────────────────────────────────────────────────────────
 
   void _updateMediaItem(String songTitle) {
-    final parts  = songTitle.split(' - ');
+    final parts = songTitle.split(' - ');
     final artist = parts.length > 1 ? parts[0].trim() : 'Radio Apollo';
-    final title  = parts.length > 1 ? parts[1].trim() : songTitle;
-    final album  = _currentProgram.isNotEmpty
+    final title = parts.length > 1 ? parts[1].trim() : songTitle;
+    final album = _currentProgram.isNotEmpty
         ? '$_currentProgram — Radio Apollo'
         : 'Radio Apollo';
     final artUri = _programArtUri ?? _defaultArtUri;
 
-    mediaItem.add(MediaItem(
-      id:     AppConstants.streamUrl,
-      title:  title,
-      artist: artist,
-      album:  album,
-      artUri: artUri,
-    ));
+    mediaItem.add(
+      MediaItem(
+        id: AppConstants.streamUrl,
+        title: title,
+        artist: artist,
+        album: album,
+        artUri: artUri,
+      ),
+    );
   }
 
   void setCurrentProgram(String programName, {String? imageUrl}) {
@@ -171,13 +178,15 @@ class RadioAudioHandler extends BaseAudioHandler {
   // ── Playback controls ─────────────────────────────────────────────────────
 
   Future<void> _startPlayback() async {
-    mediaItem.add(MediaItem(
-      id:     AppConstants.streamUrl,
-      title:  _currentProgram.isNotEmpty ? _currentProgram : 'Radio Apollo',
-      artist: 'LIVE uitzending',
-      album:  'Radio Apollo',
-      artUri: _programArtUri ?? _defaultArtUri,
-    ));
+    mediaItem.add(
+      MediaItem(
+        id: AppConstants.streamUrl,
+        title: _currentProgram.isNotEmpty ? _currentProgram : 'Radio Apollo',
+        artist: 'LIVE uitzending',
+        album: 'Radio Apollo',
+        artUri: _programArtUri ?? _defaultArtUri,
+      ),
+    );
 
     await _player.setUrl(AppConstants.streamUrl);
     await _player.play();

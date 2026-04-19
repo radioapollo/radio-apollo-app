@@ -23,7 +23,7 @@ class SponsorCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      margin:  const EdgeInsets.only(bottom: AppDimensions.spaceXLarge),
+      margin: const EdgeInsets.only(bottom: AppDimensions.spaceXLarge),
       padding: const EdgeInsets.all(AppDimensions.paddingMedium),
       decoration: AppDecorations.lightCard(),
       child: Row(
@@ -39,8 +39,7 @@ class SponsorCard extends StatelessWidget {
   // ── Logo ──────────────────────────────────────────────────────────────────
 
   Widget _buildLogo() {
-    final hasImage =
-        sponsor.imageUrl != null && sponsor.imageUrl!.isNotEmpty;
+    final hasImage = sponsor.imageUrl != null && sponsor.imageUrl!.isNotEmpty;
 
     if (!hasImage) {
       return const SizedBox(width: _logoSize, height: _logoSize);
@@ -50,9 +49,9 @@ class SponsorCard extends StatelessWidget {
       borderRadius: BorderRadius.circular(8),
       child: CachedNetworkImage(
         imageUrl: sponsor.imageUrl!,
-        width:    _logoSize,
-        height:   _logoSize,
-        fit:      BoxFit.contain,
+        width: _logoSize,
+        height: _logoSize,
+        fit: BoxFit.contain,
         errorWidget: (_, _, _) =>
             const SizedBox(width: _logoSize, height: _logoSize),
       ),

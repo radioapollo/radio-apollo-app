@@ -24,9 +24,9 @@ class ChatService {
   final AuthService authService;
   final _db = FirebaseFirestore.instance;
 
-  static const String _collection       = 'chat_messages';
-  static const int    maxMessageLength  = 160;
-  static const int    cooldownSeconds   = 3;
+  static const String _collection = 'chat_messages';
+  static const int maxMessageLength = 160;
+  static const int cooldownSeconds = 3;
 
   DateTime? _lastMessageSent;
 
@@ -60,17 +60,18 @@ class ChatService {
                 return ts.toDate().isAfter(cutoff);
               })
               .map((doc) {
-                final data          = doc.data();
-                final ts            = data['timestamp'] as Timestamp?;
-                final dt            = ts?.toDate() ?? DateTime.now();
-                final msgUsername   = data['username'] as String? ?? 'Onbekend';
+                final data = doc.data();
+                final ts = data['timestamp'] as Timestamp?;
+                final dt = ts?.toDate() ?? DateTime.now();
+                final msgUsername = data['username'] as String? ?? 'Onbekend';
                 final localUsername = UserService.instance.username;
                 return Message(
-                  role:          data['role'] as String? ?? 'user',
-                  text:          data['text'] as String? ?? '',
-                  time:          AppDateUtils.formatTime(dt),
-                  username:      msgUsername,
-                  isCurrentUser: localUsername != null &&
+                  role: data['role'] as String? ?? 'user',
+                  text: data['text'] as String? ?? '',
+                  time: AppDateUtils.formatTime(dt),
+                  username: msgUsername,
+                  isCurrentUser:
+                      localUsername != null &&
                       msgUsername == localUsername &&
                       (data['role'] as String? ?? 'user') != 'admin',
                 );
@@ -97,7 +98,9 @@ class ChatService {
   Future<bool> _sendUserMessage(String text) async {
     final username = UserService.instance.username;
     if (username == null || username.isEmpty) {
-      throw Exception('Stel eerst een gebruikersnaam in voor je een bericht stuurt.');
+      throw Exception(
+        'Stel eerst een gebruikersnaam in voor je een bericht stuurt.',
+      );
     }
 
     final remaining = cooldownRemaining();
@@ -107,9 +110,9 @@ class ChatService {
 
     try {
       await _db.collection(_collection).add({
-        'username':  username,
-        'text':      text,
-        'role':      'user',
+        'username': username,
+        'text': text,
+        'role': 'user',
         'timestamp': FieldValue.serverTimestamp(),
       });
     } on FirebaseException catch (e) {
@@ -118,7 +121,9 @@ class ChatService {
       }
       throw Exception('Bericht kon niet worden verzonden. Probeer opnieuw.');
     } catch (_) {
-      throw Exception('Bericht kon niet worden verzonden. Controleer je netwerk.');
+      throw Exception(
+        'Bericht kon niet worden verzonden. Controleer je netwerk.',
+      );
     }
 
     _lastMessageSent = DateTime.now();
@@ -138,13 +143,12 @@ class ChatService {
       response = await http.post(
         uri,
         headers: {'Content-Type': 'application/json'},
-        body: jsonEncode({
-          'token': token,
-          'text':  text,
-        }),
+        body: jsonEncode({'token': token, 'text': text}),
       );
     } catch (_) {
-      throw Exception('Bericht kon niet worden verzonden. Controleer je netwerk.');
+      throw Exception(
+        'Bericht kon niet worden verzonden. Controleer je netwerk.',
+      );
     }
 
     if (response.statusCode != 200) {

@@ -15,9 +15,9 @@ class AboutCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding:    const EdgeInsets.all(AppDimensions.paddingLarge),
+      padding: const EdgeInsets.all(AppDimensions.paddingLarge),
       decoration: AppDecorations.darkCard(),
-      child:      Text(text, style: AppTextStyles.darkCardBody),
+      child: Text(text, style: AppTextStyles.darkCardBody),
     );
   }
 }

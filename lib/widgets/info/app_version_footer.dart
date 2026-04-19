@@ -22,8 +22,8 @@ class AppVersionFooter extends StatelessWidget {
           child: Text(
             'App ontwikkeld door Raf Vermeylen',
             style: TextStyle(
-              color:      AppColors.creditText,
-              fontSize:   12,
+              color: AppColors.creditText,
+              fontSize: 12,
               fontWeight: FontWeight.w500,
             ),
           ),
@@ -32,10 +32,7 @@ class AppVersionFooter extends StatelessWidget {
         Center(
           child: Text(
             'Versie ${AppConstants.appVersion}',
-            style: const TextStyle(
-              color:    AppColors.creditText,
-              fontSize: 11,
-            ),
+            style: const TextStyle(color: AppColors.creditText, fontSize: 11),
           ),
         ),
       ],

@@ -28,14 +28,13 @@ class AppConstants {
 
   // ── Notification ──────────────────────────────────────────────────────────
 
-  static const String notificationChannelId =
-      'nl.radioapollo.channel.audio';
+  static const String notificationChannelId = 'nl.radioapollo.channel.audio';
   static const String notificationChannelName = 'Radio Apollo';
 
   // ── Cloud Functions ───────────────────────────────────────────────────────
 
   static const String projectId = 'radio-apollo-90693';
-  static const String region    = 'europe-west1';
+  static const String region = 'europe-west1';
 
   static String cloudFunctionUrl(String functionName) =>
       'https://$region-$projectId.cloudfunctions.net/$functionName';

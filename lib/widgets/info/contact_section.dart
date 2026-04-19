@@ -16,11 +16,11 @@ class ContactSection extends StatelessWidget {
 
   // ── Contact details ───────────────────────────────────────────────────────
 
-  static const String _email       = 'info@radioapollo.be';
-  static const String _phone       = '014/26.16.16';
-  static const String _phoneDial   = '003214261616';
-  static const String _address     = 'Lindestraat 7a, 2222 Wiekevorst';
-  static const String _addressMap  = 'https://g.co/kgs/3MCbeHw';
+  static const String _email = 'info@radioapollo.be';
+  static const String _phone = '014/26.16.16';
+  static const String _phoneDial = '003214261616';
+  static const String _address = 'Lindestraat 7a, 2222 Wiekevorst';
+  static const String _addressMap = 'https://g.co/kgs/3MCbeHw';
   static const String _facebookUrl =
       'https://www.facebook.com/people/Radio-Apollo/100039974545481/';
 
@@ -32,25 +32,25 @@ class ContactSection extends StatelessWidget {
       child: Column(
         children: [
           _ContactRow(
-            icon:  Icons.email_outlined,
+            icon: Icons.email_outlined,
             label: _email,
             onTap: () => UrlLauncherUtils.sendEmail(_email),
           ),
           const SizedBox(height: AppDimensions.spaceLarge),
           _ContactRow(
-            icon:  Icons.phone_outlined,
+            icon: Icons.phone_outlined,
             label: _phone,
             onTap: () => UrlLauncherUtils.dialPhone(_phoneDial),
           ),
           const SizedBox(height: AppDimensions.spaceLarge),
           _ContactRow(
-            icon:  Icons.location_on_outlined,
+            icon: Icons.location_on_outlined,
             label: _address,
             onTap: () => UrlLauncherUtils.openUrl(_addressMap),
           ),
           const SizedBox(height: AppDimensions.spaceLarge),
           _ContactRow(
-            icon:  Icons.facebook,
+            icon: Icons.facebook,
             label: 'Radio Apollo op Facebook',
             onTap: () => UrlLauncherUtils.openUrl(_facebookUrl),
           ),
@@ -63,9 +63,9 @@ class ContactSection extends StatelessWidget {
 // ── Single contact row ──────────────────────────────────────────────────────
 
 class _ContactRow extends StatelessWidget {
-  final IconData      icon;
-  final String        label;
-  final VoidCallback  onTap;
+  final IconData icon;
+  final String label;
+  final VoidCallback onTap;
 
   const _ContactRow({
     required this.icon,
@@ -79,22 +79,24 @@ class _ContactRow extends StatelessWidget {
       onTap: onTap,
       child: Row(
         children: [
-          Icon(icon,
-              size:  AppDimensions.iconLarge,
-              color: AppColors.iconOnDarkMuted),
+          Icon(
+            icon,
+            size: AppDimensions.iconLarge,
+            color: AppColors.iconOnDarkMuted,
+          ),
           const SizedBox(width: AppDimensions.spaceLarge),
           Expanded(
             child: Text(
               label,
               style: AppTextStyles.darkCardSubtitle.copyWith(
-                decoration:      TextDecoration.underline,
+                decoration: TextDecoration.underline,
                 decorationColor: AppColors.textOnDarkMedium,
               ),
             ),
           ),
           const Icon(
             Icons.open_in_new,
-            size:  16,
+            size: 16,
             color: AppColors.iconOnDarkMuted,
           ),
         ],

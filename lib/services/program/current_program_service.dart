@@ -36,14 +36,14 @@ class CurrentProgramService {
   final ProgramService _programService;
 
   CurrentProgramService({ProgramService? programService})
-      : _programService = programService ?? ProgramService();
+    : _programService = programService ?? ProgramService();
 
   // ── Cache keys ────────────────────────────────────────────────────────────
 
-  static const _keyTitle     = 'now_playing_title';
+  static const _keyTitle = 'now_playing_title';
   static const _keyPresenter = 'now_playing_presenter';
-  static const _keyTimeSlot  = 'now_playing_time_slot';
-  static const _keyImageUrl  = 'now_playing_image_url';
+  static const _keyTimeSlot = 'now_playing_time_slot';
+  static const _keyImageUrl = 'now_playing_image_url';
 
   Timer? _timer;
   final _controller = StreamController<CurrentProgram>.broadcast();
@@ -77,12 +77,14 @@ class CurrentProgramService {
     final cachedTitle = prefs.getString(_keyTitle);
 
     if (cachedTitle != null && cachedTitle.isNotEmpty) {
-      _emit(CurrentProgram(
-        title:     cachedTitle,
-        presenter: prefs.getString(_keyPresenter),
-        timeSlot:  prefs.getString(_keyTimeSlot),
-        imageUrl:  prefs.getString(_keyImageUrl),
-      ));
+      _emit(
+        CurrentProgram(
+          title: cachedTitle,
+          presenter: prefs.getString(_keyPresenter),
+          timeSlot: prefs.getString(_keyTimeSlot),
+          imageUrl: prefs.getString(_keyImageUrl),
+        ),
+      );
     }
   }
 
@@ -105,8 +107,7 @@ class CurrentProgramService {
 
   Future<void> _fetchCurrentProgram() async {
     try {
-      final todayName =
-          ProgramService.weekdays[DateTime.now().weekday - 1];
+      final todayName = ProgramService.weekdays[DateTime.now().weekday - 1];
 
       final programs = await _programService.getProgramsForDayOnce(todayName);
 
@@ -120,10 +121,10 @@ class CurrentProgramService {
             timeParts[1].isNotEmpty &&
             AppDateUtils.isCurrentTimeInRange(timeParts[0], timeParts[1])) {
           result = CurrentProgram(
-            title:     p['title'],
+            title: p['title'],
             presenter: p['desc'],
-            imageUrl:  p['imageUrl'],
-            timeSlot:  AppDateUtils.formatTimeRange(timeParts[0], timeParts[1]),
+            imageUrl: p['imageUrl'],
+            timeSlot: AppDateUtils.formatTimeRange(timeParts[0], timeParts[1]),
           );
           break;
         }

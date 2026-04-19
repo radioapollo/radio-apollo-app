@@ -121,9 +121,7 @@ class AppTextStyles {
   );
 
   // Chat bubbles
-  static const TextStyle bubbleText = TextStyle(
-    fontSize: 15,
-  );
+  static const TextStyle bubbleText = TextStyle(fontSize: 15);
 
   static const TextStyle bubbleTime = TextStyle(
     color: AppColors.textOnDarkMuted,
@@ -133,7 +131,9 @@ class AppTextStyles {
   // Input field
   static const TextStyle inputText = TextStyle(color: AppColors.textOnDark);
 
-  static const TextStyle inputHint = TextStyle(color: AppColors.textOnDarkMuted);
+  static const TextStyle inputHint = TextStyle(
+    color: AppColors.textOnDarkMuted,
+  );
 
   static const TextStyle noDataText = TextStyle(color: AppColors.textSecondary);
 

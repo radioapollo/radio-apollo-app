@@ -46,7 +46,8 @@ class DefaultFirebaseOptions {
     messagingSenderId: '1086114344104',
     projectId: 'radio-apollo-90693',
     authDomain: 'radio-apollo-90693.firebaseapp.com',
-    databaseURL: 'https://radio-apollo-90693-default-rtdb.europe-west1.firebasedatabase.app',
+    databaseURL:
+        'https://radio-apollo-90693-default-rtdb.europe-west1.firebasedatabase.app',
     storageBucket: 'radio-apollo-90693.firebasestorage.app',
   );
 
@@ -55,7 +56,8 @@ class DefaultFirebaseOptions {
     appId: '1:1086114344104:android:68f2f4083cd7bdd50e269d',
     messagingSenderId: '1086114344104',
     projectId: 'radio-apollo-90693',
-    databaseURL: 'https://radio-apollo-90693-default-rtdb.europe-west1.firebasedatabase.app',
+    databaseURL:
+        'https://radio-apollo-90693-default-rtdb.europe-west1.firebasedatabase.app',
     storageBucket: 'radio-apollo-90693.firebasestorage.app',
   );
 
@@ -64,7 +66,8 @@ class DefaultFirebaseOptions {
     appId: '1:1086114344104:ios:ac35dd4997b1245e0e269d',
     messagingSenderId: '1086114344104',
     projectId: 'radio-apollo-90693',
-    databaseURL: 'https://radio-apollo-90693-default-rtdb.europe-west1.firebasedatabase.app',
+    databaseURL:
+        'https://radio-apollo-90693-default-rtdb.europe-west1.firebasedatabase.app',
     storageBucket: 'radio-apollo-90693.firebasestorage.app',
     iosBundleId: 'com.example.flutterApplication1',
   );
@@ -74,7 +77,8 @@ class DefaultFirebaseOptions {
     appId: '1:1086114344104:ios:ac35dd4997b1245e0e269d',
     messagingSenderId: '1086114344104',
     projectId: 'radio-apollo-90693',
-    databaseURL: 'https://radio-apollo-90693-default-rtdb.europe-west1.firebasedatabase.app',
+    databaseURL:
+        'https://radio-apollo-90693-default-rtdb.europe-west1.firebasedatabase.app',
     storageBucket: 'radio-apollo-90693.firebasestorage.app',
     iosBundleId: 'com.example.flutterApplication1',
   );
@@ -85,8 +89,8 @@ class DefaultFirebaseOptions {
     messagingSenderId: '1086114344104',
     projectId: 'radio-apollo-90693',
     authDomain: 'radio-apollo-90693.firebaseapp.com',
-    databaseURL: 'https://radio-apollo-90693-default-rtdb.europe-west1.firebasedatabase.app',
+    databaseURL:
+        'https://radio-apollo-90693-default-rtdb.europe-west1.firebasedatabase.app',
     storageBucket: 'radio-apollo-90693.firebasestorage.app',
   );
-
 }

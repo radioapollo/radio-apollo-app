@@ -90,8 +90,7 @@ class _ProgramScreenState extends State<ProgramScreen>
         if (_scrollController.hasClients &&
             _scrollController.position.hasContentDimensions &&
             currentIndex >= 0) {
-          final offset =
-              currentIndex * AppDimensions.programCardHeight;
+          final offset = currentIndex * AppDimensions.programCardHeight;
           _scrollController.animateTo(
             offset.clamp(0, _scrollController.position.maxScrollExtent),
             duration: const Duration(milliseconds: 400),
@@ -135,8 +134,7 @@ class _ProgramScreenState extends State<ProgramScreen>
                       fit: BoxFit.contain,
                     ),
                     const SizedBox(height: AppDimensions.spaceMedium),
-                    const Text("Programma's",
-                        style: AppTextStyles.screenTitle),
+                    const Text("Programma's", style: AppTextStyles.screenTitle),
                     const SizedBox(height: AppDimensions.spaceLarge),
                     DaySelector(
                       days: _days,
@@ -165,8 +163,7 @@ class _ProgramScreenState extends State<ProgramScreen>
                     stream: _programService.getProgramsForDay(selectedDay),
                     builder: (context, snapshot) {
                       if (!_hasData &&
-                          snapshot.connectionState ==
-                              ConnectionState.waiting) {
+                          snapshot.connectionState == ConnectionState.waiting) {
                         return const Center(
                           child: CircularProgressIndicator(
                             color: AppColors.steelLight,
@@ -178,7 +175,8 @@ class _ProgramScreenState extends State<ProgramScreen>
                         return const Center(
                           child: Padding(
                             padding: EdgeInsets.all(
-                                AppDimensions.paddingXLarge),
+                              AppDimensions.paddingXLarge,
+                            ),
                             child: Text(
                               'Fout bij het laden van programma\'s.',
                               style: AppTextStyles.noDataText,
@@ -190,7 +188,8 @@ class _ProgramScreenState extends State<ProgramScreen>
                         return const Center(
                           child: Padding(
                             padding: EdgeInsets.all(
-                                AppDimensions.paddingXLarge),
+                              AppDimensions.paddingXLarge,
+                            ),
                             child: Text(
                               'Geen programma\'s gevonden.',
                               style: AppTextStyles.noDataText,
@@ -204,11 +203,12 @@ class _ProgramScreenState extends State<ProgramScreen>
                       int currentIndex = -1;
                       if (isToday) {
                         for (int i = 0; i < programs.length; i++) {
-                          final timeParts =
-                              programs[i]['time']!.split(' - ');
+                          final timeParts = programs[i]['time']!.split(' - ');
                           if (timeParts.length == 2 &&
                               AppDateUtils.isCurrentTimeInRange(
-                                  timeParts[0], timeParts[1])) {
+                                timeParts[0],
+                                timeParts[1],
+                              )) {
                             currentIndex = i;
                             break;
                           }
@@ -221,14 +221,17 @@ class _ProgramScreenState extends State<ProgramScreen>
                       return ListView.builder(
                         controller: _scrollController,
                         padding: const EdgeInsets.all(
-                            AppDimensions.paddingMedium),
+                          AppDimensions.paddingMedium,
+                        ),
                         itemCount: programs.length,
                         itemBuilder: (context, index) {
                           final p = programs[index];
                           final timeParts = p['time']!.split(' - ');
                           final displayTime = timeParts.length == 2
                               ? AppDateUtils.formatTimeRange(
-                                  timeParts[0], timeParts[1])
+                                  timeParts[0],
+                                  timeParts[1],
+                                )
                               : p['time']!;
                           return ProgramCard(
                             time: displayTime,

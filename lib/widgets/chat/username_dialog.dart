@@ -54,7 +54,10 @@ class _UsernameDialogState extends State<UsernameDialog> {
       return;
     }
 
-    setState(() { _loading = true; _error = null; });
+    setState(() {
+      _loading = true;
+      _error = null;
+    });
 
     try {
       await UserService.instance.setUsername(name);
@@ -73,7 +76,8 @@ class _UsernameDialogState extends State<UsernameDialog> {
   Widget build(BuildContext context) {
     return AlertDialog(
       shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(AppDimensions.radiusXLarge)),
+        borderRadius: BorderRadius.circular(AppDimensions.radiusXLarge),
+      ),
       title: const Text(
         'Kies een gebruikersnaam',
         style: TextStyle(fontWeight: FontWeight.w800, fontSize: 18),
@@ -89,23 +93,26 @@ class _UsernameDialogState extends State<UsernameDialog> {
           const SizedBox(height: 16),
           TextField(
             controller: _controller,
-            autofocus:  true,
-            maxLength:  20,
-            enabled:    !_loading,
+            autofocus: true,
+            maxLength: 20,
+            enabled: !_loading,
             decoration: InputDecoration(
-              hintText:      'Jouw naam...',
-              errorText:     _error,
+              hintText: 'Jouw naam...',
+              errorText: _error,
               errorMaxLines: 3,
               border: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(AppDimensions.radiusMedium),
               ),
               focusedBorder: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(AppDimensions.radiusMedium),
-                borderSide: const BorderSide(color: AppColors.primaryLight, width: 2),
+                borderSide: const BorderSide(
+                  color: AppColors.primaryLight,
+                  width: 2,
+                ),
               ),
             ),
             onSubmitted: (_) => _submit(),
-            onChanged:   (_) {
+            onChanged: (_) {
               if (_error != null) setState(() => _error = null);
             },
           ),
@@ -124,14 +131,16 @@ class _UsernameDialogState extends State<UsernameDialog> {
           onPressed: _loading ? null : _submit,
           child: _loading
               ? const SizedBox(
-                  width: 18, height: 18,
+                  width: 18,
+                  height: 18,
                   child: CircularProgressIndicator(strokeWidth: 2),
                 )
               : const Text(
                   'Opslaan',
                   style: TextStyle(
-                      color: AppColors.primaryLight,
-                      fontWeight: FontWeight.bold),
+                    color: AppColors.primaryLight,
+                    fontWeight: FontWeight.bold,
+                  ),
                 ),
         ),
       ],

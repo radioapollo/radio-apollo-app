@@ -67,7 +67,7 @@ class _EventScreenState extends State<EventScreen> {
           Image.asset(
             AppAssets.logo,
             height: AppDimensions.logoHeight,
-            fit:    BoxFit.contain,
+            fit: BoxFit.contain,
           ),
           const SizedBox(height: AppDimensions.spaceMedium),
           const Text('Evenementen', style: AppTextStyles.screenTitle),
@@ -90,14 +90,18 @@ class _EventScreenState extends State<EventScreen> {
         }
         if (snapshot.hasError) {
           return const Center(
-            child: Text('Fout bij het laden van evenementen.',
-                style: AppTextStyles.noDataText),
+            child: Text(
+              'Fout bij het laden van evenementen.',
+              style: AppTextStyles.noDataText,
+            ),
           );
         }
         if (!snapshot.hasData || snapshot.data!.isEmpty) {
           return const Center(
-            child: Text('Geen evenementen gevonden.',
-                style: AppTextStyles.noDataText),
+            child: Text(
+              'Geen evenementen gevonden.',
+              style: AppTextStyles.noDataText,
+            ),
           );
         }
 
@@ -111,7 +115,7 @@ class _EventScreenState extends State<EventScreen> {
             AppDimensions.paddingXLarge,
             AppDimensions.paddingXLarge,
           ),
-          itemCount:   events.length,
+          itemCount: events.length,
           itemBuilder: (context, index) => EventCard(
             event: events[index],
             onTap: () => EventDetailSheet.show(context, events[index]),

@@ -19,12 +19,12 @@ import '../../theme/app_theme.dart';
 
 class ChatInputField extends StatelessWidget {
   final TextEditingController controller;
-  final int                   maxLength;
-  final int                   charsLeft;
-  final VoidCallback          onSend;
-  final bool                  isSending;
-  final int                   cooldownRemaining;
-  final bool                  showCooldownHint;
+  final int maxLength;
+  final int charsLeft;
+  final VoidCallback onSend;
+  final bool isSending;
+  final int cooldownRemaining;
+  final bool showCooldownHint;
 
   const ChatInputField({
     super.key,
@@ -32,9 +32,9 @@ class ChatInputField extends StatelessWidget {
     required this.maxLength,
     required this.charsLeft,
     required this.onSend,
-    this.isSending         = false,
+    this.isSending = false,
     this.cooldownRemaining = 0,
-    this.showCooldownHint  = false,
+    this.showCooldownHint = false,
   });
 
   bool get _onCooldown => cooldownRemaining > 0;
@@ -44,7 +44,7 @@ class ChatInputField extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(
         horizontal: AppDimensions.paddingMedium,
-        vertical:   AppDimensions.paddingSmall,
+        vertical: AppDimensions.paddingSmall,
       ),
       margin: const EdgeInsets.fromLTRB(
         AppDimensions.paddingXLarge,
@@ -60,20 +60,25 @@ class ChatInputField extends StatelessWidget {
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.end,
-              mainAxisSize:       MainAxisSize.min,
+              mainAxisSize: MainAxisSize.min,
               children: [
                 TextField(
                   controller: controller,
-                  style:      AppTextStyles.inputText,
-                  maxLength:  maxLength,
-                  enabled:    !isSending,
-                  buildCounter: (_, {required currentLength,
-                      required isFocused, maxLength}) => null,
+                  style: AppTextStyles.inputText,
+                  maxLength: maxLength,
+                  enabled: !isSending,
+                  buildCounter:
+                      (
+                        _, {
+                        required currentLength,
+                        required isFocused,
+                        maxLength,
+                      }) => null,
                   decoration: const InputDecoration(
-                    hintText:  'Typ een bericht...',
+                    hintText: 'Typ een bericht...',
                     hintStyle: AppTextStyles.inputHint,
-                    border:    InputBorder.none,
-                    isDense:   true,
+                    border: InputBorder.none,
+                    isDense: true,
                   ),
                   onSubmitted: (_) => onSend(),
                 ),
@@ -104,7 +109,7 @@ class ChatInputField extends StatelessWidget {
         child: Text(
           'Nog ${cooldownRemaining}s geduld...',
           style: const TextStyle(
-            color:    AppColors.textOnDarkMuted,
+            color: AppColors.textOnDarkMuted,
             fontSize: 11,
           ),
         ),
@@ -129,7 +134,7 @@ class ChatInputField extends StatelessWidget {
   Widget _buildSendButton() {
     if (isSending) {
       return const SizedBox(
-        width:  AppDimensions.iconLarge,
+        width: AppDimensions.iconLarge,
         height: AppDimensions.iconLarge,
         child: Padding(
           padding: EdgeInsets.all(4),
@@ -157,8 +162,8 @@ class ChatInputField extends StatelessWidget {
           child: Text(
             '${cooldownRemaining}s',
             style: const TextStyle(
-              color:      AppColors.textOnDark,
-              fontSize:   12,
+              color: AppColors.textOnDark,
+              fontSize: 12,
               fontWeight: FontWeight.w600,
             ),
           ),
@@ -171,7 +176,7 @@ class ChatInputField extends StatelessWidget {
       child: const Icon(
         Icons.send,
         color: AppColors.textOnDark,
-        size:  AppDimensions.iconLarge,
+        size: AppDimensions.iconLarge,
       ),
     );
   }

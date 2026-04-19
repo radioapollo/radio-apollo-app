@@ -25,34 +25,42 @@ class AppDecorations {
       BoxDecoration(
         color: AppColors.navyMedium,
         borderRadius: BorderRadius.circular(radius),
-        border: Border.all(color: AppColors.borderSubtle, width: AppDimensions.borderThin),
+        border: Border.all(
+          color: AppColors.borderSubtle,
+          width: AppDimensions.borderThin,
+        ),
       );
 
   // --- Current program card ---
 
   static BoxDecoration currentProgramCard() => BoxDecoration(
-        color: AppColors.primaryLight,
-        borderRadius: BorderRadius.circular(AppDimensions.radiusXLarge),
-        border: Border.all(
-            color: AppColors.overlayLight, width: AppDimensions.borderThin),
-      );
+    color: AppColors.primaryLight,
+    borderRadius: BorderRadius.circular(AppDimensions.radiusXLarge),
+    border: Border.all(
+      color: AppColors.overlayLight,
+      width: AppDimensions.borderThin,
+    ),
+  );
 
   // --- Nu bezig badge ---
 
   static BoxDecoration nuBezigBadge() => BoxDecoration(
-        color: AppColors.overlayLight,
-        borderRadius: BorderRadius.circular(AppDimensions.radiusFull),
-      );
+    color: AppColors.overlayLight,
+    borderRadius: BorderRadius.circular(AppDimensions.radiusFull),
+  );
 
   // --- Light card (used in events, sponsors, home cards) ---
 
-  static BoxDecoration lightCard({double radius = AppDimensions.radiusMedium}) =>
-      BoxDecoration(
-        color: AppColors.white,
-        borderRadius: BorderRadius.circular(radius),
-        border: Border.all(
-            color: AppColors.divider, width: AppDimensions.borderThin),
-      );
+  static BoxDecoration lightCard({
+    double radius = AppDimensions.radiusMedium,
+  }) => BoxDecoration(
+    color: AppColors.white,
+    borderRadius: BorderRadius.circular(radius),
+    border: Border.all(
+      color: AppColors.divider,
+      width: AppDimensions.borderThin,
+    ),
+  );
 
   // --- Colored ApolloCard ---
 
@@ -60,47 +68,47 @@ class AppDecorations {
     required Color color,
     double radius = AppDimensions.radiusXLarge,
     Border? border,
-  }) =>
-      BoxDecoration(
-        color: color,
-        borderRadius: BorderRadius.circular(radius),
-        border: border,
-      );
+  }) => BoxDecoration(
+    color: color,
+    borderRadius: BorderRadius.circular(radius),
+    border: border,
+  );
 
   // --- Chat input field ---
 
   static BoxDecoration chatInputFull() => BoxDecoration(
-        color: AppColors.navyMedium,
-        borderRadius:
-            BorderRadius.circular(AppDimensions.radiusMedium),
-        border: Border.all(
-            color: AppColors.borderSubtle, width: AppDimensions.borderThin),
-      );
+    color: AppColors.navyMedium,
+    borderRadius: BorderRadius.circular(AppDimensions.radiusMedium),
+    border: Border.all(
+      color: AppColors.borderSubtle,
+      width: AppDimensions.borderThin,
+    ),
+  );
 
   // --- Chat message list container ---
 
   static BoxDecoration chatList() => BoxDecoration(
-        color: AppColors.navyDeep,
-        borderRadius: BorderRadius.circular(AppDimensions.radiusXLarge),
-        border: Border.all(
-            color: AppColors.borderSubtle, width: AppDimensions.borderThin),
-      );
+    color: AppColors.navyDeep,
+    borderRadius: BorderRadius.circular(AppDimensions.radiusXLarge),
+    border: Border.all(
+      color: AppColors.borderSubtle,
+      width: AppDimensions.borderThin,
+    ),
+  );
 
   // --- Live player card ---
 
   static BoxDecoration livePlayerCard() => BoxDecoration(
-        color: AppColors.navyDark,
-        borderRadius:
-            BorderRadius.circular(AppDimensions.radiusXXLarge),
-      );
+    color: AppColors.navyDark,
+    borderRadius: BorderRadius.circular(AppDimensions.radiusXXLarge),
+  );
 
   // --- LIVE badge ---
 
   static BoxDecoration liveBadge() => BoxDecoration(
-        color: AppColors.live,
-        borderRadius:
-            BorderRadius.circular(AppDimensions.radiusFull),
-      );
+    color: AppColors.live,
+    borderRadius: BorderRadius.circular(AppDimensions.radiusFull),
+  );
 
   // --- Icon container (used inside cards) ---
 
@@ -108,24 +116,21 @@ class AppDecorations {
     required Color color,
     double radius = AppDimensions.radiusSmall,
   }) =>
-      BoxDecoration(
-        color: color,
-        borderRadius: BorderRadius.circular(radius),
-      );
+      BoxDecoration(color: color, borderRadius: BorderRadius.circular(radius));
 
   // --- Program card icon background ---
 
   static const BoxDecoration programIconBg = BoxDecoration(
     color: AppColors.borderSubtle,
     borderRadius: BorderRadius.all(
-        Radius.circular(AppDimensions.radiusSmall + 2)),
+      Radius.circular(AppDimensions.radiusSmall + 2),
+    ),
   );
 
   // --- Sticky header background ---
 
-  static BoxDecoration stickyHeader() => BoxDecoration(
-        color: AppColors.stickyHeaderBg,
-      );
+  static BoxDecoration stickyHeader() =>
+      BoxDecoration(color: AppColors.stickyHeaderBg);
 
   // --- Bottom nav bar ---
 
@@ -142,14 +147,12 @@ class AppDecorations {
   static BoxDecoration chatBubble({
     required bool isAdmin,
     required bool isUser,
-  }) =>
-      BoxDecoration(
-        color: isAdmin
-            ? AppColors.adminBadge
-            : isUser
-                ? AppColors.primaryLight
-                : AppColors.white,
-        borderRadius:
-            BorderRadius.circular(AppDimensions.radiusMedium),
-      );
+  }) => BoxDecoration(
+    color: isAdmin
+        ? AppColors.adminBadge
+        : isUser
+        ? AppColors.primaryLight
+        : AppColors.white,
+    borderRadius: BorderRadius.circular(AppDimensions.radiusMedium),
+  );
 }
