@@ -1,18 +1,20 @@
 /* Day Selector Widget
 
-   FIXES APPLIED:
-   - Day labels no longer clip on smaller screens or with longer day names.
-     Items now size themselves to their text content (intrinsic width)
-     instead of using a fixed AppDimensions.daySelectorItemWidth.
-     The row remains horizontally scrollable.
+   A horizontally-scrollable row of day pills used on the program
+   screen to switch between weekdays in the schedule.
+
+   Items size themselves to their text content (intrinsic width)
+   so longer day names like "Donderdag" or "Zaterdag" never clip,
+   regardless of screen width. The row scrolls horizontally and
+   auto-centers on the selected day when the selection changes.
 */
 
 import 'package:flutter/material.dart';
 import '../../theme/app_theme.dart';
 
 class DaySelector extends StatefulWidget {
-  final List<String> days;
-  final int selectedIndex;
+  final List<String>  days;
+  final int           selectedIndex;
   final Function(int) onDaySelected;
 
   const DaySelector({
@@ -49,15 +51,19 @@ class _DaySelectorState extends State<DaySelector> {
     super.dispose();
   }
 
+  // ── Auto-scroll to selected day ───────────────────────────────────────────
+  //
+  // Items use intrinsic width so we can't know their exact render width.
+  // We estimate from the longest day name to keep the centering close.
+
   void _scrollToSelected() {
     if (!_scrollController.hasClients ||
-        !_scrollController.position.hasContentDimensions) return;
+        !_scrollController.position.hasContentDimensions) {
+      return;
+    }
 
     final screenWidth = MediaQuery.of(context).size.width;
 
-    // FIX: Use a generous estimated item width for scroll calculation.
-    // The actual render width is intrinsic so we can't know it exactly,
-    // but estimating from the longest day name keeps the centering close.
     const estimatedItemWidth = 90.0;
     final offset =
         (widget.selectedIndex *
@@ -68,18 +74,20 @@ class _DaySelectorState extends State<DaySelector> {
     _scrollController.animateTo(
       offset.clamp(0, _scrollController.position.maxScrollExtent),
       duration: const Duration(milliseconds: 300),
-      curve: Curves.easeOut,
+      curve:    Curves.easeOut,
     );
   }
+
+  // ── Build ─────────────────────────────────────────────────────────────────
 
   @override
   Widget build(BuildContext context) {
     return SizedBox(
       height: AppDimensions.daySelectorHeight,
       child: ListView.builder(
-        controller:     _scrollController,
+        controller:      _scrollController,
         scrollDirection: Axis.horizontal,
-        itemCount:      widget.days.length,
+        itemCount:       widget.days.length,
         itemBuilder: (context, index) {
           final isSelected = index == widget.selectedIndex;
           return Padding(
@@ -88,8 +96,8 @@ class _DaySelectorState extends State<DaySelector> {
             child: GestureDetector(
               onTap: () => widget.onDaySelected(index),
               child: Container(
-                // FIX: Remove fixed width — let the container size to its content.
-                // This prevents text clipping on smaller screens or longer labels.
+                // Intrinsic width — container sizes to its text content.
+                // Prevents clipping on smaller screens or longer labels.
                 padding: const EdgeInsets.symmetric(
                     horizontal: 16, vertical: 0),
                 alignment: Alignment.center,
@@ -102,7 +110,7 @@ class _DaySelectorState extends State<DaySelector> {
                 ),
                 child: Text(
                   widget.days[index],
-                  style: AppTextStyles.dayLabel,
+                  style:    AppTextStyles.dayLabel,
                   softWrap: false, // keep label on one line
                 ),
               ),

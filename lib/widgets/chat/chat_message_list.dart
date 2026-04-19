@@ -63,7 +63,9 @@ class _ChatMessageListState extends State<ChatMessageList> {
 
   void _onScroll() {
     if (!_scrollController.hasClients ||
-        !_scrollController.position.hasContentDimensions) return;
+        !_scrollController.position.hasContentDimensions) {
+      return;
+    }
 
     final nearBottom = _scrollController.position.maxScrollExtent -
             _scrollController.position.pixels <=
@@ -83,7 +85,9 @@ class _ChatMessageListState extends State<ChatMessageList> {
 
     WidgetsBinding.instance.addPostFrameCallback((_) async {
       if (!_scrollController.hasClients ||
-          !_scrollController.position.hasContentDimensions) return;
+          !_scrollController.position.hasContentDimensions) {
+        return;
+      }
 
       await _scrollController.animateTo(
         _scrollController.position.maxScrollExtent,

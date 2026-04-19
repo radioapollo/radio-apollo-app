@@ -7,6 +7,7 @@
    - sending user messages directly to Firestore with a client-side cooldown
    - sending admin messages via the Cloud Function using the session token
    - mapping Firestore exceptions to user-friendly error messages
+   - exposing remaining cooldown seconds so the UI can render a countdown
 */
 
 import 'dart:async';
@@ -23,13 +24,24 @@ class ChatService {
   final AuthService authService;
   final _db = FirebaseFirestore.instance;
 
-  static const String _collection      = 'chat_messages';
-  static const int    maxMessageLength = 160;
-  static const int    _cooldownSeconds = 3;
+  static const String _collection       = 'chat_messages';
+  static const int    maxMessageLength  = 160;
+  static const int    cooldownSeconds   = 3;
 
   DateTime? _lastMessageSent;
 
   ChatService({required this.authService});
+
+  // ── Cooldown helpers ──────────────────────────────────────────────────────
+
+  /// Number of seconds left before the user may send another message.
+  /// Returns 0 when no cooldown is active.
+  int cooldownRemaining() {
+    if (_lastMessageSent == null) return 0;
+    final elapsed = DateTime.now().difference(_lastMessageSent!).inSeconds;
+    final remaining = cooldownSeconds - elapsed;
+    return remaining > 0 ? remaining : 0;
+  }
 
   // ── Stream ────────────────────────────────────────────────────────────────
 
@@ -88,12 +100,9 @@ class ChatService {
       throw Exception('Stel eerst een gebruikersnaam in voor je een bericht stuurt.');
     }
 
-    if (_lastMessageSent != null) {
-      final elapsed = DateTime.now().difference(_lastMessageSent!).inSeconds;
-      if (elapsed < _cooldownSeconds) {
-        throw Exception(
-            'Wacht ${_cooldownSeconds - elapsed} seconden voor je nog een bericht stuurt.');
-      }
+    final remaining = cooldownRemaining();
+    if (remaining > 0) {
+      throw CooldownException(remaining);
     }
 
     try {
@@ -144,4 +153,15 @@ class ChatService {
 
     return true;
   }
+}
+
+// ── Cooldown exception ──────────────────────────────────────────────────────
+class CooldownException implements Exception {
+  final int secondsRemaining;
+
+  const CooldownException(this.secondsRemaining);
+
+  @override
+  String toString() =>
+      'Wacht $secondsRemaining seconden voor je nog een bericht stuurt.';
 }

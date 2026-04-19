@@ -23,6 +23,7 @@
    - Long-press the logo to open the admin login
 */
 
+import 'dart:async';
 import 'package:flutter/material.dart';
 import '../services/chat/chat_service.dart';
 import '../services/chat/auth_service.dart';
@@ -61,8 +62,13 @@ class _ChatScreenState extends State<ChatScreen>
 
   late final Stream<List<Message>> _messagesStream;
 
-  int  _charsLeft       = ChatService.maxMessageLength;
-  bool _usernameChecked = false;
+  int  _charsLeft           = ChatService.maxMessageLength;
+  bool _usernameChecked     = false;
+  bool _sending             = false;
+  int  _cooldownRemaining   = 0;
+  bool _showCooldownHint    = false;
+  Timer? _cooldownTicker;
+  Timer? _hintDismissTimer;
 
   ChatService get _chatService => widget.chatService;
   AuthService get _authService => widget.authService;
@@ -96,6 +102,8 @@ class _ChatScreenState extends State<ChatScreen>
   void dispose() {
     _controller.removeListener(_onTextChanged);
     _controller.dispose();
+    _cooldownTicker?.cancel();
+    _hintDismissTimer?.cancel();
     super.dispose();
   }
 
@@ -127,10 +135,21 @@ class _ChatScreenState extends State<ChatScreen>
     }
   }
 
+  // ── Send ──────────────────────────────────────────────────────────────────
+
   /// Safety guard: should never be reached because the UI hides the input
   /// field when hasUsername is false, but guards against any edge-case
   /// where _sendMessage is somehow called without a username.
   Future<void> _sendMessage() async {
+    if (_sending) return;
+
+    // Admins bypass the per-user cooldown entirely, so don't flash or
+    // block them. Regular users see the hint if they tap while waiting.
+    if (!_authService.isAdmin && _cooldownRemaining > 0) {
+      _flashCooldownHint();
+      return;
+    }
+
     if (_controller.text.trim().isEmpty) return;
 
     if (!UserService.instance.hasUsername && !_authService.isAdmin) {
@@ -140,7 +159,78 @@ class _ChatScreenState extends State<ChatScreen>
 
     final text = _controller.text;
     _controller.clear();
-    await _chatService.sendMessage(text);
+    setState(() => _sending = true);
+
+    try {
+      await _chatService.sendMessage(text);
+      // Only regular users have a send cooldown — admins are unlimited.
+      if (!_authService.isAdmin) {
+        _startCooldown();
+      }
+    } on CooldownException catch (e) {
+      // Rare: the service's clock disagreed with ours. Start the countdown
+      // using the service's number instead of showing a red error.
+      if (!mounted) return;
+      _controller.text = text;
+      _startCooldown(seconds: e.secondsRemaining);
+      _flashCooldownHint();
+    } catch (e) {
+      if (!mounted) return;
+      // Put the text back so the user doesn't lose what they typed
+      _controller.text = text;
+      _showError(e.toString().replaceFirst('Exception: ', ''));
+    } finally {
+      if (mounted) setState(() => _sending = false);
+    }
+  }
+
+  // ── Cooldown ──────────────────────────────────────────────────────────────
+
+  /// Starts the visible countdown on the send button. Ticks once per
+  /// second until it reaches zero, then cancels itself.
+  void _startCooldown({int? seconds}) {
+    _cooldownTicker?.cancel();
+    setState(() {
+      _cooldownRemaining = seconds ?? ChatService.cooldownSeconds;
+    });
+
+    _cooldownTicker = Timer.periodic(const Duration(seconds: 1), (timer) {
+      if (!mounted) {
+        timer.cancel();
+        return;
+      }
+      final remaining = _chatService.cooldownRemaining();
+      setState(() => _cooldownRemaining = remaining);
+      if (remaining <= 0) timer.cancel();
+    });
+  }
+
+  /// Briefly shows an inline "nog Xs" hint inside the input field when the
+  /// user taps send during cooldown. Auto-dismisses after 1.5s.
+  void _flashCooldownHint() {
+    _hintDismissTimer?.cancel();
+    setState(() => _showCooldownHint = true);
+    _hintDismissTimer = Timer(const Duration(milliseconds: 1500), () {
+      if (!mounted) return;
+      setState(() => _showCooldownHint = false);
+    });
+  }
+
+  // ── Error snackbar (real errors only) ─────────────────────────────────────
+
+  void _showError(String message) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content:         Text(message),
+        backgroundColor: AppColors.live,
+        behavior:        SnackBarBehavior.floating,
+        duration:        const Duration(seconds: 4),
+        margin:          const EdgeInsets.all(AppDimensions.paddingLarge),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(AppDimensions.radiusMedium),
+        ),
+      ),
+    );
   }
 
   void _onAdminLogin() => setState(() {});
@@ -185,10 +275,13 @@ class _ChatScreenState extends State<ChatScreen>
               // ── Input area: real input or "pick a name" prompt ──────────
               if (hasUsername || isAdmin)
                 ChatInputField(
-                  controller: _controller,
-                  maxLength:  ChatService.maxMessageLength,
-                  charsLeft:  _charsLeft,
-                  onSend:     _sendMessage,
+                  controller:        _controller,
+                  maxLength:         ChatService.maxMessageLength,
+                  charsLeft:         _charsLeft,
+                  onSend:            _sendMessage,
+                  isSending:         _sending,
+                  cooldownRemaining: _cooldownRemaining,
+                  showCooldownHint:  _showCooldownHint,
                 )
               else
                 UsernamePrompt(onTap: _promptUsername),

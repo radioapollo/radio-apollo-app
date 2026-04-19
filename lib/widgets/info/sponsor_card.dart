@@ -53,7 +53,7 @@ class SponsorCard extends StatelessWidget {
         width:    _logoSize,
         height:   _logoSize,
         fit:      BoxFit.contain,
-        errorWidget: (_, __, ___) =>
+        errorWidget: (_, _, _) =>
             const SizedBox(width: _logoSize, height: _logoSize),
       ),
     );

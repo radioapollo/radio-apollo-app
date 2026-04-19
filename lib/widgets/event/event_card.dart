@@ -44,11 +44,11 @@ class EventCard extends StatelessWidget {
       padding: const EdgeInsets.only(bottom: AppDimensions.spaceLarge),
       child: GestureDetector(
         onTap: onTap,
-        child: Stack(
-          children: [
-            _buildCard(context, isUrgent: isUrgent, isUpcoming: isUpcoming, accent: accent),
-            if (accent != null) _buildAccentBar(accent),
-          ],
+        child: _buildCard(
+          context,
+          isUrgent:   isUrgent,
+          isUpcoming: isUpcoming,
+          accent:     accent,
         ),
       ),
     );
@@ -63,33 +63,41 @@ class EventCard extends StatelessWidget {
     required Color? accent,
   }) {
     return Container(
-      padding: const EdgeInsets.all(AppDimensions.paddingLarge),
+      clipBehavior: Clip.antiAlias,
       decoration: BoxDecoration(
-        color: AppColors.white,
+        color:        AppColors.white,
         borderRadius: BorderRadius.circular(AppDimensions.radiusMedium),
         border: Border.all(
             color: AppColors.divider, width: AppDimensions.borderThin),
         boxShadow: isUpcoming && accent != null
             ? [
                 BoxShadow(
-                  color: accent.withValues(alpha: 0.18),
+                  color:     accent.withValues(alpha: 0.18),
                   blurRadius: 12,
-                  offset: const Offset(0, 4),
+                  offset:     const Offset(0, 4),
                 ),
               ]
             : null,
       ),
-      child: Row(
+      child: Stack(
         children: [
-          _buildIcon(isUrgent: isUrgent, isUpcoming: isUpcoming, accent: accent),
-          const SizedBox(width: AppDimensions.spaceLarge),
-          Expanded(child: _buildInfo(isUpcoming: isUpcoming, accent: accent)),
-          const SizedBox(width: AppDimensions.spaceSmall),
-          Icon(
-            Icons.chevron_right,
-            color: isUpcoming ? accent : AppColors.chevronIcon,
-            size:  AppDimensions.iconMedium,
+          Padding(
+            padding: const EdgeInsets.all(AppDimensions.paddingLarge),
+            child: Row(
+              children: [
+                _buildIcon(isUrgent: isUrgent, isUpcoming: isUpcoming, accent: accent),
+                const SizedBox(width: AppDimensions.spaceLarge),
+                Expanded(child: _buildInfo(isUpcoming: isUpcoming, accent: accent)),
+                const SizedBox(width: AppDimensions.spaceSmall),
+                Icon(
+                  Icons.chevron_right,
+                  color: isUpcoming ? accent : AppColors.chevronIcon,
+                  size:  AppDimensions.iconMedium,
+                ),
+              ],
+            ),
           ),
+          if (accent != null) _buildAccentBar(accent),
         ],
       ),
     );
