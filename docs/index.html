@@ -1,0 +1,251 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Privacybeleid — Radio Apollo App</title>
+  <meta name="description" content="Privacybeleid van de Radio Apollo-app. Welke gegevens we verzamelen, waarom, hoe lang we ze bewaren en welke rechten je hebt.">
+  <style>
+    :root {
+      --bg: #ffffff;
+      --text: #1a1a1a;
+      --muted: #555;
+      --accent: #0b5cff;
+      --border: #e5e7eb;
+      --table-stripe: #f9fafb;
+    }
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --bg: #0d1117;
+        --text: #e6edf3;
+        --muted: #8b949e;
+        --accent: #58a6ff;
+        --border: #30363d;
+        --table-stripe: #161b22;
+      }
+    }
+    * { box-sizing: border-box; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+      max-width: 780px;
+      margin: 0 auto;
+      padding: 2rem 1.25rem 4rem;
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.65;
+      font-size: 16px;
+    }
+    h1 { font-size: 2rem; margin-top: 0; }
+    h2 { font-size: 1.35rem; margin-top: 2.5rem; padding-top: 1rem; border-top: 1px solid var(--border); }
+    h3 { font-size: 1.1rem; margin-top: 1.75rem; }
+    p, li { color: var(--text); }
+    a { color: var(--accent); text-decoration: none; }
+    a:hover { text-decoration: underline; }
+    strong { color: var(--text); }
+    .updated {
+      color: var(--muted);
+      font-size: 0.95rem;
+      margin-bottom: 2rem;
+    }
+    .contact-block {
+      background: var(--table-stripe);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 1rem 1.25rem;
+      margin: 1rem 0;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 1rem 0;
+      font-size: 0.95rem;
+    }
+    th, td {
+      text-align: left;
+      padding: 0.65rem 0.85rem;
+      border-bottom: 1px solid var(--border);
+    }
+    th { background: var(--table-stripe); font-weight: 600; }
+    tbody tr:nth-child(even) { background: var(--table-stripe); }
+    ul { padding-left: 1.4rem; }
+    li { margin-bottom: 0.4rem; }
+    .footer {
+      margin-top: 4rem;
+      padding-top: 1.5rem;
+      border-top: 1px solid var(--border);
+      color: var(--muted);
+      font-size: 0.9rem;
+      text-align: center;
+    }
+  </style>
+</head>
+<body>
+
+<h1>Privacybeleid — Radio Apollo App</h1>
+<p class="updated"><strong>Laatst bijgewerkt:</strong> 19 april 2026</p>
+
+<p>Dit privacybeleid beschrijft welke gegevens de Radio Apollo-app verzamelt, waarom, hoe lang ze bewaard worden en welke rechten je hebt. Het beleid is opgesteld in overeenstemming met de Algemene Verordening Gegevensbescherming (AVG / GDPR) en de Belgische privacywetgeving.</p>
+
+<h2>1. Verwerkingsverantwoordelijke</h2>
+<p>De Radio Apollo-app wordt uitgegeven door:</p>
+<div class="contact-block">
+  <strong>Radio Apollo</strong><br>
+  Lindestraat 7a<br>
+  2222 Heist-op-den-Berg<br>
+  België<br><br>
+  Website: <a href="https://www.radioapollo.be/">https://www.radioapollo.be/</a><br>
+  Contact voor privacyvragen: <a href="mailto:bestuur@radioapollo.be">bestuur@radioapollo.be</a>
+</div>
+<p>Radio Apollo is de verwerkingsverantwoordelijke voor alle persoonsgegevens die binnen de app verzameld worden.</p>
+
+<h2>2. Welke gegevens we verzamelen</h2>
+
+<h3>2.1 Gegevens die je zelf opgeeft</h3>
+
+<p><strong>Gebruikersnaam voor de chat (optioneel)</strong><br>
+Je kan vrijwillig een gebruikersnaam kiezen om deel te nemen aan de livechat tijdens uitzendingen. Deze naam wordt:</p>
+<ul>
+  <li>Lokaal op je toestel bewaard zodat hij bij de volgende opstart onthouden wordt</li>
+  <li>Opgeslagen in onze Firestore-databank om dubbele namen te voorkomen en om je berichten van anderen te onderscheiden</li>
+  <li><strong>Permanent bewaard na registratie</strong> — dit voorkomt dat iemand anders je naam later kan claimen en zich voor jou kan uitgeven</li>
+</ul>
+<p>Gebruik geen echte voor- en achternaam als je anoniem wil blijven. Een bijnaam of pseudoniem volstaat.</p>
+
+<p><strong>Chatberichten</strong><br>
+Wanneer je een bericht stuurt in de chat, wordt het opgeslagen met:</p>
+<ul>
+  <li>Je gebruikersnaam</li>
+  <li>De tekstinhoud (max. 160 tekens)</li>
+  <li>Een tijdstempel</li>
+  <li>De rol (<code>user</code> of <code>admin</code>)</li>
+</ul>
+<p>Chatberichten worden <strong>automatisch verwijderd na 24 uur</strong>.</p>
+
+<h3>2.2 Gegevens die technisch verwerkt worden</h3>
+
+<p><strong>Technische identificatiegegevens</strong><br>
+Om spam en misbruik te beperken houden we tijdelijk bij hoeveel berichten een gebruikersnaam per minuut verstuurt. Deze rate-limit-registratie verdwijnt automatisch na het tijdvenster.</p>
+
+<p><strong>Stream-metadata</strong><br>
+Wanneer je de livestream afspeelt, maakt je toestel een verbinding met onze streamingserver. De server kan daarbij technische verbindingsgegevens loggen zoals IP-adres, apparaattype en tijdstip. Dit is nodig voor het functioneren van de stream en voor algemene luistercijfers.</p>
+
+<p><strong>Toestelgegevens via Firebase</strong><br>
+Bij het gebruik van de app stuurt de Firebase-software automatisch enkele technische gegevens naar Google, zoals een geanonimiseerd installatie-ID en de Firebase SDK-versie. Deze gegevens worden door Google gebruikt om de dienst te leveren en zijn niet herleidbaar tot jouw persoon door ons.</p>
+
+<p><strong>Crash- en prestatiegegevens via de app store</strong><br>
+De Google Play Store (Android) en Apple App Store (iOS) voegen zelf bepaalde meetgegevens toe over installaties en crashes. Deze worden rechtstreeks door Google respectievelijk Apple verwerkt volgens hun eigen privacybeleid.</p>
+
+<h3>2.3 Gegevens die we NIET verzamelen</h3>
+<ul>
+  <li>Geen naam, adres, telefoonnummer of geboortedatum</li>
+  <li>Geen e-mailadres (tenzij je ons er zelf een mailt)</li>
+  <li>Geen locatiegegevens (GPS)</li>
+  <li>Geen contactenlijst of foto's</li>
+  <li>Geen advertentie-ID's voor marketing</li>
+  <li>Geen microfoon- of cameratoegang</li>
+</ul>
+
+<h2>3. Waarom we deze gegevens verwerken (rechtsgrond)</h2>
+<table>
+  <thead>
+    <tr><th>Doel</th><th>Rechtsgrond (AVG art. 6)</th></tr>
+  </thead>
+  <tbody>
+    <tr><td>Livestream afspelen</td><td>Uitvoering van de dienst</td></tr>
+    <tr><td>Chatfunctionaliteit aanbieden</td><td>Toestemming (je kiest zelf om mee te doen)</td></tr>
+    <tr><td>Gebruikersnaam uniek houden</td><td>Gerechtvaardigd belang (misbruik voorkomen)</td></tr>
+    <tr><td>Spam en misbruik tegengaan</td><td>Gerechtvaardigd belang</td></tr>
+    <tr><td>Programma-informatie en sponsors tonen</td><td>Uitvoering van de dienst</td></tr>
+  </tbody>
+</table>
+
+<h2>4. Hoe lang we gegevens bewaren</h2>
+<table>
+  <thead>
+    <tr><th>Gegeven</th><th>Bewaartermijn</th></tr>
+  </thead>
+  <tbody>
+    <tr><td>Gebruikersnaam (op je toestel)</td><td>Tot je de app deïnstalleert</td></tr>
+    <tr><td>Gebruikersnaam (in onze databank)</td><td>Onbepaald, om heridentificatie te voorkomen</td></tr>
+    <tr><td>Chatberichten</td><td>24 uur, daarna automatisch gewist</td></tr>
+    <tr><td>Rate-limit-gegevens</td><td>Enkele minuten</td></tr>
+    <tr><td>Programmacache op toestel</td><td>Tot de volgende update of deïnstallatie</td></tr>
+    <tr><td>Stream-serverlogs</td><td>Maximum 30 dagen</td></tr>
+  </tbody>
+</table>
+
+<h2>5. Met wie we gegevens delen</h2>
+<p>We <strong>verkopen geen gegevens</strong> en gebruiken ze niet voor reclame.</p>
+<p>De app maakt gebruik van onderstaande dienstverleners (verwerkers), uitsluitend voor het functioneren van de app:</p>
+<ul>
+  <li><strong>Google Firebase (Google Ireland Ltd.)</strong> — hosting van de databank (Firestore), authenticatiefunctionaliteit en Cloud Functions. Gegevens worden opgeslagen in de regio <code>europe-west1</code> (België).</li>
+  <li><strong>Google Cast / Chromecast</strong> — enkel wanneer je ervoor kiest de stream te casten naar een Chromecast-toestel.</li>
+  <li><strong>Beheerstream.nl</strong> — verzorgt de livestream-infrastructuur.</li>
+  <li><strong>Google Play Store / Apple App Store</strong> — voor de distributie van de app en automatische storegerelateerde statistieken.</li>
+</ul>
+<p>Voor elk van deze dienstverleners zijn er verwerkersovereenkomsten of equivalente waarborgen conform de AVG.</p>
+
+<h2>6. Internationale doorgifte</h2>
+<p>Onze Firebase-gegevens worden opgeslagen in de regio <code>europe-west1</code> (België). Google kan, als onderdeel van haar infrastructuurbeheer, in uitzonderlijke gevallen gegevens tijdelijk verwerken buiten de Europese Economische Ruimte. Google beschikt hiervoor over de standaardcontractbepalingen van de Europese Commissie als juridisch kader.</p>
+
+<h2>7. Jouw rechten</h2>
+<p>Onder de AVG heb je onderstaande rechten:</p>
+<ul>
+  <li><strong>Recht op inzage</strong> — je kan opvragen welke gegevens we van jou verwerken.</li>
+  <li><strong>Recht op correctie</strong> — je kan onjuiste gegevens laten verbeteren.</li>
+  <li><strong>Recht op verwijdering</strong> — je kan vragen om je gebruikersnaam en bijhorende berichten te verwijderen.</li>
+  <li><strong>Recht op beperking van verwerking</strong> — je kan vragen de verwerking tijdelijk stop te zetten.</li>
+  <li><strong>Recht op gegevensoverdraagbaarheid</strong> — je kan een kopie van je gegevens opvragen in een leesbaar formaat.</li>
+  <li><strong>Recht van bezwaar</strong> — je kan bezwaar maken tegen verwerking op basis van gerechtvaardigd belang.</li>
+  <li><strong>Recht om toestemming in te trekken</strong> — voor gegevens die verwerkt worden op basis van jouw toestemming (zoals de chat).</li>
+</ul>
+<p>Om een van deze rechten uit te oefenen, stuur een e-mail naar <a href="mailto:bestuur@radioapollo.be">bestuur@radioapollo.be</a> met een duidelijke omschrijving van je verzoek. We reageren binnen 30 dagen.</p>
+<p>Je kan ook klacht indienen bij de Gegevensbeschermingsautoriteit:</p>
+<div class="contact-block">
+  <strong>Gegevensbeschermingsautoriteit</strong><br>
+  Drukpersstraat 35<br>
+  1000 Brussel<br>
+  <a href="https://www.gegevensbeschermingsautoriteit.be">https://www.gegevensbeschermingsautoriteit.be</a>
+</div>
+
+<h2>8. Kinderen</h2>
+<p>De Radio Apollo-app is niet specifiek gericht op kinderen onder de 13 jaar. We verzamelen niet bewust gegevens van kinderen onder die leeftijd. Als je weet of vermoedt dat een kind onrechtmatig gegevens aan ons heeft doorgegeven, neem dan contact met ons op en wij verwijderen deze.</p>
+
+<h2>9. Beveiliging</h2>
+<p>We nemen redelijke technische en organisatorische maatregelen om je gegevens te beschermen, waaronder:</p>
+<ul>
+  <li>Versleutelde verbindingen (HTTPS/TLS) voor alle communicatie met Firebase</li>
+  <li>Toegangscontrole via Firestore Security Rules</li>
+  <li>Rate limiting om misbruik tegen te gaan</li>
+  <li>Gescheiden admintoegang met kortlevende sessietokens</li>
+</ul>
+<p>Geen enkele systeembeveiliging is 100% waterdicht, maar we doen redelijke inspanningen om je gegevens veilig te houden.</p>
+
+<h2>10. Toestelpermissies</h2>
+<p>De app vraagt enkel de toestemmingen die strikt nodig zijn om te functioneren:</p>
+<ul>
+  <li><strong>Internettoegang</strong> — om de stream af te spelen en met Firebase te communiceren</li>
+  <li><strong>Audio afspelen op de achtergrond</strong> — om de stream te laten doorlopen als je de app verlaat</li>
+  <li><strong>Meldingen</strong> — om de afspeelcontroles in de systeembalk weer te geven tijdens het luisteren</li>
+  <li><strong>Netwerkstatus</strong> — om offline-situaties correct te behandelen</li>
+</ul>
+<p>De app vraagt <strong>geen</strong> toegang tot locatie, contacten, foto's, microfoon of camera.</p>
+
+<h2>11. Wijzigingen aan dit beleid</h2>
+<p>We kunnen dit privacybeleid aanpassen, bijvoorbeeld wanneer we nieuwe functies toevoegen of wanneer de regelgeving wijzigt. Belangrijke wijzigingen worden aangekondigd via de app of op onze website. De datum bovenaan dit document geeft aan wanneer het beleid voor het laatst is bijgewerkt.</p>
+
+<h2>12. Contact</h2>
+<p>Vragen, opmerkingen of klachten over dit privacybeleid?</p>
+<div class="contact-block">
+  <strong>Radio Apollo</strong><br>
+  Lindestraat 7a, 2222 Heist-op-den-Berg<br>
+  <a href="mailto:bestuur@radioapollo.be">bestuur@radioapollo.be</a><br>
+  <a href="https://www.radioapollo.be/">https://www.radioapollo.be/</a>
+</div>
+
+<p class="footer">
+  Dit privacybeleid is specifiek van toepassing op de Radio Apollo-app. Voor het privacybeleid van de website radioapollo.be verwijzen we naar de bepalingen op die website.
+</p>
+
+</body>
+</html>
