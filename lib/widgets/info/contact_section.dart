@@ -23,7 +23,8 @@ class ContactSection extends StatelessWidget {
   static const String _addressMap = 'https://g.co/kgs/3MCbeHw';
   static const String _facebookUrl =
       'https://www.facebook.com/people/Radio-Apollo/100039974545481/';
-  static const String _privacyUrl = 'https://radioapollo.github.io/radio-apollo-app/';
+  static const String _privacyUrl =
+      'https://radioapollo.github.io/radio-apollo-app/';
 
   @override
   Widget build(BuildContext context) {
@@ -57,7 +58,7 @@ class ContactSection extends StatelessWidget {
           ),
           const SizedBox(height: AppDimensions.spaceLarge),
           _ContactRow(
-            icon:  Icons.privacy_tip_outlined,
+            icon: Icons.privacy_tip_outlined,
             label: 'Privacybeleid',
             onTap: () => UrlLauncherUtils.openUrl(_privacyUrl),
           ),

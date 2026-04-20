@@ -3,16 +3,21 @@
    A single event in the event list.
 
    It shows:
-   - an icon (glowing red when urgent, accented when upcoming)
+   - an icon OR a thumbnail image (when imageUrl is set on the event)
    - the event title, date, location, and a 2-line description
    - an UpcomingBadge when the event is within two weeks
    - a colored accent bar on the left for upcoming events
    - a chevron to indicate the card is tappable
 
+   When an event has an imageUrl, the calendar icon is replaced by a
+   small rounded thumbnail. If the image fails to load (404, offline,
+   etc.), we silently fall back to the default icon.
+
    Tapping the card calls [onTap] so the parent can open the detail sheet.
 */
 
 import 'package:flutter/material.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 import '../../models/event.dart';
 import '../../theme/app_theme.dart';
 import 'event_icon_row.dart';
@@ -83,7 +88,7 @@ class EventCard extends StatelessWidget {
             padding: const EdgeInsets.all(AppDimensions.paddingLarge),
             child: Row(
               children: [
-                _buildIcon(
+                _buildLeading(
                   isUrgent: isUrgent,
                   isUpcoming: isUpcoming,
                   accent: accent,
@@ -107,15 +112,86 @@ class EventCard extends StatelessWidget {
     );
   }
 
-  // ── Leading icon ──────────────────────────────────────────────────────────
+  // ── Leading visual (image thumbnail OR fallback icon) ─────────────────────
 
-  Widget _buildIcon({
+  Widget _buildLeading({
+    required bool isUrgent,
+    required bool isUpcoming,
+    required Color? accent,
+  }) {
+    // Thumbnail dimensions match the visual footprint of the old
+    // icon container so upcoming/urgent glow effects land correctly
+    // regardless of which leading variant is shown.
+    const double size = 44;
+
+    if (event.hasImage) {
+      return _buildImageThumbnail(
+        size: size,
+        isUrgent: isUrgent,
+        accent: accent,
+      );
+    }
+
+    return _buildDefaultIcon(
+      size: size,
+      isUrgent: isUrgent,
+      isUpcoming: isUpcoming,
+      accent: accent,
+    );
+  }
+
+  Widget _buildImageThumbnail({
+    required double size,
+    required bool isUrgent,
+    required Color? accent,
+  }) {
+    return Container(
+      width: size,
+      height: size,
+      clipBehavior: Clip.antiAlias,
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(AppDimensions.radiusSmall),
+        // Keep the urgent glow so time-sensitive events still stand out
+        // even when they have their own artwork.
+        boxShadow: isUrgent
+            ? [
+                BoxShadow(
+                  color: AppColors.live.withValues(alpha: 0.4),
+                  blurRadius: 12,
+                  spreadRadius: 2,
+                ),
+              ]
+            : null,
+      ),
+      child: CachedNetworkImage(
+        imageUrl: event.imageUrl!,
+        fit: BoxFit.cover,
+        // Placeholder while loading — subtle so it doesn't flicker.
+        placeholder: (_, __) => Container(color: AppColors.cardBlue),
+        // Fall back to the default icon if the image 404s, the device
+        // is offline, or the URL is malformed. We pass the same visual
+        // configuration so the fallback is indistinguishable from a
+        // card that never had an image set.
+        errorWidget: (_, __, ___) => _buildDefaultIcon(
+          size: size,
+          isUrgent: isUrgent,
+          isUpcoming: event.isWithinTwoWeeks,
+          accent: accent,
+        ),
+      ),
+    );
+  }
+
+  Widget _buildDefaultIcon({
+    required double size,
     required bool isUrgent,
     required bool isUpcoming,
     required Color? accent,
   }) {
     return Container(
-      padding: const EdgeInsets.all(AppDimensions.paddingSmall),
+      width: size,
+      height: size,
+      alignment: Alignment.center,
       decoration: BoxDecoration(
         color: isUpcoming && accent != null
             ? accent.withValues(alpha: 0.12)

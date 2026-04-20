@@ -21,14 +21,19 @@ class EventService {
         final todayStart = DateTime(today.year, today.month, today.day);
 
         final events = snap.docs
-            .map(
-              (doc) => Event(
-                title: doc['title'] ?? '',
-                date: doc['date'] ?? '',
-                location: doc['location'] ?? '',
-                what: doc['what'] ?? '',
-              ),
-            )
+            .map((doc) {
+              final data = doc.data();
+              // imageUrl is optional — older event documents won't have it,
+              // and that's fine. The UI falls back to the default icon.
+              final rawImageUrl = data['imageUrl'] as String?;
+              return Event(
+                title: data['title'] as String? ?? '',
+                date: data['date'] as String? ?? '',
+                location: data['location'] as String? ?? '',
+                what: data['what'] as String? ?? '',
+                imageUrl: rawImageUrl,
+              );
+            })
             // ── Remove events whose date has already passed ─────────────
             // Events with an unparseable date are kept so they stay
             // visible instead of silently disappearing.

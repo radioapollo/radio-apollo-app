@@ -4,9 +4,14 @@
 
    It shows the full event title, date, location, and description —
    without the truncation applied in the list view.
+
+   When the event has an imageUrl, a full-width banner is rendered at
+   the top of the sheet. The banner fails silently (hides itself) if
+   the image can't be loaded.
 */
 
 import 'package:flutter/material.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 import '../../models/event.dart';
 import '../../theme/app_theme.dart';
 import 'event_icon_row.dart';
@@ -43,34 +48,73 @@ class EventDetailSheet extends StatelessWidget {
     final accent = _accentColor;
 
     return DraggableScrollableSheet(
-      initialChildSize: 0.4,
+      initialChildSize: event.hasImage ? 0.55 : 0.4,
       minChildSize: 0.25,
-      maxChildSize: 0.85,
+      maxChildSize: 0.9,
       expand: false,
       builder: (context, scrollController) => SingleChildScrollView(
         controller: scrollController,
-        padding: const EdgeInsets.fromLTRB(
-          AppDimensions.paddingXLarge,
-          AppDimensions.paddingXLarge,
-          AppDimensions.paddingXLarge,
-          AppDimensions.space30,
-        ),
+        // No top padding when we have an image — we want the banner
+        // to stretch to the rounded corners of the sheet. Side and
+        // bottom padding are still applied to the content below.
+        padding: EdgeInsets.zero,
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            _buildDragHandle(accent),
-            _buildTitle(),
-            const SizedBox(height: AppDimensions.spaceLarge),
-            EventIconRow(
-              icon: Icons.access_time,
-              label: event.date,
-              accent: isUpcoming ? accent : null,
+            if (event.hasImage) _buildImageBanner(),
+            Padding(
+              padding: const EdgeInsets.fromLTRB(
+                AppDimensions.paddingXLarge,
+                AppDimensions.paddingXLarge,
+                AppDimensions.paddingXLarge,
+                AppDimensions.space30,
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // Drag handle only shown when there's no image —
+                  // the sheet's rounded top + banner gives enough of a
+                  // visual affordance on its own.
+                  if (!event.hasImage) _buildDragHandle(accent),
+                  _buildTitle(),
+                  const SizedBox(height: AppDimensions.spaceLarge),
+                  EventIconRow(
+                    icon: Icons.access_time,
+                    label: event.date,
+                    accent: isUpcoming ? accent : null,
+                  ),
+                  const SizedBox(height: AppDimensions.spaceSmall),
+                  EventIconRow(icon: Icons.location_on, label: event.location),
+                  const SizedBox(height: AppDimensions.spaceLarge),
+                  Text(event.what, style: AppTextStyles.cardSubtitle),
+                ],
+              ),
             ),
-            const SizedBox(height: AppDimensions.spaceSmall),
-            EventIconRow(icon: Icons.location_on, label: event.location),
-            const SizedBox(height: AppDimensions.spaceLarge),
-            Text(event.what, style: AppTextStyles.cardSubtitle),
           ],
+        ),
+      ),
+    );
+  }
+
+  // ── Banner image ──────────────────────────────────────────────────────────
+
+  Widget _buildImageBanner() {
+    // Aspect ratio 16:9 gives a cinematic feel without eating too much
+    // vertical space. CachedNetworkImage handles loading, caching, and
+    // graceful failure.
+    return ClipRRect(
+      borderRadius: const BorderRadius.vertical(
+        top: Radius.circular(AppDimensions.radiusXLarge),
+      ),
+      child: AspectRatio(
+        aspectRatio: 16 / 9,
+        child: CachedNetworkImage(
+          imageUrl: event.imageUrl!,
+          fit: BoxFit.cover,
+          placeholder: (_, __) => Container(color: AppColors.cardBlue),
+          // If the image can't load, collapse the banner so the sheet
+          // degrades gracefully to its old icon-less layout.
+          errorWidget: (_, __, ___) => const SizedBox.shrink(),
         ),
       ),
     );
@@ -92,10 +136,11 @@ class EventDetailSheet extends StatelessWidget {
     );
   }
 
-  // ── Title row with optional badge ─────────────────────────────────────────
+  // ── Title + upcoming badge ────────────────────────────────────────────────
 
   Widget _buildTitle() {
     return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Expanded(
           child: Text(event.title, style: AppTextStyles.screenTitleSmall),
