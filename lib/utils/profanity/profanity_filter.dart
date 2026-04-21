@@ -67,12 +67,10 @@ class ProfanityFilter {
 
   /// Normalize text for detection.
   ///
-  /// Handles: leetspeak, spacing, repeated chars, mixed case
+  /// Handles: leetspeak, repeated chars, mixed case
+  /// Keeps spaces intact so word boundaries work correctly
   static String _normalize(String text) {
     String s = text.toLowerCase();
-
-    // Remove spaces between letters (catches "f u c k")
-    s = s.replaceAll(RegExp(r'\s+'), '');
 
     // Collapse repeated characters (fuuuuck → fuck)
     s = s.replaceAllMapped(
@@ -90,7 +88,7 @@ class ProfanityFilter {
       '7': 't',
       '8': 'b',
       '@': 'a',
-      '\$': 's',
+      r'$': 's',
       '!': 'i',
     };
 
@@ -103,11 +101,16 @@ class ProfanityFilter {
 
   // ── Detection ─────────────────────────────────────────────────────────────
 
-  /// Check if normalized text contains a bad word (with word boundaries).
+  /// Check if normalized text contains a bad word.
   ///
-  /// Uses regex word boundaries so "class" doesn't match "ass".
+  /// Uses word boundaries OR string boundaries (start/end of text).
+  /// This catches: "fuck", "fuck you", "fuckoff", "niggerbitch", etc.
   static bool _containsWord(String normalized, String badWord) {
-    final pattern = RegExp(r'\b' + RegExp.escape(badWord) + r'\b');
+    // Pattern explanation:
+    // (?:^|\b) = start of string OR word boundary
+    // (?:$|\b) = end of string OR word boundary
+    // This catches the word anywhere: alone, at start, at end, or embedded
+    final pattern = RegExp(r'(?:^|\b)' + RegExp.escape(badWord) + r'(?:$|\b)');
     return pattern.hasMatch(normalized);
   }
 
@@ -116,9 +119,10 @@ class ProfanityFilter {
   /// Replace a bad word with asterisks in the original message.
   ///
   /// Keeps first and last letter visible: "fuck" → "f**k"
+  /// Works at start, end, middle, or stuck to other words.
   static String _censorWord(String text, String badWord) {
     final pattern = RegExp(
-      r'\b' + RegExp.escape(badWord) + r'\b',
+      r'(?:^|\b)' + RegExp.escape(badWord) + r'(?:$|\b)',
       caseSensitive: false,
     );
 
