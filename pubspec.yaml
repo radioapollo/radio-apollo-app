@@ -21,6 +21,7 @@ dependencies:
   connectivity_plus: ^6.0.0
   flutter_chrome_cast: ^1.4.5
   url_launcher: ^6.2.0
+  package_info_plus: ^8.0.0
 
 dev_dependencies:
   flutter_test:
