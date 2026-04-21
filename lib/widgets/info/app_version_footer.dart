@@ -59,10 +59,7 @@ class _AppVersionFooterState extends State<AppVersionFooter> {
           // the same height so the layout doesn't jump.
           child: Text(
             _version != null ? 'Versie $_version' : ' ',
-            style: const TextStyle(
-              color: AppColors.creditText,
-              fontSize: 11,
-            ),
+            style: const TextStyle(color: AppColors.creditText, fontSize: 11),
           ),
         ),
       ],

@@ -1,8 +1,16 @@
-/* Chat Service
+/* Chat Service (with Profanity Filter)
 
    Handles sending and receiving chat messages.
 
-   It handles:
+   NEW: All messages are checked for profanity before submission:
+   - Severe words → message blocked, error shown to user
+   - Mild words → auto-censored to asterisks, message sent with censored text
+   - Clean → sent as-is
+
+   This is CLIENT-SIDE enforcement (instant feedback). The Cloud Function
+   also validates (server-side enforcement that can't be bypassed).
+
+   Features:
    - streaming messages from Firestore (last 24 hours)
    - sending user messages directly to Firestore with a client-side cooldown
    - sending admin messages via the Cloud Function using the session token
@@ -16,6 +24,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:http/http.dart' as http;
 import '../../models/message.dart';
 import '../../utils/date_utils.dart';
+import '../../utils/profanity/profanity_filter.dart';
 import '../../constants/constants.dart';
 import 'auth_service.dart';
 import 'user_service.dart';
@@ -108,10 +117,25 @@ class ChatService {
       throw CooldownException(remaining);
     }
 
+    // ── Profanity check (NEW) ─────────────────────────────────────────────
+    final filterResult = ProfanityFilter.check(text);
+
+    if (filterResult.isSevere) {
+      throw ProfanityException(
+        'Dit bericht kan niet worden verzonden. Blijf vriendelijk.',
+      );
+    }
+
+    // Use censored text if mild profanity was detected, original otherwise
+    final textToSend = filterResult.hasMildProfanity
+        ? filterResult.cleanedText
+        : text;
+
+    // ── Send to Firestore ─────────────────────────────────────────────────
     try {
       await _db.collection(_collection).add({
         'username': username,
-        'text': text,
+        'text': textToSend,
         'role': 'user',
         'timestamp': FieldValue.serverTimestamp(),
       });
@@ -159,13 +183,21 @@ class ChatService {
   }
 }
 
-// ── Cooldown exception ──────────────────────────────────────────────────────
+// ── Custom exceptions ────────────────────────────────────────────────────────
+
 class CooldownException implements Exception {
   final int secondsRemaining;
-
-  const CooldownException(this.secondsRemaining);
+  CooldownException(this.secondsRemaining);
 
   @override
   String toString() =>
-      'Wacht $secondsRemaining seconden voor je nog een bericht stuurt.';
+      'Exception: Wacht nog $secondsRemaining seconde${secondsRemaining != 1 ? 'n' : ''}.';
+}
+
+class ProfanityException implements Exception {
+  final String message;
+  ProfanityException(this.message);
+
+  @override
+  String toString() => 'Exception: $message';
 }
