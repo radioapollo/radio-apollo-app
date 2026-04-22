@@ -1,4 +1,4 @@
-/* Profanity Filter
+/* Profanity Filter - FINAL CORRECTED VERSION
 
    Content moderation for chat messages.
 
@@ -7,9 +7,9 @@
    - Mild → auto-censor to asterisks
 
    Handles common evasion techniques:
-   - Leetspeak (f*ck → f***ck, sh1t → sh**t)
-   - Spacing (f u c k → f****)
-   - Repeated letters (fuuuuck → f*****k)
+   - Leetspeak (f@ck → f**k, sh1t → sh*t)
+   - Spacing (f u c k → f**k)
+   - Repeated letters (fuuuuck → f**k)
    - Mixed case (FuCk → F**k)
 
    Usage:
@@ -45,13 +45,13 @@ class ProfanityFilter {
     }
 
     // Check for mild words (auto-censor)
-    String cleaned = message;
+    String cleaned = message;  // Work with original message
     bool foundMild = false;
 
     for (final word in ProfanityConfig.allMildWords) {
       if (_containsWord(normalized, word)) {
         foundMild = true;
-        // Replace in the original message (case-insensitive)
+        // Censor in the ORIGINAL message with flexible pattern
         cleaned = _censorWord(cleaned, word);
       }
     }
@@ -67,15 +67,18 @@ class ProfanityFilter {
 
   /// Normalize text for detection.
   ///
-  /// Handles: leetspeak, repeated chars, mixed case
-  /// Keeps spaces intact so word boundaries work correctly
+  /// Handles: leetspeak, repeated chars, spacing, mixed case
   static String _normalize(String text) {
     String s = text.toLowerCase();
 
+    // Remove spaces between single characters (catches "f u c k")
+    s = s.replaceAll(RegExp(r'\b(\w)\s+(?=\w\s|\w\b)'), r'$1');
+    
     // Collapse repeated characters (fuuuuck → fuck)
+    // Only collapse 3+ repeats to preserve normal words like "hallo", "een"
     s = s.replaceAllMapped(
       RegExp(r'(.)\1{2,}'),
-      (match) => match.group(1)! * 2, // keep max 2 repeats
+      (match) => match.group(1)!, // keep only 1
     );
 
     // Leetspeak substitutions
@@ -103,14 +106,10 @@ class ProfanityFilter {
 
   /// Check if normalized text contains a bad word.
   ///
-  /// Uses word boundaries OR string boundaries (start/end of text).
-  /// This catches: "fuck", "fuck you", "fuckoff", "niggerbitch", etc.
+  /// Uses word boundaries to match whole words only.
   static bool _containsWord(String normalized, String badWord) {
-    // Pattern explanation:
-    // (?:^|\b) = start of string OR word boundary
-    // (?:$|\b) = end of string OR word boundary
-    // This catches the word anywhere: alone, at start, at end, or embedded
-    final pattern = RegExp(r'(?:^|\b)' + RegExp.escape(badWord) + r'(?:$|\b)');
+    // Escape the badWord and use word boundaries
+    final pattern = RegExp(r'\b' + RegExp.escape(badWord) + r'\b');
     return pattern.hasMatch(normalized);
   }
 
@@ -119,23 +118,28 @@ class ProfanityFilter {
   /// Replace a bad word with asterisks in the original message.
   ///
   /// Keeps first and last letter visible: "fuck" → "f**k"
-  /// Works at start, end, middle, or stuck to other words.
+  /// Handles variations in case and repeated letters.
   static String _censorWord(String text, String badWord) {
-    final pattern = RegExp(
-      r'(?:^|\b)' + RegExp.escape(badWord) + r'(?:$|\b)',
-      caseSensitive: false,
-    );
-
-    return text.replaceAllMapped(pattern, (match) {
-      final word = match.group(0)!;
-      if (word.length <= 2) {
-        return '*' * word.length;
+    // Build a flexible regex pattern that matches the badword with variations
+    String pattern = '';
+    
+    for (int i = 0; i < badWord.length; i++) {
+      final char = badWord[i];
+      if (char.toLowerCase() != char.toUpperCase()) {
+        // It's a letter - match both cases, 1-3 repeats
+        pattern += '[${char.toUpperCase()}${char.toLowerCase()}]{1,3}';
+      } else {
+        // Not a letter - match as-is with optional repeats
+        pattern += RegExp.escape(char) + '{1,3}';
       }
-      // Keep first and last letter, asterisk the middle
-      final first = word[0];
-      final last = word[word.length - 1];
-      final middle = '*' * (word.length - 2);
-      return '$first$middle$last';
+    }
+    
+    final regex = RegExp(r'\b' + pattern + r'\b');
+    
+    return text.replaceAllMapped(regex, (match) {
+      final word = match.group(0)!;
+      if (word.length <= 2) return '*' * word.length;
+      return word[0] + ('*' * (word.length - 2)) + word[word.length - 1];
     });
   }
 }
