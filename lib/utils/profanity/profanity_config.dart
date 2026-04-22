@@ -32,7 +32,7 @@ class ProfanityConfig {
     'nikkers',
     'niksnut',
     'nikkerslet',
-    
+
     // Disease-based slurs (extremely offensive in Dutch)
     // Both standalone and compound forms
     'kanker',
@@ -53,7 +53,7 @@ class ProfanityConfig {
     'pleurislijder',
     'kolere',
     'pokken',
-    
+
     // Extreme sexual/violent
     'hoerenjong',
     'hoerenkind',
@@ -62,13 +62,13 @@ class ProfanityConfig {
     'kutvent',
     'klootzak',
     'verkrachten',
-    
+
     // Homophobic slurs
     'flikker',
     'nicht',
     'noppeshoer',
     'potje',
-    
+
     // Ableist slurs
     'debiel',
     'randdebiel',
@@ -89,23 +89,23 @@ class ProfanityConfig {
     'coon',
     'beaner',
     'paki',
-    
+
     // Homophobic slurs
     'faggot',
     'fag',
     'dyke',
     'tranny',
-    
+
     // Ableist slurs
     'retard',
     'retarded',
     'spastic',
-    
+
     // Extreme sexual/violent
     'rape',
     'molest',
     'rapist',
-    
+
     // Hate speech patterns
     'kill yourself',
     'kys',
@@ -130,7 +130,7 @@ class ProfanityConfig {
     'klooien',
     'klojo',
     'kluns',
-    
+
     // Religious/blasphemy
     'godverdomme',
     'godverdamme',
@@ -138,7 +138,7 @@ class ProfanityConfig {
     'verdorie',
     'jezus',
     'christus',
-    
+
     // Anatomical
     // Note: 'gat' removed - too many false positives with 'gaat' (goes)
     'pik',
@@ -149,7 +149,7 @@ class ProfanityConfig {
     'hol',
     'aars',
     'zak',
-    
+
     // Common insults
     // Note: 'hoer' removed - false positives with 'hoe' (how). Compounds like 'hoerenzoon' still in severe.
     'stom',
@@ -181,7 +181,7 @@ class ProfanityConfig {
     'wijf',
     'zeikerd',
     'zeur',
-    
+
     // Sexual terms (mild)
     'pijpen',
     'aftrekken',
@@ -191,7 +191,7 @@ class ProfanityConfig {
     'wippen',
     'vingeren',
     'zuigen',
-    
+
     // Scatological
     'schijt',
     'schijten',
@@ -205,8 +205,8 @@ class ProfanityConfig {
     'zeiker',
     'pis',
     'pissen',
-    
-    // Milder insults  
+
+    // Milder insults
     'aasgier',
     'aap',
     'baviaan',
@@ -295,7 +295,7 @@ class ProfanityConfig {
     'zeur',
     'zeikous',
     'zwijn',
-    
+
     // From Wiktionary list (A-Z selection)
     'aambeiienlikker',
     'aapmens',

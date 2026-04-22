@@ -45,7 +45,7 @@ class ProfanityFilter {
     }
 
     // Check for mild words (auto-censor)
-    String cleaned = message;  // Work with original message
+    String cleaned = message; // Work with original message
     bool foundMild = false;
 
     for (final word in ProfanityConfig.allMildWords) {
@@ -73,7 +73,7 @@ class ProfanityFilter {
 
     // Remove spaces between single characters (catches "f u c k")
     s = s.replaceAll(RegExp(r'\b(\w)\s+(?=\w\s|\w\b)'), r'$1');
-    
+
     // Collapse repeated characters (fuuuuck → fuck)
     // Only collapse 3+ repeats to preserve normal words like "hallo", "een"
     s = s.replaceAllMapped(
@@ -122,7 +122,7 @@ class ProfanityFilter {
   static String _censorWord(String text, String badWord) {
     // Build a flexible regex pattern that matches the badword with variations
     String pattern = '';
-    
+
     for (int i = 0; i < badWord.length; i++) {
       final char = badWord[i];
       if (char.toLowerCase() != char.toUpperCase()) {
@@ -133,9 +133,9 @@ class ProfanityFilter {
         pattern += RegExp.escape(char) + '{1,3}';
       }
     }
-    
+
     final regex = RegExp(r'\b' + pattern + r'\b');
-    
+
     return text.replaceAllMapped(regex, (match) {
       final word = match.group(0)!;
       if (word.length <= 2) return '*' * word.length;
