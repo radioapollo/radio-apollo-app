@@ -108,9 +108,15 @@ class ProfanityFilter {
   ///
   /// Uses word boundaries to match whole words only.
   static bool _containsWord(String normalized, String badWord) {
-    // Escape the badWord and use word boundaries
+    // Check exact word
     final pattern = RegExp(r'\b' + RegExp.escape(badWord) + r'\b');
-    return pattern.hasMatch(normalized);
+    if (pattern.hasMatch(normalized)) return true;
+
+    // Also check common Dutch plurals
+    final pluralPattern = RegExp(r'\b' + RegExp.escape(badWord) + r'(en|s)\b');
+    if (pluralPattern.hasMatch(normalized)) return true;
+
+    return false;
   }
 
   // ── Censoring ─────────────────────────────────────────────────────────────
