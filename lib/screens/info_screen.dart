@@ -7,8 +7,22 @@
    - a scrollable content area with about text, contact info, and sponsors
    - a developer credit and the app version number at the bottom
 
-   The screen itself only wires together Firestore streams and the
-   dedicated widgets in widgets/info/.
+   ─── No more flicker on tab swipe ──────────────────────────────────────────
+   The two Firestore streams (about text + sponsors) used to be looked up
+   through `_infoService.aboutTextStream` / `sponsorsStream` inside each
+   `_build…Section()` call. Those getters previously built a brand-new
+   `.snapshots()` stream every time, so StreamBuilder reset to
+   `ConnectionState.waiting` on every rebuild — including every frame of
+   a PageView swipe. That caused the "flitst en hapert" flash between
+   Programma's and Info.
+
+   We now:
+     1. Cache the streams as broadcast streams inside InfoService.
+     2. Capture each stream once in State so the StreamBuilder sees the
+        same identity across rebuilds and keeps its last snapshot.
+     3. Pass `initialData` from the service's latest-value cache so the
+        very first build after opening the app is also flicker-free as
+        soon as any data has arrived.
 */
 
 import 'package:flutter/material.dart';
@@ -31,6 +45,10 @@ class InfoScreen extends StatefulWidget {
 class _InfoScreenState extends State<InfoScreen>
     with AutomaticKeepAliveClientMixin {
   final _infoService = InfoService();
+
+  // Capture the streams once so StreamBuilder has a stable identity.
+  late final Stream<String> _aboutTextStream = _infoService.aboutTextStream;
+  late final Stream<List<Sponsor>> _sponsorsStream = _infoService.sponsorsStream;
 
   @override
   bool get wantKeepAlive => true;
@@ -118,9 +136,12 @@ class _InfoScreenState extends State<InfoScreen>
 
   Widget _buildAboutSection() {
     return StreamBuilder<String>(
-      stream: _infoService.aboutTextStream,
+      stream: _aboutTextStream,
+      initialData: _infoService.latestAboutText,
       builder: (context, snapshot) {
-        if (snapshot.connectionState == ConnectionState.waiting) {
+        // Only show the spinner on the very first cold load.
+        if (snapshot.connectionState == ConnectionState.waiting &&
+            !snapshot.hasData) {
           return const Center(
             child: CircularProgressIndicator(color: AppColors.navyMedium),
           );
@@ -137,9 +158,11 @@ class _InfoScreenState extends State<InfoScreen>
 
   Widget _buildSponsorsSection() {
     return StreamBuilder<List<Sponsor>>(
-      stream: _infoService.sponsorsStream,
+      stream: _sponsorsStream,
+      initialData: _infoService.latestSponsors,
       builder: (context, snapshot) {
-        if (snapshot.connectionState == ConnectionState.waiting) {
+        if (snapshot.connectionState == ConnectionState.waiting &&
+            !snapshot.hasData) {
           return const Center(
             child: CircularProgressIndicator(color: AppColors.navyMedium),
           );

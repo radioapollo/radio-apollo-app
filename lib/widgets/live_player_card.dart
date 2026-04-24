@@ -6,21 +6,22 @@
    It shows:
    - the program background image (faded, decorative)
    - a LIVE badge with the current time slot
+   - a Chromecast button (mobile only) next to the LIVE badge, visible
+     whenever at least one Cast device is discovered on the network
+     or a session is already active
    - the program title (instead of "Radio Apollo")
    - the presenter name
    - the currently playing song (from the audio handler's mediaItem stream)
    - a play/pause button
-   - a Chromecast button (mobile only)
 
    The entire card is tappable to navigate to the programs screen.
 */
 
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:audio_service/audio_service.dart';
 import 'package:cached_network_image/cached_network_image.dart';
-import 'package:flutter_chrome_cast/widgets.dart';
 import 'service_provider.dart';
+import 'cast_button.dart';
 import '../services/program/current_program_service.dart';
 import '../theme/app_theme.dart';
 
@@ -95,7 +96,7 @@ class LivePlayerCard extends StatelessWidget {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      // Row: LIVE badge + time slot + tap indicator
+                      // Row: LIVE badge + time slot + cast button + tap indicator
                       Row(
                         children: [
                           Container(
@@ -117,7 +118,11 @@ class LivePlayerCard extends StatelessWidget {
                             ),
                           ],
                           const Spacer(),
-                          if (onTap != null)
+                          // Cast button — hidden until a device is discovered
+                          // or a session is active.
+                          const CastButton(size: 22),
+                          if (onTap != null) ...[
+                            const SizedBox(width: AppDimensions.spaceMedium),
                             const Row(
                               mainAxisSize: MainAxisSize.min,
                               children: [
@@ -136,6 +141,7 @@ class LivePlayerCard extends StatelessWidget {
                                 ),
                               ],
                             ),
+                          ],
                         ],
                       ),
 
@@ -145,27 +151,15 @@ class LivePlayerCard extends StatelessWidget {
                       Row(
                         children: [
                           // Play/pause button (left side)
-                          Column(
-                            children: [
-                              GestureDetector(
-                                onTap: onPlayPause,
-                                child: Icon(
-                                  isPlaying
-                                      ? Icons.pause_circle_filled
-                                      : Icons.play_circle_fill,
-                                  color: AppColors.textOnDark,
-                                  size: AppDimensions.iconPlayPause,
-                                ),
-                              ),
-                              // Chromecast button (mobile only)
-                              if (!kIsWeb)
-                                const Padding(
-                                  padding: EdgeInsets.only(
-                                    top: AppDimensions.spaceXSmall,
-                                  ),
-                                  child: GoogleCastMiniController(),
-                                ),
-                            ],
+                          GestureDetector(
+                            onTap: onPlayPause,
+                            child: Icon(
+                              isPlaying
+                                  ? Icons.pause_circle_filled
+                                  : Icons.play_circle_fill,
+                              color: AppColors.textOnDark,
+                              size: AppDimensions.iconPlayPause,
+                            ),
                           ),
 
                           const SizedBox(width: AppDimensions.paddingLarge),
@@ -177,7 +171,9 @@ class LivePlayerCard extends StatelessWidget {
                               children: [
                                 // Program title or fallback
                                 Text(
-                                  hasProgram ? program.title! : 'RADIO APOLLO',
+                                  hasProgram
+                                      ? program.title!
+                                      : 'RADIO APOLLO',
                                   style: AppTextStyles.stationName,
                                   maxLines: 1,
                                   overflow: TextOverflow.ellipsis,

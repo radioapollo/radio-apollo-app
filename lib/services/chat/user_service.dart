@@ -9,6 +9,10 @@
    - saving the username locally on the device
 */
 
+import 'dart:convert';
+import 'package:firebase_app_check/firebase_app_check.dart';
+import 'package:http/http.dart' as http;
+import '../../constants/constants.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -31,57 +35,61 @@ class UserService {
 
   Future<void> init() async {
     final prefs = await SharedPreferences.getInstance();
-    _username = prefs.getString(_key);
-
-    if (_username != null && _username!.isNotEmpty) {
-      final docId = _username!.toLowerCase();
-      final doc = await _db.collection('usernames').doc(docId).get();
-      if (!doc.exists) {
-        try {
-          await _db.collection('usernames').doc(docId).set({
-            'displayName': _username!,
-            'claimedAt': FieldValue.serverTimestamp(),
-          });
-        } catch (_) {
-          _username = null;
-          await prefs.remove(_key);
-        }
+    final saved = prefs.getString(_key);
+    if (saved == null || saved.isEmpty) return;
+  
+    try {
+      final doc = await _db.collection('usernames').doc(saved.toLowerCase()).get();
+      if (doc.exists) {
+        _username = saved;
+      } else {
+        await prefs.remove(_key);
       }
+    } catch (_) {
+      // Network error — keep local value, best-effort.
+      _username = saved;
     }
   }
 
   Future<void> setUsername(String name) async {
     final trimmed = name.trim();
     if (trimmed.isEmpty) return;
-
-    final docId = trimmed.toLowerCase();
-    final docRef = _db.collection('usernames').doc(docId);
-
-    final existing = await docRef.get();
-    if (existing.exists) {
-      throw Exception('Deze naam is al in gebruik. Kies een andere.');
-    }
-
+  
+    String? appCheckToken;
     try {
-      await _db.runTransaction((transaction) async {
-        final snapshot = await transaction.get(docRef);
-
-        if (snapshot.exists) {
-          throw Exception('Deze naam is al in gebruik. Kies een andere.');
-        }
-
-        transaction.set(docRef, {
-          'displayName': trimmed,
-          'claimedAt': FieldValue.serverTimestamp(),
-        });
-      });
-    } catch (e) {
-      if (e is Exception && e.toString().contains('al in gebruik')) {
-        rethrow;
-      }
+      appCheckToken = await FirebaseAppCheck.instance.getToken();
+    } catch (_) {
+      throw Exception('Kon geen beveiligingstoken ophalen. Probeer opnieuw.');
+    }
+  
+    final uri = Uri.parse(AppConstants.cloudFunctionUrl('claimUsername'));
+  
+    final response = await http
+        .post(
+          uri,
+          headers: {
+            'Content-Type': 'application/json',
+            if (appCheckToken != null) 'X-Firebase-AppCheck': appCheckToken,
+          },
+          body: jsonEncode({'name': trimmed}),
+        )
+        .timeout(const Duration(seconds: 15));
+  
+    if (response.statusCode == 409) {
       throw Exception('Deze naam is al in gebruik. Kies een andere.');
     }
-
+    if (response.statusCode == 400) {
+      String msg = 'Ongeldige naam.';
+      try {
+        final body = jsonDecode(response.body);
+        if (body is Map && body['error'] is String) msg = body['error'];
+      } catch (_) {}
+      throw Exception(msg);
+    }
+    if (response.statusCode != 200) {
+      throw Exception('Naam kon niet worden opgeslagen. Probeer opnieuw.');
+    }
+  
     final prefs = await SharedPreferences.getInstance();
     await prefs.setString(_key, trimmed);
     _username = trimmed;

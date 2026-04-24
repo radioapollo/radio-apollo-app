@@ -6,6 +6,20 @@
    - streaming program data from Firestore per weekday
    - one-shot fetches for today's schedule
    - returning a shifted day list so today is centered in the selector
+
+   ─── Stream caching ────────────────────────────────────────────────────────
+   Firestore queries are lazy — calling `.snapshots()` on a fresh query
+   builds a brand new stream every time. If the UI did that on every
+   rebuild, the StreamBuilder would reset to `ConnectionState.waiting`
+   and flash a spinner during each rebuild (for example while the user
+   swipes between bottom-nav tabs).
+
+   Instead, we cache one broadcast stream per day. Multiple subscribers
+   — or the same subscriber re-subscribing after a rebuild — all share
+   the same underlying Firestore listener, so:
+     - no extra database reads on rebuild
+     - no loading flicker during tab swipes
+     - real Firestore changes still propagate to every subscriber
 */
 
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -13,6 +27,22 @@ import '../../utils/date_utils.dart';
 
 class ProgramService {
   final _db = FirebaseFirestore.instance;
+
+  /// One cached broadcast stream per weekday, keyed by the Dutch day name.
+  /// Built lazily on first request.
+  final Map<String, Stream<List<Map<String, String>>>> _dayStreamCache = {};
+
+  /// The most recent value emitted by each cached stream, kept around so
+  /// StreamBuilder subscribers can be handed it as `initialData` when they
+  /// re-subscribe (for example after a widget rebuild). Without this, a
+  /// new subscriber to a broadcast stream has to wait for the next Firestore
+  /// emission before seeing any data, which looks like a flash of "empty".
+  final Map<String, List<Map<String, String>>> _latestValueByDay = {};
+
+  /// Returns the most recent value we've seen for [day], or null if we
+  /// haven't received one yet. Screens can pass this to `StreamBuilder`'s
+  /// `initialData` to render immediately on rebuild.
+  List<Map<String, String>>? latestForDay(String day) => _latestValueByDay[day];
 
   static const List<String> weekdays = [
     'Maandag',
@@ -46,19 +76,32 @@ class ProgramService {
 
   // ── Live stream ───────────────────────────────────────────────────────────
 
+  /// Returns the cached stream for [day] if we've already built one,
+  /// otherwise creates a fresh broadcast stream, caches it, and returns
+  /// that. The resulting stream is safe to subscribe to, unsubscribe
+  /// from, and re-subscribe to without re-querying Firestore.
   Stream<List<Map<String, String>>> getProgramsForDay(String day) {
-    return _db
-        .collection('programmatie')
-        .where('day', isEqualTo: day)
-        .snapshots()
-        .map((snapshot) {
-          final docs = snapshot.docs.toList();
-          docs.sort(
-            (a, b) =>
-                _s(a.data(), 'startTime').compareTo(_s(b.data(), 'startTime')),
-          );
-          return docs.map((doc) => _mapDoc(doc.data())).toList();
-        });
+    return _dayStreamCache.putIfAbsent(day, () {
+      return _db
+          .collection('programmatie')
+          .where('day', isEqualTo: day)
+          .snapshots()
+          .map((snapshot) {
+            final docs = snapshot.docs.toList();
+            docs.sort(
+              (a, b) => _s(
+                a.data(),
+                'startTime',
+              ).compareTo(_s(b.data(), 'startTime')),
+            );
+            final programs = docs.map((doc) => _mapDoc(doc.data())).toList();
+            // Remember the latest value so re-subscribers can get it
+            // as initialData and avoid a flash of empty state.
+            _latestValueByDay[day] = programs;
+            return programs;
+          })
+          .asBroadcastStream();
+    });
   }
 
   // ── One-shot fetch ────────────────────────────────────────────────────────

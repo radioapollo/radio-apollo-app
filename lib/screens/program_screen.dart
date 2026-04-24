@@ -9,6 +9,25 @@
    - auto scroll to the current program
    - automatic refresh every minute to update the current program
    - resets to today when the user navigates back to this tab
+
+   ─── No more flicker on tab swipe ──────────────────────────────────────────
+   `ProgramService.getProgramsForDay` now returns a cached broadcast
+   stream — the same stream instance for the same day across rebuilds.
+   StreamBuilder therefore keeps its last snapshot, so swiping into
+   Programma's (or diagonally into Info while the list is scrolling)
+   no longer flashes the spinner.
+
+   `initialData` is filled from the service's latest-value cache so
+   that even the very first rebuild after switching days has data on
+   screen straight away, as long as that day has been loaded once
+   before during the session.
+
+   Live updates still work:
+     - Firestore changes push through the broadcast stream, updating
+       the list.
+     - A local Timer.periodic(1 minute) calls setState, which re-runs
+       `isCurrentTimeInRange` so "NU BEZIG" moves to the next program
+       at the right moment even if no DB change happened.
 */
 
 import 'dart:async';
@@ -37,7 +56,6 @@ class _ProgramScreenState extends State<ProgramScreen>
   late List<String> _days;
   int _selectedIndex = 3;
   bool _hasScrolledToCurrent = false;
-  bool _hasData = false;
   Timer? _timer;
 
   @override
@@ -57,7 +75,7 @@ class _ProgramScreenState extends State<ProgramScreen>
   @override
   void didUpdateWidget(covariant ProgramScreen oldWidget) {
     super.didUpdateWidget(oldWidget);
-    // Reset to today when the user navigates back to this tab
+    // Reset to today when the user navigates back to this tab.
     if (widget.isActive && !oldWidget.isActive) {
       _resetToToday();
     }
@@ -75,7 +93,6 @@ class _ProgramScreenState extends State<ProgramScreen>
       _selectedIndex = 3;
       _days = _programService.getShiftedDays(_selectedIndex);
       _hasScrolledToCurrent = false;
-      _hasData = false;
     });
   }
 
@@ -142,7 +159,6 @@ class _ProgramScreenState extends State<ProgramScreen>
                       onDaySelected: (index) => setState(() {
                         _selectedIndex = index;
                         _hasScrolledToCurrent = false;
-                        _hasData = false;
                       }),
                     ),
                     const SizedBox(height: AppDimensions.spaceLarge),
@@ -160,17 +176,25 @@ class _ProgramScreenState extends State<ProgramScreen>
                     AppDimensions.paddingXLarge,
                   ),
                   child: StreamBuilder<List<Map<String, String>>>(
+                    // Same stream identity on every rebuild for this day,
+                    // so StreamBuilder keeps its last snapshot.
                     stream: _programService.getProgramsForDay(selectedDay),
+                    // If we've already loaded this day once during the
+                    // session, render the cached value on the very first
+                    // frame instead of flashing an empty state.
+                    initialData: _programService.latestForDay(selectedDay),
                     builder: (context, snapshot) {
-                      if (!_hasData &&
-                          snapshot.connectionState == ConnectionState.waiting) {
+                      // Only show the spinner on the very first cold load
+                      // for a day we have no cached data for.
+                      if (snapshot.connectionState == ConnectionState.waiting &&
+                          !snapshot.hasData) {
                         return const Center(
                           child: CircularProgressIndicator(
                             color: AppColors.steelLight,
                           ),
                         );
                       }
-                      if (snapshot.hasData) _hasData = true;
+
                       if (snapshot.hasError) {
                         return const Center(
                           child: Padding(
@@ -184,6 +208,7 @@ class _ProgramScreenState extends State<ProgramScreen>
                           ),
                         );
                       }
+
                       if (!snapshot.hasData || snapshot.data!.isEmpty) {
                         return const Center(
                           child: Padding(

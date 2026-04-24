@@ -2,25 +2,19 @@
 
    Handles sending and receiving chat messages.
 
-   NEW: All messages are checked for profanity before submission:
-   - Severe words → message blocked, error shown to user
-   - Mild words → auto-censored to asterisks, message sent with censored text
-   - Clean → sent as-is
+   CHANGE (security): user messages are now sent via the Cloud Function
+   `userSendMessage` instead of writing directly to Firestore. This ensures
+   rate limiting, profanity enforcement, and App Check validation all run
+   server-side. Direct Firestore writes are now blocked by security rules.
 
-   This is CLIENT-SIDE enforcement (instant feedback). The Cloud Function
-   also validates (server-side enforcement that can't be bypassed).
-
-   Features:
-   - streaming messages from Firestore (last 24 hours)
-   - sending user messages directly to Firestore with a client-side cooldown
-   - sending admin messages via the Cloud Function using the session token
-   - mapping Firestore exceptions to user-friendly error messages
-   - exposing remaining cooldown seconds so the UI can render a countdown
+   Client-side profanity check remains for instant feedback, but the
+   server performs the authoritative check.
 */
 
 import 'dart:async';
 import 'dart:convert';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_app_check/firebase_app_check.dart';
 import 'package:http/http.dart' as http;
 import '../../models/message.dart';
 import '../../utils/date_utils.dart';
@@ -43,8 +37,6 @@ class ChatService {
 
   // ── Cooldown helpers ──────────────────────────────────────────────────────
 
-  /// Number of seconds left before the user may send another message.
-  /// Returns 0 when no cooldown is active.
   int cooldownRemaining() {
     if (_lastMessageSent == null) return 0;
     final elapsed = DateTime.now().difference(_lastMessageSent!).inSeconds;
@@ -53,6 +45,7 @@ class ChatService {
   }
 
   // ── Stream ────────────────────────────────────────────────────────────────
+  // (unchanged — reads are still allowed by the rules)
 
   Stream<List<Message>> get messagesStream {
     return _db
@@ -117,37 +110,61 @@ class ChatService {
       throw CooldownException(remaining);
     }
 
-    // ── Profanity check (NEW) ─────────────────────────────────────────────
+    // Client-side profanity (for instant UX feedback only — server re-checks)
     final filterResult = ProfanityFilter.check(text);
-
     if (filterResult.isSevere) {
       throw ProfanityException(
         'Dit bericht kan niet worden verzonden. Blijf vriendelijk.',
       );
     }
 
-    // Use censored text if mild profanity was detected, original otherwise
-    final textToSend = filterResult.hasMildProfanity
-        ? filterResult.cleanedText
-        : text;
+    // ── Send via Cloud Function ───────────────────────────────────────────
+    final uri = Uri.parse(AppConstants.cloudFunctionUrl('userSendMessage'));
 
-    // ── Send to Firestore ─────────────────────────────────────────────────
+    // App Check token — proves the request comes from a genuine build of
+    // this app, not from a script hitting the endpoint with curl.
+    String? appCheckToken;
     try {
-      await _db.collection(_collection).add({
-        'username': username,
-        'text': textToSend,
-        'role': 'user',
-        'timestamp': FieldValue.serverTimestamp(),
-      });
-    } on FirebaseException catch (e) {
-      if (e.code == 'permission-denied') {
-        throw Exception('Bericht geweigerd. Probeer opnieuw.');
-      }
+      appCheckToken = await FirebaseAppCheck.instance.getToken();
+    } catch (_) {
+      // Fail closed — don't send without an App Check token.
       throw Exception('Bericht kon niet worden verzonden. Probeer opnieuw.');
+    }
+
+    late final http.Response response;
+    try {
+      response = await http
+          .post(
+            uri,
+            headers: {
+              'Content-Type': 'application/json',
+              if (appCheckToken != null) 'X-Firebase-AppCheck': appCheckToken,
+            },
+            body: jsonEncode({'username': username, 'text': text}),
+          )
+          .timeout(const Duration(seconds: 15));
+    } on TimeoutException {
+      throw Exception('Server antwoordt niet. Probeer het later opnieuw.');
     } catch (_) {
       throw Exception(
         'Bericht kon niet worden verzonden. Controleer je netwerk.',
       );
+    }
+
+    if (response.statusCode == 429) {
+      throw Exception('Je stuurt berichten te snel. Wacht even.');
+    }
+    if (response.statusCode == 400) {
+      // Server rejected (length / profanity / missing fields)
+      String msg = 'Bericht geweigerd.';
+      try {
+        final body = jsonDecode(response.body);
+        if (body is Map && body['error'] is String) msg = body['error'];
+      } catch (_) {}
+      throw ProfanityException(msg);
+    }
+    if (response.statusCode != 200) {
+      throw Exception('Bericht kon niet worden verzonden. Probeer opnieuw.');
     }
 
     _lastMessageSent = DateTime.now();
@@ -155,6 +172,7 @@ class ChatService {
   }
 
   // ── Admin message ─────────────────────────────────────────────────────────
+  // (unchanged)
 
   Future<bool> _sendAdminMessage(String text) async {
     final token = authService.sessionToken;

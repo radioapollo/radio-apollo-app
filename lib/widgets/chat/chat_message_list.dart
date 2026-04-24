@@ -9,6 +9,10 @@
      a MessageBubble
    - auto-scrolling to the bottom when a new message arrives and the
      user is already near the bottom
+   - auto-scrolling when the current user sends their OWN message,
+     regardless of scroll position
+   - auto-scrolling when the keyboard opens so the input field
+     remains visible above the keyboard
    - showing a floating "Nieuwe berichten" chip when new messages
      arrive while the user has scrolled up
    - distinguishing network/Firestore errors from empty state so
@@ -39,6 +43,7 @@ class _ChatMessageListState extends State<ChatMessageList>
   final ScrollController _scrollController = ScrollController();
 
   int _lastMessageCount = 0;
+  String? _lastMessageSignature;
   bool _isNearBottom = true;
   bool _hasNewMessages = false;
   double _lastBottomInset = 0;
@@ -60,15 +65,24 @@ class _ChatMessageListState extends State<ChatMessageList>
     super.dispose();
   }
 
-  // Detect keyboard open/close via viewInsets changes
+  // Detect keyboard open/close via viewInsets changes.
+  //
+  // When the keyboard opens we ALWAYS scroll to the bottom so the most
+  // recent messages remain visible above the keyboard. This used to only
+  // fire when the user was already near the bottom, but that caused the
+  // confusing behaviour where tapping the input field after scrolling
+  // up would leave old messages in view while the user typed.
   @override
   void didChangeMetrics() {
     super.didChangeMetrics();
-    final bottomInset = WidgetsBinding.instance.window.viewInsets.bottom;
+    final view = View.of(context);
+    final bottomInset = view.viewInsets.bottom;
+
     // Keyboard opened (bottom inset increased)
-    if (bottomInset > _lastBottomInset && _isNearBottom) {
-      // Wait for keyboard animation to finish before scrolling
-      Future.delayed(const Duration(milliseconds: 300), () {
+    if (bottomInset > _lastBottomInset + 10) {
+      // Wait for the keyboard animation to finish before scrolling,
+      // otherwise the maxScrollExtent is out of date.
+      Future.delayed(const Duration(milliseconds: 280), () {
         if (mounted) _scrollToBottom();
       });
     }
@@ -98,11 +112,13 @@ class _ChatMessageListState extends State<ChatMessageList>
 
   Future<void> _scrollToBottom({int retries = 3}) async {
     if (!mounted) return;
-    setState(() => _hasNewMessages = false);
+    if (_hasNewMessages) {
+      setState(() => _hasNewMessages = false);
+    }
 
     WidgetsBinding.instance.addPostFrameCallback((_) async {
       if (!mounted) return;
-      
+
       if (!_scrollController.hasClients ||
           !_scrollController.position.hasContentDimensions) {
         // Retry after layout completes
@@ -119,7 +135,7 @@ class _ChatMessageListState extends State<ChatMessageList>
           duration: const Duration(milliseconds: 300),
           curve: Curves.easeOut,
         );
-      } catch (e) {
+      } catch (_) {
         // Handle animation in progress
         if (retries > 0) {
           await Future.delayed(const Duration(milliseconds: 100));
@@ -131,12 +147,34 @@ class _ChatMessageListState extends State<ChatMessageList>
 
   /// All state mutations (counter update + new-messages flag) happen
   /// after the frame completes, never during build.
-  void _handleMessageCountChange(int newCount) {
+  ///
+  /// If the newest message is from the current user, we always scroll
+  /// down regardless of where the user was looking — they just sent
+  /// something and expect to see it appear.
+  void _handleMessageCountChange(List<Message> messages) {
+    final newCount = messages.length;
     if (newCount == _lastMessageCount) return;
+
+    // Detect whether this update was caused by the current user sending
+    // a message. If so we always scroll, even if they had scrolled up.
+    final newest = messages.isNotEmpty ? messages.last : null;
+    final newestSignature = newest == null
+        ? null
+        : '${newest.username}|${newest.text}|${newest.time}';
+    final hadPreviousMessages = _lastMessageCount > 0;
+    final isNewMessage = newestSignature != _lastMessageSignature;
+    final newestIsOwn =
+        hadPreviousMessages &&
+        isNewMessage &&
+        newest != null &&
+        newest.isCurrentUser;
+
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
       _lastMessageCount = newCount;
-      if (_isNearBottom) {
+      _lastMessageSignature = newestSignature;
+
+      if (_isNearBottom || newestIsOwn) {
         _scrollToBottom();
       } else {
         setState(() => _hasNewMessages = true);
@@ -168,23 +206,42 @@ class _ChatMessageListState extends State<ChatMessageList>
   }
 
   // ── Stream builder ────────────────────────────────────────────────────────
+  //
+  // While the first snapshot is loading we show a small loader. Once we
+  // have received at least one snapshot we keep the data pinned to the
+  // screen even during re-subscribes so the UI never flashes back to a
+  // full-screen spinner — that prevented the input field below from
+  // feeling responsive ("je kan pas typen als alle berichten geladen zijn").
+
+  List<Message>? _lastMessages;
 
   Widget _buildStream() {
     return StreamBuilder<List<Message>>(
       stream: widget.messagesStream,
       builder: (context, snapshot) {
-        if (snapshot.connectionState == ConnectionState.waiting) {
+        // First load — nothing cached yet.
+        if (snapshot.connectionState == ConnectionState.waiting &&
+            _lastMessages == null) {
           return const Center(child: CircularProgressIndicator());
         }
-        if (snapshot.hasError) {
+
+        if (snapshot.hasError && _lastMessages == null) {
           return _buildErrorState(snapshot.error);
         }
-        if (!snapshot.hasData || snapshot.data!.isEmpty) {
+
+        final messages = snapshot.data ?? _lastMessages ?? const <Message>[];
+
+        // Cache the most recent non-null snapshot so we can keep showing
+        // messages if the stream briefly re-enters a waiting state.
+        if (snapshot.hasData) {
+          _lastMessages = messages;
+        }
+
+        if (messages.isEmpty) {
           return _buildEmptyState();
         }
 
-        final messages = snapshot.data!;
-        _handleMessageCountChange(messages.length);
+        _handleMessageCountChange(messages);
 
         return ListView.builder(
           controller: _scrollController,

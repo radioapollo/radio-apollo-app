@@ -76,6 +76,17 @@ Future<void> main() async {
 
       if (castOptions != null) {
         GoogleCastContext.instance.setSharedInstanceWithOptions(castOptions);
+
+        // Start actively scanning for Cast devices so the cast button
+        // on the home screen can light up as soon as a Chromecast is
+        // visible on the local network. This is the fix for "Cast
+        // knop is weg" — without an active discovery the UI never
+        // sees any devices.
+        try {
+          GoogleCastDiscoveryManager.instance.startDiscovery();
+        } catch (e) {
+          debugPrint('[main] Cast discovery start failed: $e');
+        }
       }
     } catch (e) {
       debugPrint('[main] Cast init failed: $e');

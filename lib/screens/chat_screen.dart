@@ -21,6 +21,7 @@
    - Own messages on the right (blue), others on the left
    - Admin messages in orange with a radio icon
    - Long-press the logo to open the admin login
+   - Keyboard stays open between messages so the user can keep typing
 */
 
 import 'dart:async';
@@ -112,6 +113,7 @@ class _ChatScreenState extends State<ChatScreen>
   // ── Helpers ───────────────────────────────────────────────────────────────
 
   void _onTextChanged() {
+    if (!mounted) return;
     setState(() {
       _charsLeft = ChatService.maxMessageLength - _controller.text.length;
     });
@@ -124,7 +126,7 @@ class _ChatScreenState extends State<ChatScreen>
     await UserService.instance.init();
     if (!UserService.instance.hasUsername && mounted) {
       await UsernameDialog.show(context);
-      setState(() {});
+      if (mounted) setState(() {});
     }
   }
 
@@ -160,17 +162,26 @@ class _ChatScreenState extends State<ChatScreen>
     }
 
     final text = _controller.text;
+    // Remember whether the keyboard/focus was up so we can restore it
+    // exactly as it was once the message has flown out. This is the fix
+    // for "tussen berichten in moet er opnieuw op tekstvak getikt worden":
+    // the send flow briefly rebuilds, and if we only request focus when
+    // it's still held we end up losing it to the bottom of the tree.
+    final keepFocus = _textFieldFocus.hasFocus;
+
     _controller.clear();
     setState(() => _sending = true);
 
     try {
       await _chatService.sendMessage(text);
-      
-      // Keep keyboard open after sending
-      if (mounted && _textFieldFocus.hasFocus) {
+
+      // Always restore focus to the input field after a successful send,
+      // regardless of what happened during the async gap. This keeps the
+      // keyboard open so the user can type the next message immediately.
+      if (mounted && keepFocus && !_textFieldFocus.hasFocus) {
         _textFieldFocus.requestFocus();
       }
-      
+
       // Only regular users have a send cooldown — admins are unlimited.
       if (!_authService.isAdmin) {
         _startCooldown();
@@ -196,13 +207,24 @@ class _ChatScreenState extends State<ChatScreen>
 
   /// Starts the visible countdown on the send button. Ticks once per
   /// second until it reaches zero, then cancels itself.
+  ///
+  /// The previous implementation re-read the remaining seconds from the
+  /// service on each tick. That caused two visible issues:
+  ///   1. The pill could briefly show the wrong number (0 → 3 → 2 → 1)
+  ///      because the service's reference time is set after the network
+  ///      request returns, while the UI starts ticking before then.
+  ///   2. If the user sent a message through the admin path (which does
+  ///      NOT update _lastMessageSent on the service), the countdown
+  ///      would immediately snap to 0.
+  /// Instead we just decrement a local counter — simple and stable.
   void _startCooldown({int? seconds}) {
     _cooldownTicker?.cancel();
-    
+
     if (!mounted) return;
-    
+
+    final initial = seconds ?? ChatService.cooldownSeconds;
     setState(() {
-      _cooldownRemaining = seconds ?? ChatService.cooldownSeconds;
+      _cooldownRemaining = initial;
     });
 
     _cooldownTicker = Timer.periodic(const Duration(seconds: 1), (timer) {
@@ -211,16 +233,15 @@ class _ChatScreenState extends State<ChatScreen>
         _cooldownTicker = null;
         return;
       }
-      
-      final remaining = _chatService.cooldownRemaining();
-      
-      if (mounted) {
-        setState(() => _cooldownRemaining = remaining);
-      }
-      
-      if (remaining <= 0) {
+
+      final next = _cooldownRemaining - 1;
+
+      if (next <= 0) {
         timer.cancel();
         _cooldownTicker = null;
+        setState(() => _cooldownRemaining = 0);
+      } else {
+        setState(() => _cooldownRemaining = next);
       }
     });
   }

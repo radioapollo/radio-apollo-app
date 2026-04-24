@@ -10,6 +10,12 @@
    The screen itself is a thin orchestrator. All card rendering,
    badges, detail sheet, and the snackbar logic live in
    widgets/event/.
+
+   The events stream is cached as a broadcast stream in EventService
+   and captured once here in State so StreamBuilder keeps its last
+   snapshot across rebuilds. That, plus `initialData` from the
+   service's latest-value cache, means swiping into this tab doesn't
+   flash an empty loader.
 */
 
 import 'package:flutter/material.dart';
@@ -31,6 +37,8 @@ class EventScreen extends StatefulWidget {
 class _EventScreenState extends State<EventScreen>
     with AutomaticKeepAliveClientMixin {
   final _eventService = EventService();
+
+  late final Stream<List<Event>> _eventsStream = _eventService.eventsStream;
 
   @override
   bool get wantKeepAlive => true;
@@ -86,9 +94,12 @@ class _EventScreenState extends State<EventScreen>
 
   Widget _buildEventList() {
     return StreamBuilder<List<Event>>(
-      stream: _eventService.eventsStream,
+      stream: _eventsStream,
+      initialData: _eventService.latestEvents,
       builder: (context, snapshot) {
-        if (snapshot.connectionState == ConnectionState.waiting) {
+        // Only show the spinner on the very first cold load.
+        if (snapshot.connectionState == ConnectionState.waiting &&
+            !snapshot.hasData) {
           return const Center(
             child: CircularProgressIndicator(color: AppColors.navyMedium),
           );

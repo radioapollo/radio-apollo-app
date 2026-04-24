@@ -8,8 +8,8 @@ environment:
   sdk: ^3.11.1
 
 dependencies:
-  cloud_firestore: ^5.0.0
-  firebase_core: ^3.0.0
+  cloud_firestore: ^6.3.0
+  firebase_core: ^4.0.0
   http: ^1.2.0
   flutter:
     sdk: flutter
@@ -22,6 +22,7 @@ dependencies:
   flutter_chrome_cast: ^1.4.5
   url_launcher: ^6.2.0
   package_info_plus: ^8.0.0
+  firebase_app_check: ^0.4.0
 
 dev_dependencies:
   flutter_test:
