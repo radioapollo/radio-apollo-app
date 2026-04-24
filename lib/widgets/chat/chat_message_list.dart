@@ -34,26 +34,45 @@ class ChatMessageList extends StatefulWidget {
   State<ChatMessageList> createState() => _ChatMessageListState();
 }
 
-class _ChatMessageListState extends State<ChatMessageList> {
+class _ChatMessageListState extends State<ChatMessageList>
+    with WidgetsBindingObserver {
   final ScrollController _scrollController = ScrollController();
 
   int _lastMessageCount = 0;
   bool _isNearBottom = true;
   bool _hasNewMessages = false;
+  double _lastBottomInset = 0;
 
   static const double _nearBottomThreshold = 150.0;
 
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
     _scrollController.addListener(_onScroll);
   }
 
   @override
   void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
     _scrollController.removeListener(_onScroll);
     _scrollController.dispose();
     super.dispose();
+  }
+
+  // Detect keyboard open/close via viewInsets changes
+  @override
+  void didChangeMetrics() {
+    super.didChangeMetrics();
+    final bottomInset = WidgetsBinding.instance.window.viewInsets.bottom;
+    // Keyboard opened (bottom inset increased)
+    if (bottomInset > _lastBottomInset && _isNearBottom) {
+      // Wait for keyboard animation to finish before scrolling
+      Future.delayed(const Duration(milliseconds: 300), () {
+        if (mounted) _scrollToBottom();
+      });
+    }
+    _lastBottomInset = bottomInset;
   }
 
   // ── Scroll tracking ───────────────────────────────────────────────────────
@@ -77,21 +96,36 @@ class _ChatMessageListState extends State<ChatMessageList> {
     }
   }
 
-  Future<void> _scrollToBottom() async {
+  Future<void> _scrollToBottom({int retries = 3}) async {
     if (!mounted) return;
     setState(() => _hasNewMessages = false);
 
     WidgetsBinding.instance.addPostFrameCallback((_) async {
+      if (!mounted) return;
+      
       if (!_scrollController.hasClients ||
           !_scrollController.position.hasContentDimensions) {
+        // Retry after layout completes
+        if (retries > 0) {
+          await Future.delayed(const Duration(milliseconds: 100));
+          _scrollToBottom(retries: retries - 1);
+        }
         return;
       }
 
-      await _scrollController.animateTo(
-        _scrollController.position.maxScrollExtent,
-        duration: const Duration(milliseconds: 300),
-        curve: Curves.easeOut,
-      );
+      try {
+        await _scrollController.animateTo(
+          _scrollController.position.maxScrollExtent,
+          duration: const Duration(milliseconds: 300),
+          curve: Curves.easeOut,
+        );
+      } catch (e) {
+        // Handle animation in progress
+        if (retries > 0) {
+          await Future.delayed(const Duration(milliseconds: 100));
+          _scrollToBottom(retries: retries - 1);
+        }
+      }
     });
   }
 

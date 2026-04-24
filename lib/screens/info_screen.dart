@@ -21,13 +21,23 @@ import '../widgets/info/app_version_footer.dart';
 import '../theme/app_theme.dart';
 import '../constants/constants.dart';
 
-class InfoScreen extends StatelessWidget {
-  InfoScreen({super.key});
+class InfoScreen extends StatefulWidget {
+  const InfoScreen({super.key});
 
+  @override
+  State<InfoScreen> createState() => _InfoScreenState();
+}
+
+class _InfoScreenState extends State<InfoScreen>
+    with AutomaticKeepAliveClientMixin {
   final _infoService = InfoService();
 
   @override
+  bool get wantKeepAlive => true;
+
+  @override
   Widget build(BuildContext context) {
+    super.build(context); // Required for AutomaticKeepAliveClientMixin
     return SizedBox.expand(
       child: Container(
         decoration: const BoxDecoration(

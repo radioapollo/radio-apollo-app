@@ -15,13 +15,23 @@ import '../widgets/apollo_card.dart';
 import '../widgets/live_player_card.dart';
 import '../theme/app_theme.dart';
 
-class HomeScreen extends StatelessWidget {
+class HomeScreen extends StatefulWidget {
   final Function(int) onNavigate;
 
   const HomeScreen({super.key, required this.onNavigate});
 
   @override
+  State<HomeScreen> createState() => _HomeScreenState();
+}
+
+class _HomeScreenState extends State<HomeScreen>
+    with AutomaticKeepAliveClientMixin {
+  @override
+  bool get wantKeepAlive => true;
+
+  @override
   Widget build(BuildContext context) {
+    super.build(context); // Required for AutomaticKeepAliveClientMixin
     final services = ServiceProvider.of(context);
 
     return PageWithHeader(
@@ -32,7 +42,7 @@ class HomeScreen extends StatelessWidget {
             builder: (context, snapshot) => LivePlayerCard(
               isPlaying: snapshot.data?.playing ?? false,
               onPlayPause: services.audioHandler.toggle,
-              onTap: () => onNavigate(1),
+              onTap: () => widget.onNavigate(1),
             ),
           ),
           const SizedBox(height: AppDimensions.space30),
@@ -76,15 +86,15 @@ class HomeScreen extends StatelessWidget {
   }
 
   Widget _buildRow(List<Widget> children) => IntrinsicHeight(
-    child: Row(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        Expanded(child: children[0]),
-        const SizedBox(width: AppDimensions.spaceXLarge),
-        Expanded(child: children[1]),
-      ],
-    ),
-  );
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Expanded(child: children[0]),
+            const SizedBox(width: AppDimensions.spaceXLarge),
+            Expanded(child: children[1]),
+          ],
+        ),
+      );
 
   Widget _card({
     required Color color,
@@ -93,17 +103,18 @@ class HomeScreen extends StatelessWidget {
     required String subtitle,
     required int index,
     bool darkText = false,
-  }) => ApolloCard(
-    color: color,
-    icon: icon,
-    title: title,
-    subtitle: subtitle,
-    darkText: darkText,
-    onTap: () => onNavigate(index),
-    layout: CardLayout.vertical,
-    border: Border.all(
-      color: AppColors.divider,
-      width: AppDimensions.borderThin,
-    ),
-  );
+  }) =>
+      ApolloCard(
+        color: color,
+        icon: icon,
+        title: title,
+        subtitle: subtitle,
+        darkText: darkText,
+        onTap: () => widget.onNavigate(index),
+        layout: CardLayout.vertical,
+        border: Border.all(
+          color: AppColors.divider,
+          width: AppDimensions.borderThin,
+        ),
+      );
 }

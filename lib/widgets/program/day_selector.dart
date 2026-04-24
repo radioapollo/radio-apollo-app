@@ -9,6 +9,7 @@
    auto-centers on the selected day when the selection changes.
 */
 
+import 'dart:async';
 import 'package:flutter/material.dart';
 import '../../theme/app_theme.dart';
 
@@ -30,6 +31,7 @@ class DaySelector extends StatefulWidget {
 
 class _DaySelectorState extends State<DaySelector> {
   final _scrollController = ScrollController();
+  Timer? _scrollDebounce;
 
   @override
   void initState() {
@@ -47,6 +49,7 @@ class _DaySelectorState extends State<DaySelector> {
 
   @override
   void dispose() {
+    _scrollDebounce?.cancel();
     _scrollController.dispose();
     super.dispose();
   }
@@ -57,25 +60,31 @@ class _DaySelectorState extends State<DaySelector> {
   // We estimate from the longest day name to keep the centering close.
 
   void _scrollToSelected() {
-    if (!_scrollController.hasClients ||
-        !_scrollController.position.hasContentDimensions) {
-      return;
-    }
+    // Cancel any pending scroll to prevent jitter
+    _scrollDebounce?.cancel();
+    
+    // Debounce scroll animation
+    _scrollDebounce = Timer(const Duration(milliseconds: 50), () {
+      if (!_scrollController.hasClients ||
+          !_scrollController.position.hasContentDimensions) {
+        return;
+      }
 
-    final screenWidth = MediaQuery.of(context).size.width;
+      final screenWidth = MediaQuery.of(context).size.width;
 
-    const estimatedItemWidth = 90.0;
-    final offset =
-        (widget.selectedIndex *
-            (estimatedItemWidth + AppDimensions.daySelectorSpacing)) -
-        (screenWidth / 2) +
-        (estimatedItemWidth / 2);
+      const estimatedItemWidth = 90.0;
+      final offset =
+          (widget.selectedIndex *
+              (estimatedItemWidth + AppDimensions.daySelectorSpacing)) -
+          (screenWidth / 2) +
+          (estimatedItemWidth / 2);
 
-    _scrollController.animateTo(
-      offset.clamp(0, _scrollController.position.maxScrollExtent),
-      duration: const Duration(milliseconds: 300),
-      curve: Curves.easeOut,
-    );
+      _scrollController.animateTo(
+        offset.clamp(0, _scrollController.position.maxScrollExtent),
+        duration: const Duration(milliseconds: 300),
+        curve: Curves.easeOut,
+      );
+    });
   }
 
   // ── Build ─────────────────────────────────────────────────────────────────

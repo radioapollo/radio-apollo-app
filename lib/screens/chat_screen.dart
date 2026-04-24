@@ -59,6 +59,7 @@ class ChatScreen extends StatefulWidget {
 class _ChatScreenState extends State<ChatScreen>
     with AutomaticKeepAliveClientMixin {
   final TextEditingController _controller = TextEditingController();
+  final FocusNode _textFieldFocus = FocusNode();
 
   late final Stream<List<Message>> _messagesStream;
 
@@ -102,6 +103,7 @@ class _ChatScreenState extends State<ChatScreen>
   void dispose() {
     _controller.removeListener(_onTextChanged);
     _controller.dispose();
+    _textFieldFocus.dispose();
     _cooldownTicker?.cancel();
     _hintDismissTimer?.cancel();
     super.dispose();
@@ -163,6 +165,12 @@ class _ChatScreenState extends State<ChatScreen>
 
     try {
       await _chatService.sendMessage(text);
+      
+      // Keep keyboard open after sending
+      if (mounted && _textFieldFocus.hasFocus) {
+        _textFieldFocus.requestFocus();
+      }
+      
       // Only regular users have a send cooldown — admins are unlimited.
       if (!_authService.isAdmin) {
         _startCooldown();
@@ -190,6 +198,9 @@ class _ChatScreenState extends State<ChatScreen>
   /// second until it reaches zero, then cancels itself.
   void _startCooldown({int? seconds}) {
     _cooldownTicker?.cancel();
+    
+    if (!mounted) return;
+    
     setState(() {
       _cooldownRemaining = seconds ?? ChatService.cooldownSeconds;
     });
@@ -197,11 +208,20 @@ class _ChatScreenState extends State<ChatScreen>
     _cooldownTicker = Timer.periodic(const Duration(seconds: 1), (timer) {
       if (!mounted) {
         timer.cancel();
+        _cooldownTicker = null;
         return;
       }
+      
       final remaining = _chatService.cooldownRemaining();
-      setState(() => _cooldownRemaining = remaining);
-      if (remaining <= 0) timer.cancel();
+      
+      if (mounted) {
+        setState(() => _cooldownRemaining = remaining);
+      }
+      
+      if (remaining <= 0) {
+        timer.cancel();
+        _cooldownTicker = null;
+      }
     });
   }
 
@@ -276,6 +296,7 @@ class _ChatScreenState extends State<ChatScreen>
               if (hasUsername || isAdmin)
                 ChatInputField(
                   controller: _controller,
+                  focusNode: _textFieldFocus,
                   maxLength: ChatService.maxMessageLength,
                   charsLeft: _charsLeft,
                   onSend: _sendMessage,

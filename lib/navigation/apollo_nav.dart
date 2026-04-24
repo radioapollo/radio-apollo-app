@@ -119,7 +119,7 @@ class _ApolloNavState extends State<ApolloNav> {
           Expanded(
             child: PageView(
               controller: _pageController,
-              physics: const ClampingScrollPhysics(),
+              physics: const PageScrollPhysics(),
               onPageChanged: (index) => setState(() => _index = index),
               children: [
                 HomeScreen(onNavigate: _switchTab),

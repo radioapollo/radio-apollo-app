@@ -19,6 +19,7 @@ import '../../theme/app_theme.dart';
 
 class ChatInputField extends StatelessWidget {
   final TextEditingController controller;
+  final FocusNode? focusNode;
   final int maxLength;
   final int charsLeft;
   final VoidCallback onSend;
@@ -29,6 +30,7 @@ class ChatInputField extends StatelessWidget {
   const ChatInputField({
     super.key,
     required this.controller,
+    this.focusNode,
     required this.maxLength,
     required this.charsLeft,
     required this.onSend,
@@ -64,9 +66,10 @@ class ChatInputField extends StatelessWidget {
               children: [
                 TextField(
                   controller: controller,
+                  focusNode: focusNode,
                   style: AppTextStyles.inputText,
                   maxLength: maxLength,
-                  enabled: !isSending,
+                  enabled: true, // Always enabled - only send button is disabled
                   buildCounter:
                       (
                         _, {
