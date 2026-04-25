@@ -171,9 +171,7 @@ class LivePlayerCard extends StatelessWidget {
                               children: [
                                 // Program title or fallback
                                 Text(
-                                  hasProgram
-                                      ? program.title!
-                                      : 'RADIO APOLLO',
+                                  hasProgram ? program.title! : 'RADIO APOLLO',
                                   style: AppTextStyles.stationName,
                                   maxLines: 1,
                                   overflow: TextOverflow.ellipsis,

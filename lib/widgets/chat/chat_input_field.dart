@@ -69,7 +69,8 @@ class ChatInputField extends StatelessWidget {
                   focusNode: focusNode,
                   style: AppTextStyles.inputText,
                   maxLength: maxLength,
-                  enabled: true, // Always enabled - only send button is disabled
+                  enabled:
+                      true, // Always enabled - only send button is disabled
                   buildCounter:
                       (
                         _, {

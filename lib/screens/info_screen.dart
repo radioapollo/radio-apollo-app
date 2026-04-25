@@ -48,7 +48,8 @@ class _InfoScreenState extends State<InfoScreen>
 
   // Capture the streams once so StreamBuilder has a stable identity.
   late final Stream<String> _aboutTextStream = _infoService.aboutTextStream;
-  late final Stream<List<Sponsor>> _sponsorsStream = _infoService.sponsorsStream;
+  late final Stream<List<Sponsor>> _sponsorsStream =
+      _infoService.sponsorsStream;
 
   @override
   bool get wantKeepAlive => true;

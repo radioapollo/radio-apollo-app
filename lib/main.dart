@@ -1,11 +1,11 @@
 /* Main Entry Point
 
-   Initialises Firebase, loads the stored username, sets up the
-   audio service, current-program service, and Cast context,
-   then launches the app.
+   Initialises Firebase, App Check, loads the stored username, sets up the
+   audio service, current-program service, and Cast context, then launches
+   the app.
 
-   Includes a top-level error zone so uncaught async errors and
-   Flutter framework errors are logged instead of crashing the app.
+   Includes a top-level error zone so uncaught async errors and Flutter
+   framework errors are logged instead of crashing the app.
 */
 
 import 'dart:async';
@@ -15,6 +15,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 import 'package:audio_service/audio_service.dart';
 import 'package:firebase_core/firebase_core.dart';
+import 'package:firebase_app_check/firebase_app_check.dart';
 import 'package:flutter_chrome_cast/flutter_chrome_cast.dart';
 import 'navigation/apollo_nav.dart';
 import 'services/audio_handler.dart';
@@ -57,6 +58,30 @@ Future<void> main() async {
       const _ErrorApp(message: 'Kan Firebase niet laden. Herstart de app.'),
     );
     return;
+  }
+
+  // ── Firebase App Check ────────────────────────────────────────────────────
+  //
+  // Activate immediately after Firebase.initializeApp and before any
+  // Firestore reads or Cloud Function calls. Without this, the
+  // `userSendMessage` and `claimUsername` Cloud Functions will reject
+  // requests once App Check enforcement is enabled in the console.
+  //
+  // We catch errors here so a token-fetch failure doesn't prevent the
+  // rest of the app from starting (radio stream still works, chat will
+  // fail gracefully with a friendly error).
+
+  try {
+    await FirebaseAppCheck.instance.activate(
+      androidProvider: kDebugMode
+          ? AndroidProvider.debug
+          : AndroidProvider.playIntegrity,
+      appleProvider: kDebugMode
+          ? AppleProvider.debug
+          : AppleProvider.deviceCheck,
+    );
+  } catch (e) {
+    debugPrint('[main] App Check activation failed: $e');
   }
 
   // ── Google Cast ───────────────────────────────────────────────────────────

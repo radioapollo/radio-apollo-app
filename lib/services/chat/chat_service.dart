@@ -2,13 +2,20 @@
 
    Handles sending and receiving chat messages.
 
-   CHANGE (security): user messages are now sent via the Cloud Function
-   `userSendMessage` instead of writing directly to Firestore. This ensures
-   rate limiting, profanity enforcement, and App Check validation all run
-   server-side. Direct Firestore writes are now blocked by security rules.
+   SECURITY: user messages are sent via the Cloud Function `userSendMessage`
+   instead of writing directly to Firestore. This ensures rate limiting,
+   profanity enforcement, and App Check validation all run server-side.
+   Direct Firestore writes are blocked by security rules.
 
    Client-side profanity check remains for instant feedback, but the
    server performs the authoritative check.
+
+   Features:
+   - streaming messages from Firestore (last 24 hours)
+   - sending user messages via the userSendMessage Cloud Function
+   - sending admin messages via the adminSendMessage Cloud Function
+   - mapping HTTP errors to user-friendly messages
+   - exposing remaining cooldown seconds so the UI can render a countdown
 */
 
 import 'dart:async';
@@ -37,6 +44,8 @@ class ChatService {
 
   // ── Cooldown helpers ──────────────────────────────────────────────────────
 
+  /// Number of seconds left before the user may send another message.
+  /// Returns 0 when no cooldown is active.
   int cooldownRemaining() {
     if (_lastMessageSent == null) return 0;
     final elapsed = DateTime.now().difference(_lastMessageSent!).inSeconds;
@@ -45,7 +54,6 @@ class ChatService {
   }
 
   // ── Stream ────────────────────────────────────────────────────────────────
-  // (unchanged — reads are still allowed by the rules)
 
   Stream<List<Message>> get messagesStream {
     return _db
@@ -110,26 +118,27 @@ class ChatService {
       throw CooldownException(remaining);
     }
 
-    // Client-side profanity (for instant UX feedback only — server re-checks)
+    // ── Client-side profanity check (instant UX, server re-checks) ────────
     final filterResult = ProfanityFilter.check(text);
+
     if (filterResult.isSevere) {
       throw ProfanityException(
         'Dit bericht kan niet worden verzonden. Blijf vriendelijk.',
       );
     }
 
-    // ── Send via Cloud Function ───────────────────────────────────────────
-    final uri = Uri.parse(AppConstants.cloudFunctionUrl('userSendMessage'));
-
-    // App Check token — proves the request comes from a genuine build of
-    // this app, not from a script hitting the endpoint with curl.
+    // ── App Check token ───────────────────────────────────────────────────
+    // The Cloud Function rejects requests without a valid App Check token,
+    // proving the call comes from a genuine build of this app.
     String? appCheckToken;
     try {
       appCheckToken = await FirebaseAppCheck.instance.getToken();
     } catch (_) {
-      // Fail closed — don't send without an App Check token.
       throw Exception('Bericht kon niet worden verzonden. Probeer opnieuw.');
     }
+
+    // ── Send via Cloud Function ───────────────────────────────────────────
+    final uri = Uri.parse(AppConstants.cloudFunctionUrl('userSendMessage'));
 
     late final http.Response response;
     try {
@@ -155,13 +164,16 @@ class ChatService {
       throw Exception('Je stuurt berichten te snel. Wacht even.');
     }
     if (response.statusCode == 400) {
-      // Server rejected (length / profanity / missing fields)
+      // Server rejected (length / profanity / unknown username)
       String msg = 'Bericht geweigerd.';
       try {
         final body = jsonDecode(response.body);
         if (body is Map && body['error'] is String) msg = body['error'];
       } catch (_) {}
       throw ProfanityException(msg);
+    }
+    if (response.statusCode == 401) {
+      throw Exception('Bericht geweigerd. Werk de app bij en probeer opnieuw.');
     }
     if (response.statusCode != 200) {
       throw Exception('Bericht kon niet worden verzonden. Probeer opnieuw.');
@@ -172,7 +184,6 @@ class ChatService {
   }
 
   // ── Admin message ─────────────────────────────────────────────────────────
-  // (unchanged)
 
   Future<bool> _sendAdminMessage(String text) async {
     final token = authService.sessionToken;

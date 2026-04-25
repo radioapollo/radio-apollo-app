@@ -86,15 +86,15 @@ class _HomeScreenState extends State<HomeScreen>
   }
 
   Widget _buildRow(List<Widget> children) => IntrinsicHeight(
-        child: Row(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            Expanded(child: children[0]),
-            const SizedBox(width: AppDimensions.spaceXLarge),
-            Expanded(child: children[1]),
-          ],
-        ),
-      );
+    child: Row(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Expanded(child: children[0]),
+        const SizedBox(width: AppDimensions.spaceXLarge),
+        Expanded(child: children[1]),
+      ],
+    ),
+  );
 
   Widget _card({
     required Color color,
@@ -103,18 +103,17 @@ class _HomeScreenState extends State<HomeScreen>
     required String subtitle,
     required int index,
     bool darkText = false,
-  }) =>
-      ApolloCard(
-        color: color,
-        icon: icon,
-        title: title,
-        subtitle: subtitle,
-        darkText: darkText,
-        onTap: () => widget.onNavigate(index),
-        layout: CardLayout.vertical,
-        border: Border.all(
-          color: AppColors.divider,
-          width: AppDimensions.borderThin,
-        ),
-      );
+  }) => ApolloCard(
+    color: color,
+    icon: icon,
+    title: title,
+    subtitle: subtitle,
+    darkText: darkText,
+    onTap: () => widget.onNavigate(index),
+    layout: CardLayout.vertical,
+    border: Border.all(
+      color: AppColors.divider,
+      width: AppDimensions.borderThin,
+    ),
+  );
 }

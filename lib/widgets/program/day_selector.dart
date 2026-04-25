@@ -62,7 +62,7 @@ class _DaySelectorState extends State<DaySelector> {
   void _scrollToSelected() {
     // Cancel any pending scroll to prevent jitter
     _scrollDebounce?.cancel();
-    
+
     // Debounce scroll animation
     _scrollDebounce = Timer(const Duration(milliseconds: 50), () {
       if (!_scrollController.hasClients ||
