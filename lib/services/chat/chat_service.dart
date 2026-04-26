@@ -2,20 +2,23 @@
 
    Handles sending and receiving chat messages.
 
-   SECURITY: user messages are sent via the Cloud Function `userSendMessage`
-   instead of writing directly to Firestore. This ensures rate limiting,
-   profanity enforcement, and App Check validation all run server-side.
-   Direct Firestore writes are blocked by security rules.
+   APP CHECK STRATEGY: best-effort.
+   - We try to get an App Check token with a 5-second timeout.
+   - If we get a token, we send it. The server applies normal rate
+     limiting (10 messages per minute).
+   - If we DON'T get a token (Xiaomi/HyperOS, broken Play Services,
+     etc.), we send the message without one. The server applies a
+     stricter rate limit (2 per 30s) but accepts the call.
+   - Either way, the user can chat.
 
-   Client-side profanity check remains for instant feedback, but the
-   server performs the authoritative check.
+   This is paired with claimUsername (in user_service.dart) which
+   ENFORCES App Check strictly. So users without App Check can chat
+   under their existing claimed name, but cannot claim new names.
 
-   Features:
-   - streaming messages from Firestore (last 24 hours)
-   - sending user messages via the userSendMessage Cloud Function
-   - sending admin messages via the adminSendMessage Cloud Function
-   - mapping HTTP errors to user-friendly messages
-   - exposing remaining cooldown seconds so the UI can render a countdown
+   SECURITY: rate limit + profanity filter + per-name claim still apply
+   to all calls. The trade-off: a determined attacker can spam ~2 messages
+   per 30 seconds as a previously-claimed username. Acceptable given the
+   gain of not locking out Xiaomi users.
 */
 
 import 'dart:async';
@@ -38,14 +41,16 @@ class ChatService {
   static const int maxMessageLength = 160;
   static const int cooldownSeconds = 3;
 
+  // Best-effort App Check token retrieval timeout. On Xiaomi/HyperOS the
+  // call can hang for tens of seconds, so we cap it short.
+  static const Duration appCheckTimeout = Duration(seconds: 5);
+
   DateTime? _lastMessageSent;
 
   ChatService({required this.authService});
 
   // ── Cooldown helpers ──────────────────────────────────────────────────────
 
-  /// Number of seconds left before the user may send another message.
-  /// Returns 0 when no cooldown is active.
   int cooldownRemaining() {
     if (_lastMessageSent == null) return 0;
     final elapsed = DateTime.now().difference(_lastMessageSent!).inSeconds;
@@ -118,23 +123,27 @@ class ChatService {
       throw CooldownException(remaining);
     }
 
-    // ── Client-side profanity check (instant UX, server re-checks) ────────
+    // Client-side profanity check (instant UX, server re-checks)
     final filterResult = ProfanityFilter.check(text);
-
     if (filterResult.isSevere) {
       throw ProfanityException(
         'Dit bericht kan niet worden verzonden. Blijf vriendelijk.',
       );
     }
 
-    // ── App Check token ───────────────────────────────────────────────────
-    // The Cloud Function rejects requests without a valid App Check token,
-    // proving the call comes from a genuine build of this app.
+    // ── App Check token (best-effort) ─────────────────────────────────────
+    // Try to get a token, but don't block sending if we can't. The server
+    // will apply a stricter rate limit for missing/invalid tokens but
+    // still accept the message. This keeps Xiaomi/HyperOS users — whose
+    // Play Integrity often hangs — able to chat.
     String? appCheckToken;
     try {
-      appCheckToken = await FirebaseAppCheck.instance.getToken();
+      appCheckToken = await FirebaseAppCheck.instance.getToken().timeout(
+        appCheckTimeout,
+      );
     } catch (_) {
-      throw Exception('Bericht kon niet worden verzonden. Probeer opnieuw.');
+      // Silent fallback — proceed without a token.
+      appCheckToken = null;
     }
 
     // ── Send via Cloud Function ───────────────────────────────────────────
@@ -164,16 +173,12 @@ class ChatService {
       throw Exception('Je stuurt berichten te snel. Wacht even.');
     }
     if (response.statusCode == 400) {
-      // Server rejected (length / profanity / unknown username)
       String msg = 'Bericht geweigerd.';
       try {
         final body = jsonDecode(response.body);
         if (body is Map && body['error'] is String) msg = body['error'];
       } catch (_) {}
       throw ProfanityException(msg);
-    }
-    if (response.statusCode == 401) {
-      throw Exception('Bericht geweigerd. Werk de app bij en probeer opnieuw.');
     }
     if (response.statusCode != 200) {
       throw Exception('Bericht kon niet worden verzonden. Probeer opnieuw.');

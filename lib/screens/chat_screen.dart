@@ -16,7 +16,7 @@
    - Optional username prompt on first visit (can be skipped)
    - Users without a username can read chat but not send messages
    - "Kies een naam" button in the title bar to set a username later
-   - Messages streamed live from Firestore (last 24 hours only)
+   - Messages streamed live from Firestore (last 48 hours only)
    - 160 character limit with a countdown near the limit
    - Own messages on the right (blue), others on the left
    - Admin messages in orange with a radio icon
