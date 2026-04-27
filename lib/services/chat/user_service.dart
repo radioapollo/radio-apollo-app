@@ -77,11 +77,9 @@ class UserService {
 
   /// Throws an Exception with a user-friendly message on failure.
   Future<void> _claimViaCloudFunction(String name) async {
-    final response = await AppCheckHttp.post(
-      'claimUsername',
-      {'name': name},
-      requireAppCheck: true,
-    );
+    final response = await AppCheckHttp.post('claimUsername', {
+      'name': name,
+    }, requireAppCheck: true);
 
     if (response.statusCode == 200) return;
 

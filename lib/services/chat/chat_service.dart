@@ -54,31 +54,36 @@ class ChatService {
         .map(_mapSnapshotToMessages);
   }
 
-  List<Message> _mapSnapshotToMessages(QuerySnapshot<Map<String, dynamic>> snap) {
+  List<Message> _mapSnapshotToMessages(
+    QuerySnapshot<Map<String, dynamic>> snap,
+  ) {
     final cutoff = DateTime.now().subtract(const Duration(hours: 48));
     final localUsername = UserService.instance.username;
 
-    return snap.docs.where((doc) {
-      final ts = doc.data()['timestamp'] as Timestamp?;
-      if (ts == null) return true;
-      return ts.toDate().isAfter(cutoff);
-    }).map((doc) {
-      final data = doc.data();
-      final ts = data['timestamp'] as Timestamp?;
-      final dt = ts?.toDate() ?? DateTime.now();
-      final msgUsername = data['username'] as String? ?? 'Onbekend';
-      final role = data['role'] as String? ?? 'user';
-      return Message(
-        role: role,
-        text: data['text'] as String? ?? '',
-        time: AppDateUtils.formatTime(dt),
-        username: msgUsername,
-        isCurrentUser:
-            localUsername != null &&
-            msgUsername == localUsername &&
-            role != 'admin',
-      );
-    }).toList();
+    return snap.docs
+        .where((doc) {
+          final ts = doc.data()['timestamp'] as Timestamp?;
+          if (ts == null) return true;
+          return ts.toDate().isAfter(cutoff);
+        })
+        .map((doc) {
+          final data = doc.data();
+          final ts = data['timestamp'] as Timestamp?;
+          final dt = ts?.toDate() ?? DateTime.now();
+          final msgUsername = data['username'] as String? ?? 'Onbekend';
+          final role = data['role'] as String? ?? 'user';
+          return Message(
+            role: role,
+            text: data['text'] as String? ?? '',
+            time: AppDateUtils.formatTime(dt),
+            username: msgUsername,
+            isCurrentUser:
+                localUsername != null &&
+                msgUsername == localUsername &&
+                role != 'admin',
+          );
+        })
+        .toList();
   }
 
   // ── Send ──────────────────────────────────────────────────────────────────
@@ -113,10 +118,10 @@ class ChatService {
       );
     }
 
-    final response = await AppCheckHttp.post(
-      'userSendMessage',
-      {'username': username, 'text': text},
-    );
+    final response = await AppCheckHttp.post('userSendMessage', {
+      'username': username,
+      'text': text,
+    });
 
     if (response.statusCode == 429) {
       throw Exception('Je stuurt berichten te snel. Wacht even.');
@@ -136,10 +141,10 @@ class ChatService {
     final token = authService.sessionToken;
     if (token == null) return false;
 
-    final response = await AppCheckHttp.post(
-      'adminSendMessage',
-      {'token': token, 'text': text},
-    );
+    final response = await AppCheckHttp.post('adminSendMessage', {
+      'token': token,
+      'text': text,
+    });
 
     if (response.statusCode != 200) {
       throw Exception('Bericht kon niet worden verzonden. Probeer opnieuw.');

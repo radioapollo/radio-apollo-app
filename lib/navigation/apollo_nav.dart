@@ -7,8 +7,16 @@
      Evenementen, Chat) inside a PageView
    - watching connectivity and showing an offline banner when there
      is no network
-   - listening to Google Cast session events so the radio stream is
-     loaded onto a connected Cast device automatically
+
+   Cast handling note:
+   The Cast session lifecycle (loading the stream onto the device,
+   silencing the local player, mirroring Cast media status into the
+   notification, etc.) is owned by `RadioAudioHandler` itself. ApolloNav
+   used to listen to `currentSessionStream` here, but that caused two
+   listeners to fight over playback state and produced the
+   double-audio + flickering-notification + "pause keeps playing on
+   Chromecast" bugs. There is now a single source of truth in
+   `audio_handler.dart`.
 
    The connectivity check on startup is wrapped in a short timeout
    so the app does not block indefinitely when the device is offline.
@@ -20,9 +28,7 @@
 
 import 'dart:async';
 import 'package:connectivity_plus/connectivity_plus.dart';
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_chrome_cast/session.dart';
 import '../screens/home_screen.dart';
 import '../screens/event_screen.dart';
 import '../screens/program_screen.dart';
@@ -30,7 +36,6 @@ import '../screens/info_screen.dart';
 import '../screens/chat_screen.dart';
 import '../services/chat/chat_service.dart';
 import '../services/chat/auth_service.dart';
-import '../services/cast_service.dart';
 import '../theme/app_theme.dart';
 
 class ApolloNav extends StatefulWidget {
@@ -45,7 +50,6 @@ class _ApolloNavState extends State<ApolloNav> {
   bool _isOffline = false;
 
   StreamSubscription<List<ConnectivityResult>>? _connectivitySub;
-  StreamSubscription? _castSessionSub;
 
   final AuthService _authService = AuthService.instance;
   late final ChatService _chatService;
@@ -61,22 +65,12 @@ class _ApolloNavState extends State<ApolloNav> {
     _connectivitySub = Connectivity().onConnectivityChanged.listen(
       _updateConnectivity,
     );
-
-    if (!kIsWeb) {
-      _castSessionSub = GoogleCastSessionManager.instance.currentSessionStream
-          .listen((session) {
-            if (session != null) {
-              CastService.instance.castRadioStream();
-            }
-          });
-    }
   }
 
   @override
   void dispose() {
     _pageController.dispose();
     _connectivitySub?.cancel();
-    _castSessionSub?.cancel();
     super.dispose();
   }
 
