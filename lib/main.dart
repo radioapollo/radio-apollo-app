@@ -1,11 +1,10 @@
 /* Main Entry Point
 
-   Initialises Firebase, App Check, loads the stored username, sets up the
-   audio service, current-program service, and Cast context, then launches
-   the app.
+   Initialises Firebase, App Check, the audio service, the current-program
+   service, and Cast context, then launches the app.
 
-   Includes a top-level error zone so uncaught async errors and Flutter
-   framework errors are logged instead of crashing the app.
+   Wraps async startup in a top-level error zone so uncaught errors are
+   logged rather than crashing the app.
 */
 
 import 'dart:async';
@@ -29,17 +28,7 @@ import 'theme/app_theme.dart';
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  // ── Top-level error handling ──────────────────────────────────────────────
-
-  FlutterError.onError = (FlutterErrorDetails details) {
-    FlutterError.presentError(details);
-    debugPrint('[FlutterError] ${details.exceptionAsString()}');
-  };
-
-  PlatformDispatcher.instance.onError = (Object error, StackTrace stack) {
-    debugPrint('[UncaughtError] $error\n$stack');
-    return true;
-  };
+  _installErrorHandlers();
 
   await SystemChrome.setPreferredOrientations([
     DeviceOrientation.portraitUp,
@@ -60,73 +49,13 @@ Future<void> main() async {
     return;
   }
 
-  // ── Firebase App Check ────────────────────────────────────────────────────
-  //
-  // Activate immediately after Firebase.initializeApp and before any
-  // Firestore reads or Cloud Function calls. Without this, the
-  // `userSendMessage` and `claimUsername` Cloud Functions will reject
-  // requests once App Check enforcement is enabled in the console.
-  //
-  // We catch errors here so a token-fetch failure doesn't prevent the
-  // rest of the app from starting (radio stream still works, chat will
-  // fail gracefully with a friendly error).
+  await _activateAppCheck();
 
-  try {
-    await FirebaseAppCheck.instance.activate(
-      providerAndroid: kDebugMode
-          ? const AndroidDebugProvider()
-          : const AndroidPlayIntegrityProvider(),
-      providerApple: kDebugMode
-          ? const AppleDebugProvider()
-          : const AppleDeviceCheckProvider(),
-    );
-  } catch (e) {
-    debugPrint('[main] App Check activation failed: $e');
-  }
+  if (!kIsWeb) await _initCast();
 
-  // ── Google Cast ───────────────────────────────────────────────────────────
+  await _initUser();
 
-  if (!kIsWeb) {
-    try {
-      const appId = GoogleCastDiscoveryCriteria.kDefaultApplicationId;
-      GoogleCastOptions? castOptions;
-
-      if (Platform.isIOS) {
-        castOptions = IOSGoogleCastOptions(
-          GoogleCastDiscoveryCriteriaInitialize.initWithApplicationID(appId),
-        );
-      } else if (Platform.isAndroid) {
-        castOptions = GoogleCastOptionsAndroid(appId: appId);
-      }
-
-      if (castOptions != null) {
-        GoogleCastContext.instance.setSharedInstanceWithOptions(castOptions);
-
-        // Start actively scanning for Cast devices so the cast button
-        // on the home screen can light up as soon as a Chromecast is
-        // visible on the local network. This is the fix for "Cast
-        // knop is weg" — without an active discovery the UI never
-        // sees any devices.
-        try {
-          GoogleCastDiscoveryManager.instance.startDiscovery();
-        } catch (e) {
-          debugPrint('[main] Cast discovery start failed: $e');
-        }
-      }
-    } catch (e) {
-      debugPrint('[main] Cast init failed: $e');
-    }
-  }
-
-  // ── User identity ─────────────────────────────────────────────────────────
-
-  try {
-    await UserService.instance.init();
-  } catch (e) {
-    debugPrint('[main] UserService init failed: $e');
-  }
-
-  // ── Audio service ─────────────────────────────────────────────────────────
+  // ── Audio service (must succeed for the app to run) ───────────────────────
 
   late final RadioAudioHandler audioHandler;
   try {
@@ -171,6 +100,68 @@ Future<void> main() async {
       programSubscription: programSub,
     ),
   );
+}
+
+// ── Startup helpers ─────────────────────────────────────────────────────────
+
+void _installErrorHandlers() {
+  FlutterError.onError = (FlutterErrorDetails details) {
+    FlutterError.presentError(details);
+    debugPrint('[FlutterError] ${details.exceptionAsString()}');
+  };
+  PlatformDispatcher.instance.onError = (Object error, StackTrace stack) {
+    debugPrint('[UncaughtError] $error\n$stack');
+    return true;
+  };
+}
+
+Future<void> _activateAppCheck() async {
+  try {
+    await FirebaseAppCheck.instance.activate(
+      providerAndroid: kDebugMode
+          ? const AndroidDebugProvider()
+          : const AndroidPlayIntegrityProvider(),
+      providerApple: kDebugMode
+          ? const AppleDebugProvider()
+          : const AppleDeviceCheckProvider(),
+    );
+  } catch (e) {
+    debugPrint('[main] App Check activation failed: $e');
+  }
+}
+
+Future<void> _initCast() async {
+  try {
+    const appId = GoogleCastDiscoveryCriteria.kDefaultApplicationId;
+    GoogleCastOptions? castOptions;
+
+    if (Platform.isIOS) {
+      castOptions = IOSGoogleCastOptions(
+        GoogleCastDiscoveryCriteriaInitialize.initWithApplicationID(appId),
+      );
+    } else if (Platform.isAndroid) {
+      castOptions = GoogleCastOptionsAndroid(appId: appId);
+    }
+
+    if (castOptions != null) {
+      GoogleCastContext.instance.setSharedInstanceWithOptions(castOptions);
+      try {
+        GoogleCastDiscoveryManager.instance.startDiscovery();
+      } catch (e) {
+        debugPrint('[main] Cast discovery start failed: $e');
+      }
+    }
+  } catch (e) {
+    debugPrint('[main] Cast init failed: $e');
+  }
+}
+
+Future<void> _initUser() async {
+  try {
+    await UserService.instance.init();
+  } catch (e) {
+    debugPrint('[main] UserService init failed: $e');
+  }
 }
 
 // ── Fallback error screen ───────────────────────────────────────────────────
