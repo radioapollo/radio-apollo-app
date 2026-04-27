@@ -16,17 +16,35 @@ import 'package:audio_service/audio_service.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_app_check/firebase_app_check.dart';
 import 'package:flutter_chrome_cast/flutter_chrome_cast.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
 import 'navigation/apollo_nav.dart';
 import 'services/audio_handler.dart';
 import 'services/program/current_program_service.dart';
 import 'services/chat/user_service.dart';
+import 'services/notifications/notification_service.dart';
 import 'widgets/service_provider.dart';
 import 'firebase_options.dart';
 import 'constants/constants.dart';
 import 'theme/app_theme.dart';
+import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
+
+  // Create notification channels as early as possible — the FCM service
+  // looks them up by ID and falls back to default if they don't exist.
+  final tempPlugin = FlutterLocalNotificationsPlugin();
+  await tempPlugin.initialize(
+    const InitializationSettings(
+      android: AndroidInitializationSettings('@mipmap/ic_launcher'),
+      iOS: DarwinInitializationSettings(
+        requestAlertPermission: false,
+        requestBadgePermission: false,
+        requestSoundPermission: false,
+      ),
+    ),
+  );
+  await ensureNotificationChannels(tempPlugin);
 
   _installErrorHandlers();
 
@@ -34,6 +52,35 @@ Future<void> main() async {
     DeviceOrientation.portraitUp,
     DeviceOrientation.portraitDown,
   ]);
+
+  try {
+    await Firebase.initializeApp(
+      options: DefaultFirebaseOptions.currentPlatform,
+    );
+  } catch (e) {
+    debugPrint('[main] Firebase init failed: $e');
+    runApp(
+      const _ErrorApp(message: 'Kan Firebase niet laden. Herstart de app.'),
+    );
+    return;
+  }
+
+  // Background message handler must be registered before any other
+  // FCM API call. It's a no-op for now (FCM displays the notification
+  // itself when the app isn't in the foreground) but having it wired
+  // up means future silent-data messages will Just Work.
+  FirebaseMessaging.onBackgroundMessage(firebaseMessagingBackgroundHandler);
+
+  await _activateAppCheck();
+
+  // Notifications. Does not prompt — that happens on first interaction
+  // with the Settings screen. Safe to fail silently if Firebase isn't
+  // available (offline first launch on iOS, etc).
+  try {
+    await NotificationService.instance.init();
+  } catch (e) {
+    debugPrint('[main] NotificationService init failed: $e');
+  }
 
   // ── Firebase ──────────────────────────────────────────────────────────────
 

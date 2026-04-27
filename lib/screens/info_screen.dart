@@ -34,6 +34,7 @@ import '../widgets/info/sponsor_card.dart';
 import '../widgets/info/app_version_footer.dart';
 import '../theme/app_theme.dart';
 import '../constants/constants.dart';
+import 'settings_screen.dart';
 
 class InfoScreen extends StatefulWidget {
   const InfoScreen({super.key});
@@ -94,7 +95,29 @@ class _InfoScreenState extends State<InfoScreen>
             fit: BoxFit.contain,
           ),
           const SizedBox(height: AppDimensions.spaceMedium),
-          const Text('Over Radio Apollo', style: AppTextStyles.screenTitle),
+          Row(
+            children: [
+              const Expanded(
+                child: Text(
+                  'Over Radio Apollo',
+                  style: AppTextStyles.screenTitle,
+                ),
+              ),
+              IconButton(
+                icon: const Icon(
+                  Icons.settings_outlined,
+                  color: AppColors.textPrimary,
+                ),
+                onPressed: () {
+                  Navigator.of(context).push(
+                    MaterialPageRoute(
+                      builder: (_) => const SettingsScreen(),
+                    ),
+                  );
+                },
+              ),
+            ],
+          ),
           const SizedBox(height: AppDimensions.spaceLarge),
         ],
       ),

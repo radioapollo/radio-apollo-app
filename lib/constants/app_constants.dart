@@ -28,7 +28,7 @@ class AppConstants {
 
   // ── Notification ──────────────────────────────────────────────────────────
 
-  static const String notificationChannelId = 'nl.radioapollo.channel.audio';
+  static const String notificationChannelId = 'be.radioapollo.channel.audio';
   static const String notificationChannelName = 'Radio Apollo';
 
   // ── Cloud Functions ───────────────────────────────────────────────────────
