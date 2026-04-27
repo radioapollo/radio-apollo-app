@@ -111,10 +111,10 @@ class EventDetailSheet extends StatelessWidget {
         child: CachedNetworkImage(
           imageUrl: event.imageUrl!,
           fit: BoxFit.cover,
-          placeholder: (_, __) => Container(color: AppColors.cardBlue),
+          placeholder: (_, _) => Container(color: AppColors.cardBlue),
           // If the image can't load, collapse the banner so the sheet
           // degrades gracefully to its old icon-less layout.
-          errorWidget: (_, __, ___) => const SizedBox.shrink(),
+          errorWidget: (_, _, _) => const SizedBox.shrink(),
         ),
       ),
     );

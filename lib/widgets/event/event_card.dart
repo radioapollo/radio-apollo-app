@@ -167,12 +167,12 @@ class EventCard extends StatelessWidget {
         imageUrl: event.imageUrl!,
         fit: BoxFit.cover,
         // Placeholder while loading — subtle so it doesn't flicker.
-        placeholder: (_, __) => Container(color: AppColors.cardBlue),
+        placeholder: (_, _) => Container(color: AppColors.cardBlue),
         // Fall back to the default icon if the image 404s, the device
         // is offline, or the URL is malformed. We pass the same visual
         // configuration so the fallback is indistinguishable from a
         // card that never had an image set.
-        errorWidget: (_, __, ___) => _buildDefaultIcon(
+        errorWidget: (_, _, _) => _buildDefaultIcon(
           size: size,
           isUrgent: isUrgent,
           isUpcoming: event.isWithinTwoWeeks,

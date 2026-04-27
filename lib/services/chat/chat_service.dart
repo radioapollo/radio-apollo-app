@@ -18,7 +18,6 @@ import 'package:http/http.dart' as http;
 import '../../models/message.dart';
 import '../../utils/date_utils.dart';
 import '../../utils/profanity/profanity_filter.dart';
-import '../../constants/constants.dart';
 import 'app_check_http.dart';
 import 'auth_service.dart';
 import 'user_service.dart';
