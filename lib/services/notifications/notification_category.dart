@@ -32,7 +32,7 @@
 enum NotificationCategory {
   studioMessages(
     topic: 'studio_messages',
-    channelId: 'nl.radioapollo.channel.studio_messages',
+    channelId: 'be.radioapollo.channel.studio_messages',
     displayName: 'Berichten van de studio',
     description: 'Wanneer de studio een bericht stuurt in de chat.',
     defaultEnabled: true,
@@ -40,7 +40,7 @@ enum NotificationCategory {
   ),
   chatActivity(
     topic: 'chat_activity',
-    channelId: 'nl.radioapollo.channel.chat_activity',
+    channelId: 'be.radioapollo.channel.chat_activity',
     displayName: 'Chatactiviteit',
     description: 'Wanneer er nieuwe berichten zijn in de chat.',
     defaultEnabled: false,
@@ -48,7 +48,7 @@ enum NotificationCategory {
   ),
   events(
     topic: 'events',
-    channelId: 'nl.radioapollo.channel.events',
+    channelId: 'be.radioapollo.channel.events',
     displayName: 'Evenementen',
     description: 'Een herinnering een week, een dag, en op de dag zelf.',
     defaultEnabled: true,
