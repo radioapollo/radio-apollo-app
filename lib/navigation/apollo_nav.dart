@@ -36,6 +36,7 @@ import '../screens/info_screen.dart';
 import '../screens/chat_screen.dart';
 import '../services/chat/chat_service.dart';
 import '../services/chat/auth_service.dart';
+import '../services/notifications/notification_router.dart';
 import '../theme/app_theme.dart';
 
 class ApolloNav extends StatefulWidget {
@@ -65,10 +66,13 @@ class _ApolloNavState extends State<ApolloNav> {
     _connectivitySub = Connectivity().onConnectivityChanged.listen(
       _updateConnectivity,
     );
+    NotificationRouter.instance.requestedTab.addListener(_onNotificationRoute);
+    _onNotificationRoute();
   }
 
   @override
   void dispose() {
+    NotificationRouter.instance.requestedTab.removeListener(_onNotificationRoute);
     _pageController.dispose();
     _connectivitySub?.cancel();
     super.dispose();
@@ -104,6 +108,13 @@ class _ApolloNavState extends State<ApolloNav> {
       duration: const Duration(milliseconds: 300),
       curve: Curves.easeInOut,
     );
+  }
+  
+  void _onNotificationRoute() {
+    final tab = NotificationRouter.instance.requestedTab.value;
+    if (tab == null) return;
+    _switchTab(tab);
+    NotificationRouter.instance.consume();
   }
 
   // ── Build ─────────────────────────────────────────────────────────────────

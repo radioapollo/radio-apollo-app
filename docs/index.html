@@ -82,7 +82,7 @@
 <body>
 
 <h1>Privacybeleid — Radio Apollo App</h1>
-<p class="updated"><strong>Laatst bijgewerkt:</strong> 19 april 2026</p>
+<p class="updated"><strong>Laatst bijgewerkt:</strong> 28 april 2026</p>
 
 <p>Dit privacybeleid beschrijft welke gegevens de Radio Apollo-app verzamelt, waarom, hoe lang ze bewaard worden en welke rechten je hebt. Het beleid is opgesteld in overeenstemming met de Algemene Verordening Gegevensbescherming (AVG / GDPR) en de Belgische privacywetgeving.</p>
 
@@ -135,7 +135,24 @@ Bij het gebruik van de app stuurt de Firebase-software automatisch enkele techni
 <p><strong>Crash- en prestatiegegevens via de app store</strong><br>
 De Google Play Store (Android) en Apple App Store (iOS) voegen zelf bepaalde meetgegevens toe over installaties en crashes. Deze worden rechtstreeks door Google respectievelijk Apple verwerkt volgens hun eigen privacybeleid.</p>
 
-<h3>2.3 Gegevens die we NIET verzamelen</h3>
+<h3>2.3 Push-meldingen</h3>
+
+<p>Wanneer je meldingen inschakelt in de app, registreert je toestel zich bij <strong>Firebase Cloud Messaging (FCM)</strong> — een dienst van Google — om berichten te kunnen ontvangen.</p>
+
+<p>Per categorie meldingen waarvoor je kiest, abonneert de app zich op een <em>topic</em> (bv. <code>studio_messages</code> of <code>events</code>). We <strong>bewaren geen apparaat-tokens</strong> in onze databank: het abonnement leeft enkel bij Google, en topics zijn niet herleidbaar tot jou persoonlijk.</p>
+
+<p>FCM verwerkt onderstaande gegevens namens ons:</p>
+<ul>
+  <li>Een geanonimiseerd registratie-token van je toestel</li>
+  <li>De lijst van topics waarop je geabonneerd bent</li>
+  <li>De inhoud van het bericht (titel + tekst), op het moment van afleveren</li>
+</ul>
+
+<p>Je kan meldingen op elk moment uitschakelen, per categorie binnen de app of voor de hele app via de telefooninstellingen. Bij uitschakelen meldt de app zich automatisch af bij het bijhorende topic.</p>
+
+<p>Voor het privacybeleid van FCM zelf, zie <a href="https://firebase.google.com/support/privacy">https://firebase.google.com/support/privacy</a>.</p>
+
+<h3>2.4 Gegevens die we NIET verzamelen</h3>
 <ul>
   <li>Geen naam, adres, telefoonnummer of geboortedatum</li>
   <li>Geen e-mailadres (tenzij je ons er zelf een mailt)</li>
@@ -178,7 +195,7 @@ De Google Play Store (Android) en Apple App Store (iOS) voegen zelf bepaalde mee
 <p>We <strong>verkopen geen gegevens</strong> en gebruiken ze niet voor reclame.</p>
 <p>De app maakt gebruik van onderstaande dienstverleners (verwerkers), uitsluitend voor het functioneren van de app:</p>
 <ul>
-  <li><strong>Google Firebase (Google Ireland Ltd.)</strong> — hosting van de databank (Firestore), authenticatiefunctionaliteit en Cloud Functions. Gegevens worden opgeslagen in de regio <code>europe-west1</code> (België).</li>
+  <li><strong>Google Firebase (Google Ireland Ltd.)</strong> — hosting van de databank (Firestore), authenticatiefunctionaliteit, Cloud Functions en push-meldingen via Firebase Cloud Messaging. Gegevens worden opgeslagen in de regio <code>europe-west1</code> (België).</li>
   <li><strong>Google Cast / Chromecast</strong> — enkel wanneer je ervoor kiest de stream te casten naar een Chromecast-toestel.</li>
   <li><strong>Beheerstream.nl</strong> — verzorgt de livestream-infrastructuur.</li>
   <li><strong>Google Play Store / Apple App Store</strong> — voor de distributie van de app en automatische storegerelateerde statistieken.</li>
@@ -226,7 +243,7 @@ De Google Play Store (Android) en Apple App Store (iOS) voegen zelf bepaalde mee
 <ul>
   <li><strong>Internettoegang</strong> — om de stream af te spelen en met Firebase te communiceren</li>
   <li><strong>Audio afspelen op de achtergrond</strong> — om de stream te laten doorlopen als je de app verlaat</li>
-  <li><strong>Meldingen</strong> — om de afspeelcontroles in de systeembalk weer te geven tijdens het luisteren</li>
+  <li><strong>Meldingen</strong> — om de afspeelcontroles in de systeembalk weer te geven tijdens het luisteren en om push-meldingen te ontvangen voor chat en evenementen (alleen wanneer je dit zelf inschakelt)</li>
   <li><strong>Netwerkstatus</strong> — om offline-situaties correct te behandelen</li>
 </ul>
 <p>De app vraagt <strong>geen</strong> toegang tot locatie, contacten, foto's, microfoon of camera.</p>
