@@ -23,6 +23,22 @@
    flutter_local_notifications to render them ourselves so the user
    sees a consistent banner regardless of app state.
 
+   Self-notification suppression
+   ─────────────────────────────
+   When the user sends a chat message themselves, the FCM message
+   from chat_activity arrives back at their own device. We don't
+   want to notify them about their own send. The Cloud Function
+   includes the sender's username in `data.sender`; if that matches
+   UserService.instance.username we drop the foreground notification.
+
+   Background/terminated self-suppression is harder because FCM
+   renders those itself without giving us a hook. In practice this
+   is rare: the user is on the chat screen (foreground) when sending,
+   and any chat_activity notification arriving while they're elsewhere
+   is from someone else. If this becomes a real complaint we'd switch
+   chat_activity to data-only messages and render in all states
+   ourselves; for now the foreground filter covers the actual use case.
+
    Tap-to-route
    ────────────
    Three message-arrival paths can end with a tap:
@@ -53,6 +69,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import '../chat/user_service.dart';
 import 'notification_category.dart';
 import 'notification_router.dart';
 
@@ -98,14 +115,6 @@ class NotificationService {
 
   // ── Lifecycle ──────────────────────────────────────────────────────────────
 
-  /// Called once from main(). Sets up the local-notifications plugin,
-  /// reads the current OS permission, reconciles category preferences
-  /// with FCM topic subscriptions if already authorised, wires the
-  /// foreground/background message handlers, and checks for a
-  /// pending tap-to-route from a cold start.
-  ///
-  /// Does NOT prompt the user for permission — that's done later on
-  /// first interaction with the Settings screen.
   Future<void> init() async {
     if (_initialised) return;
     _initialised = true;
@@ -134,9 +143,6 @@ class NotificationService {
 
     await _local.initialize(
       const InitializationSettings(android: androidInit, iOS: iosInit),
-      // Foreground tap path: when our local plugin rendered the banner
-      // and the user tapped it, this fires. The payload carries the
-      // `data` map from the original FCM message, JSON-encoded.
       onDidReceiveNotificationResponse: _onLocalNotificationTapped,
     );
 
@@ -157,19 +163,10 @@ class NotificationService {
   }
 
   void _wireMessageHandlers() {
-    // Foreground: render with the local plugin so the user sees a banner.
     FirebaseMessaging.onMessage.listen(_displayForegroundMessage);
-
-    // Background tap: user tapped a notification while the app was
-    // backgrounded. The system brings the app to the foreground and
-    // fires this stream with the message payload.
     FirebaseMessaging.onMessageOpenedApp.listen(_onMessageOpenedApp);
   }
 
-  /// Cold-start tap: app was terminated, user tapped a notification.
-  /// Android/iOS launches the app and we can read which message
-  /// caused it via getInitialMessage(). Returns null when the app was
-  /// launched normally (icon tap, fresh install, etc.).
   Future<void> _handleColdStartTap() async {
     final message = await _fcm.getInitialMessage();
     if (message == null) return;
@@ -191,15 +188,25 @@ class NotificationService {
     final notification = message.notification;
     if (notification == null) return;
 
+    // Drop chat_activity notifications for messages the user sent
+    // themselves. The Cloud Function includes the sender's username in
+    // data.sender; we compare it (case-insensitively to match Firestore
+    // doc IDs) with the locally claimed name. If it matches, return
+    // without rendering.
+    if (_isOwnMessage(message.data)) {
+      debugPrint(
+        '[NotificationService] Suppressing self-notification for '
+        '${message.data['sender']}',
+      );
+      return;
+    }
+
     final categoryKey = message.data['category'] as String?;
     final category = NotificationCategory.values.firstWhere(
       (c) => c.topic == categoryKey,
       orElse: () => NotificationCategory.studioMessages,
     );
 
-    // Encode the data map as the local notification's payload so the
-    // tap callback can read it. JSON because payload is a single
-    // String and we need to round-trip a Map<String, String>.
     final payload = jsonEncode(message.data);
 
     await _local.show(
@@ -211,23 +218,15 @@ class NotificationService {
           category.channelId,
           category.displayName,
           channelDescription: category.description,
-          // Match the channel's importance — Android won't show a
-          // heads-up banner over a foreground app for a notification
-          // below high importance. We use `max` for guaranteed heads-up.
           importance: category.highImportance
               ? Importance.max
               : Importance.defaultImportance,
           priority: category.highImportance
               ? Priority.max
               : Priority.defaultPriority,
-          // Hide the timestamp that otherwise renders large in the
-          // heads-up banner on stock Android.
           showWhen: false,
-          // Stay in the shade until the user swipes or taps.
           ongoing: false,
           autoCancel: true,
-          // Lets Android rank and group this as a message-style
-          // notification rather than generic. Better UX in the shade.
           category: AndroidNotificationCategory.message,
         ),
         iOS: const DarwinNotificationDetails(),
@@ -236,8 +235,20 @@ class NotificationService {
     );
   }
 
-  /// Called by the local plugin when the user taps a notification we
-  /// rendered ourselves (foreground path).
+  /// Returns true when the FCM data identifies the local user as the
+  /// sender, so we should drop the notification. Currently only fires
+  /// for chat_activity messages; other categories don't include
+  /// `sender` so the check no-ops harmlessly.
+  bool _isOwnMessage(Map<String, dynamic> data) {
+    final sender = (data['sender'] as String?)?.trim().toLowerCase();
+    if (sender == null || sender.isEmpty) return false;
+
+    final localName = UserService.instance.username?.trim().toLowerCase();
+    if (localName == null || localName.isEmpty) return false;
+
+    return sender == localName;
+  }
+
   void _onLocalNotificationTapped(NotificationResponse response) {
     final raw = response.payload;
     if (raw == null || raw.isEmpty) return;
@@ -252,13 +263,6 @@ class NotificationService {
 
   // ── Permission ─────────────────────────────────────────────────────────────
 
-  /// Prompt the user for OS-level notification permission. On Android
-  /// 12 and below this is a no-op (auto-granted); on Android 13+ and
-  /// iOS it shows the system dialog the first time and is silently
-  /// idempotent on subsequent calls.
-  ///
-  /// Always sets `hasAskedForPermission` to true — needed because on
-  /// Android the OS doesn't track this for us.
   Future<bool> requestPermission() async {
     final settings = await _fcm.requestPermission(
       alert: true,
@@ -279,17 +283,11 @@ class NotificationService {
 
   // ── Category preferences ──────────────────────────────────────────────────
 
-  /// Whether the user has enabled this category. Defaults to the
-  /// category's `defaultEnabled` value if no preference is saved yet.
   Future<bool> isEnabled(NotificationCategory category) async {
     final prefs = await SharedPreferences.getInstance();
     return prefs.getBool(_prefsKey(category)) ?? category.defaultEnabled;
   }
 
-  /// Toggle a category on or off. Persists the choice and updates the
-  /// FCM topic subscription. Safe to call before the user has granted
-  /// permission — the preference is saved either way and the topic
-  /// will be subscribed once permission lands via reconcile.
   Future<void> setEnabled(NotificationCategory category, bool enabled) async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setBool(_prefsKey(category), enabled);
@@ -303,8 +301,6 @@ class NotificationService {
         await _fcm.unsubscribeFromTopic(category.topic);
       }
     } catch (e) {
-      // Best-effort: a transient FCM failure is recovered on next
-      // app start by _reconcileSubscriptions().
       debugPrint(
         '[NotificationService] subscribe/unsubscribe failed for '
         '${category.topic}: $e',
@@ -312,8 +308,6 @@ class NotificationService {
     }
   }
 
-  /// Re-applies all saved preferences to FCM. Called on startup (if
-  /// already authorised) and right after a permission grant.
   Future<void> _reconcileSubscriptions() async {
     for (final category in NotificationCategory.values) {
       final enabled = await isEnabled(category);
@@ -340,35 +334,12 @@ class NotificationService {
 /// What banner (if any) the Settings screen should display about the
 /// OS-level notification permission.
 enum PermissionBannerState {
-  /// No banner — everything's working.
   none,
-
-  /// We have not yet successfully asked for permission. Banner explains
-  /// notifications are off and offers a button to ask now.
   notYetAsked,
-
-  /// We asked and were refused, OR the user turned notifications off
-  /// in system settings later. Banner explains and offers a button to
-  /// open system settings.
   denied,
 }
 
-/// Top-level channel creation. Idempotent: createNotificationChannel
-/// with the same ID is a no-op after the first call.
-///
-/// Why top-level: the FCM background isolate that handles incoming
-/// messages spins up its own Flutter engine, separate from the main
-/// app's. State on the NotificationService singleton is invisible
-/// from there. So channel creation lives here and gets called from:
-///   1. NotificationService.init() in the main app
-///   2. main.dart before Firebase.initializeApp() (belt-and-braces)
-///   3. firebaseMessagingBackgroundHandler() below
-///
-/// On most Android versions, FCM looks up the target channel
-/// synchronously when displaying a notification — if the channel
-/// doesn't exist, it falls back to the default channel (which is
-/// low-importance, no heads-up). Calling this everywhere prevents
-/// that race.
+/// Top-level channel creation. Idempotent.
 Future<void> ensureNotificationChannels(
   FlutterLocalNotificationsPlugin plugin,
 ) async {
@@ -384,12 +355,6 @@ Future<void> ensureNotificationChannels(
         category.channelId,
         category.displayName,
         description: category.description,
-        // Once a channel is created with a given importance, the user
-        // can lower it via system settings, but the app cannot raise
-        // it without uninstalling. So pick wisely on the first
-        // install. We use `max` for high-importance categories
-        // because it explicitly guarantees a heads-up banner across
-        // Android skins.
         importance: category.highImportance
             ? Importance.max
             : Importance.defaultImportance,
@@ -404,10 +369,6 @@ Future<void> ensureNotificationChannels(
 /// Top-level background message handler. Must be a top-level or
 /// static function annotated with @pragma('vm:entry-point') so the
 /// Flutter engine can find it from the background isolate.
-///
-/// Even though FCM is the one rendering background notifications (not
-/// us), we still ensure channels exist here so the very first message
-/// after install/restart finds the high-importance channel ready.
 @pragma('vm:entry-point')
 Future<void> firebaseMessagingBackgroundHandler(RemoteMessage message) async {
   final plugin = FlutterLocalNotificationsPlugin();
