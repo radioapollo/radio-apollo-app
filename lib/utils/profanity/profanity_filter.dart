@@ -1,16 +1,24 @@
-/* Profanity Filter - FINAL CORRECTED VERSION
+/* Profanity Filter
 
    Content moderation for chat messages.
 
    Detects profanity in two tiers:
    - Severe → block the message entirely
-   - Mild → auto-censor to asterisks
+   - Mild   → auto-censor to asterisks
 
    Handles common evasion techniques:
    - Leetspeak (f@ck → f**k, sh1t → sh*t)
    - Spacing (f u c k → f**k)
    - Repeated letters (fuuuuck → f**k)
    - Mixed case (FuCk → F**k)
+
+   Source of truth
+   ───────────────
+   The active word lists come from `ProfanityService`, which loads
+   them from Firestore on startup and listens for live updates. The
+   hardcoded lists in `ProfanityConfig` are always merged in as a
+   fallback so the filter still works on first launch / offline /
+   if Firestore is unreachable.
 
    Usage:
      final result = ProfanityFilter.check('Dit is kut');
@@ -23,7 +31,7 @@
      }
 */
 
-import 'profanity_config.dart';
+import 'profanity_service.dart';
 
 class ProfanityFilter {
   ProfanityFilter._();
@@ -37,8 +45,13 @@ class ProfanityFilter {
     // Normalize the message for detection (but keep original for censoring)
     final normalized = _normalize(message);
 
+    // Pull the live lists from the service. These already include the
+    // hardcoded fallback so they're never empty.
+    final severeWords = ProfanityService.instance.activeSevereWords;
+    final mildWords = ProfanityService.instance.activeMildWords;
+
     // Check for severe words first (hard block)
-    for (final word in ProfanityConfig.allSevereWords) {
+    for (final word in severeWords) {
       if (_containsWord(normalized, word)) {
         return ProfanityCheckResult.severe(message);
       }
@@ -48,7 +61,7 @@ class ProfanityFilter {
     String cleaned = message; // Work with original message
     bool foundMild = false;
 
-    for (final word in ProfanityConfig.allMildWords) {
+    for (final word in mildWords) {
       if (_containsWord(normalized, word)) {
         foundMild = true;
         // Censor in the ORIGINAL message with flexible pattern
@@ -145,47 +158,42 @@ class ProfanityFilter {
     return text.replaceAllMapped(regex, (match) {
       final word = match.group(0)!;
       if (word.length <= 2) return '*' * word.length;
-      return word[0] + ('*' * (word.length - 2)) + word[word.length - 1];
+      return word[0] + '*' * (word.length - 2) + word[word.length - 1];
     });
   }
 }
 
-// ── Result object ────────────────────────────────────────────────────────────
+// ── Result ──────────────────────────────────────────────────────────────────
 
 class ProfanityCheckResult {
-  final String cleanedText;
   final bool isSevere;
   final bool hasMildProfanity;
+  final String cleanedText;
 
   const ProfanityCheckResult._({
-    required this.cleanedText,
     required this.isSevere,
     required this.hasMildProfanity,
+    required this.cleanedText,
   });
 
-  factory ProfanityCheckResult.clean(String text) {
-    return ProfanityCheckResult._(
-      cleanedText: text,
-      isSevere: false,
-      hasMildProfanity: false,
-    );
-  }
+  factory ProfanityCheckResult.clean(String text) =>
+      ProfanityCheckResult._(
+        isSevere: false,
+        hasMildProfanity: false,
+        cleanedText: text,
+      );
 
-  factory ProfanityCheckResult.severe(String originalText) {
-    return ProfanityCheckResult._(
-      cleanedText: originalText,
-      isSevere: true,
-      hasMildProfanity: false,
-    );
-  }
+  factory ProfanityCheckResult.mild(String cleanedText) =>
+      ProfanityCheckResult._(
+        isSevere: false,
+        hasMildProfanity: true,
+        cleanedText: cleanedText,
+      );
 
-  factory ProfanityCheckResult.mild(String censoredText) {
-    return ProfanityCheckResult._(
-      cleanedText: censoredText,
-      isSevere: false,
-      hasMildProfanity: true,
-    );
-  }
-
-  bool get isClean => !isSevere && !hasMildProfanity;
+  factory ProfanityCheckResult.severe(String text) =>
+      ProfanityCheckResult._(
+        isSevere: true,
+        hasMildProfanity: false,
+        cleanedText: text,
+      );
 }

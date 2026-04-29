@@ -21,6 +21,7 @@ import 'navigation/apollo_nav.dart';
 import 'services/audio_handler.dart';
 import 'services/program/current_program_service.dart';
 import 'services/chat/user_service.dart';
+import 'utils/profanity/profanity_service.dart';
 import 'services/notifications/notification_service.dart';
 import 'widgets/service_provider.dart';
 import 'firebase_options.dart';
@@ -101,6 +102,12 @@ Future<void> main() async {
   if (!kIsWeb) await _initCast();
 
   await _initUser();
+
+  try {
+    await ProfanityService.instance.init();
+  } catch (e) {
+    debugPrint('[main] ProfanityService init failed: $e');
+  }
 
   // ── Audio service (must succeed for the app to run) ───────────────────────
 
