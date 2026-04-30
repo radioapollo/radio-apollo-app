@@ -104,26 +104,45 @@ class ChatService {
         'Stel eerst een gebruikersnaam in voor je een bericht stuurt.',
       );
     }
-
+ 
+    // NEW: pull the claim token. If missing, ask the user to re-set their
+    // name. This only happens for legacy installs that opened the new app
+    // when App Check happened to be unavailable — next successful launch
+    // recovers automatically. The error text guides them either way.
+    final claimToken = UserService.instance.claimToken;
+    if (claimToken == null || claimToken.isEmpty) {
+      throw Exception(
+        'Beveiligingstoken ontbreekt. Stel je gebruikersnaam opnieuw in via het profielmenu.',
+      );
+    }
+ 
     final remaining = cooldownRemaining();
     if (remaining > 0) {
       throw CooldownException(remaining);
     }
-
+ 
     // Client-side profanity check for instant feedback; server re-checks.
     if (ProfanityFilter.check(text).isSevere) {
       throw ProfanityException(
         'Dit bericht kan niet worden verzonden. Blijf vriendelijk.',
       );
     }
-
+ 
     final response = await AppCheckHttp.post('userSendMessage', {
       'username': username,
       'text': text,
+      'claimToken': claimToken, // NEW
     });
-
+ 
     if (response.statusCode == 429) {
       throw Exception('Je stuurt berichten te snel. Wacht even.');
+    }
+    if (response.statusCode == 401) {
+      // NEW: token rejected. Could be revoked, expired (we don't expire,
+      // but defensive), or signed with a previous secret. Surface clearly.
+      throw Exception(
+        'Beveiligingstoken ongeldig. Stel je gebruikersnaam opnieuw in via het profielmenu.',
+      );
     }
     if (response.statusCode == 400) {
       throw ProfanityException(_extractError(response, 'Bericht geweigerd.'));
@@ -131,11 +150,11 @@ class ChatService {
     if (response.statusCode != 200) {
       throw Exception('Bericht kon niet worden verzonden. Probeer opnieuw.');
     }
-
+ 
     _lastMessageSent = DateTime.now();
     return true;
   }
-
+ 
   Future<bool> _sendAdminMessage(String text) async {
     final token = authService.sessionToken;
     if (token == null) return false;

@@ -134,3 +134,6 @@ ios/Gemfile.lock
 
 # Build outputs
 ios/build/
+
+# Local security testing scripts
+*.ps1

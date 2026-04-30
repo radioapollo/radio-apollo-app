@@ -14,28 +14,34 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 import 'app_check_http.dart';
-
+ 
 class UserService {
   UserService._();
   static final UserService instance = UserService._();
-
+ 
   static const String _key = 'chat_username';
+  static const String _tokenKey = 'chat_claim_token'; // NEW
   final _db = FirebaseFirestore.instance;
-
+ 
   String? _username;
-
+  String? _claimToken; // NEW
+ 
   // ── Getters ───────────────────────────────────────────────────────────────
-
+ 
   String? get username => _username;
   bool get hasUsername => _username != null && _username!.isNotEmpty;
-
+  String? get claimToken => _claimToken; // NEW
+ 
   // ── Lifecycle ─────────────────────────────────────────────────────────────
-
+ 
   Future<void> init() async {
     final prefs = await SharedPreferences.getInstance();
     final saved = prefs.getString(_key);
+    final savedToken = prefs.getString(_tokenKey); // NEW
     if (saved == null || saved.isEmpty) return;
-
+ 
+    _claimToken = savedToken; // restore (may be null for legacy installs)
+ 
     DocumentSnapshot<Map<String, dynamic>>? doc;
     try {
       doc = await _db.collection('usernames').doc(saved.toLowerCase()).get();
@@ -44,45 +50,78 @@ class UserService {
       _username = saved;
       return;
     }
-
-    if (doc.exists) {
+ 
+    // If we have the username locally, but no token (legacy install) OR no
+    // Firestore doc, try to claim. The server treats a re-claim with the same
+    // displayName as a token reissue, so this is idempotent.
+    final needsReclaim = !doc.exists || _claimToken == null;
+ 
+    if (!needsReclaim) {
       _username = saved;
       return;
     }
-
-    // Saved locally but no Firestore doc yet — try to claim it transparently.
+ 
     try {
-      await _claimViaCloudFunction(saved);
+      final newToken = await _claimViaCloudFunction(saved);
       _username = saved;
+      _claimToken = newToken;
+      await prefs.setString(_tokenKey, newToken);
     } catch (_) {
-      await prefs.remove(_key);
-      _username = null;
+      // Couldn't re-claim. Two possibilities:
+      //   - App Check failed transiently (e.g. Xiaomi) — keep the local
+      //     username so the UI doesn't disappear, leave _claimToken null.
+      //     Sends will fail until next launch retries init() successfully.
+      //   - Name was taken by someone else (shouldn't happen, but possible
+      //     if the doc was wiped server-side) — clear local state.
+      if (!doc.exists) {
+        await prefs.remove(_key);
+        await prefs.remove(_tokenKey);
+        _username = null;
+        _claimToken = null;
+      } else {
+        // Doc exists but we couldn't get a token. Keep username, no token.
+        _username = saved;
+      }
     }
   }
-
+ 
   // ── Public API ────────────────────────────────────────────────────────────
-
+ 
   Future<void> setUsername(String name) async {
     final trimmed = name.trim();
     if (trimmed.isEmpty) return;
-
-    await _claimViaCloudFunction(trimmed);
-
+ 
+    final newToken = await _claimViaCloudFunction(trimmed);
+ 
     final prefs = await SharedPreferences.getInstance();
     await prefs.setString(_key, trimmed);
+    await prefs.setString(_tokenKey, newToken); // NEW
     _username = trimmed;
+    _claimToken = newToken; // NEW
   }
-
+ 
   // ── Internal ──────────────────────────────────────────────────────────────
-
+ 
   /// Throws an Exception with a user-friendly message on failure.
-  Future<void> _claimViaCloudFunction(String name) async {
+  /// Returns the claim token issued by the server.
+  Future<String> _claimViaCloudFunction(String name) async {
     final response = await AppCheckHttp.post('claimUsername', {
       'name': name,
     }, requireAppCheck: true);
-
-    if (response.statusCode == 200) return;
-
+ 
+    if (response.statusCode == 200) {
+      // Parse the token from the response body.
+      try {
+        final body = jsonDecode(response.body);
+        if (body is Map && body['claimToken'] is String) {
+          return body['claimToken'] as String;
+        }
+      } catch (_) {}
+      // Server returned 200 but no token? Treat as failure — sends will
+      // not work without one.
+      throw Exception('Server gaf geen geldig token terug. Probeer opnieuw.');
+    }
+ 
     if (response.statusCode == 409) {
       throw Exception('Deze naam is al in gebruik. Kies een andere.');
     }
@@ -90,11 +129,13 @@ class UserService {
       throw Exception(_extractError(response, 'Ongeldige naam.'));
     }
     if (response.statusCode == 401) {
-      throw Exception('Naam geweigerd. Werk de app bij en probeer opnieuw.');
+      throw Exception(
+        'Naam geweigerd. Werk de app bij en probeer opnieuw.',
+      );
     }
     throw Exception('Naam kon niet worden opgeslagen. Probeer opnieuw.');
   }
-
+ 
   static String _extractError(http.Response response, String fallback) {
     try {
       final body = jsonDecode(response.body);

@@ -15,12 +15,21 @@
    - Icons.cast when disconnected, Icons.cast_connected when a session
      is active. Both are tappable.
    - Tap while disconnected → opens a bottom sheet listing the
-     discovered devices; picking one starts the session. Connection
-     triggers `CastService.castRadioStream()` through the existing
-     session listener in `ApolloNav`, so the stream begins playing on
-     the cast device automatically.
+     discovered devices; picking one starts the session. Connection is
+     handled by the audio handler (which loads the radio stream onto
+     the cast device automatically).
    - Tap while connected → opens the same sheet, showing the connected
-     device with a "Stop casten" action.
+     device, a volume slider, and a "Stop casten" action.
+
+   Why an in-sheet volume slider?
+   The phone's hardware volume buttons do not reliably control the
+   Cast device's volume on Android, because the audio_service
+   foreground notification holds a higher-priority claim on the
+   media volume keys than the Cast SDK's media router. Rather than
+   fight Android's media routing rules, we expose a slider here that
+   talks directly to the Cast SDK via
+   `GoogleCastSessionManager.instance.setDeviceVolume(...)`. This
+   works the same on iOS and Android.
 
    Discovery is started/stopped by the parent app lifecycle (see
    `main.dart`); this widget only observes the streams.
@@ -103,72 +112,87 @@ class CastButton extends StatelessWidget {
         ),
       ),
       builder: (sheetCtx) {
-        return SafeArea(
-          child: Padding(
-            padding: const EdgeInsets.symmetric(
-              vertical: AppDimensions.paddingLarge,
-            ),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Padding(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: AppDimensions.paddingXLarge,
-                  ),
-                  child: Text(
-                    isConnected ? 'Casten' : 'Cast naar apparaat',
-                    style: const TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.w700,
-                      color: AppColors.textBody,
-                    ),
-                  ),
-                ),
-                const SizedBox(height: AppDimensions.spaceMedium),
+        // Rebuild the sheet contents whenever the session changes so
+        // the volume slider stays in sync with the device.
+        return StreamBuilder<GoogleCastSession?>(
+          stream: GoogleCastSessionManager.instance.currentSessionStream,
+          initialData: GoogleCastSessionManager.instance.currentSession,
+          builder: (ctx, sessionSnap) {
+            final session = sessionSnap.data;
+            final connectedNow =
+                GoogleCastSessionManager.instance.connectionState ==
+                GoogleCastConnectState.connected;
 
-                if (devices.isEmpty && !isConnected)
-                  const Padding(
-                    padding: EdgeInsets.all(AppDimensions.paddingXLarge),
-                    child: Text(
-                      'Geen Chromecast-apparaten gevonden.\n'
-                      'Zorg dat je op hetzelfde wifi-netwerk zit.',
-                      style: TextStyle(
-                        color: AppColors.textSecondary,
-                        fontSize: 13,
+            return SafeArea(
+              child: Padding(
+                padding: const EdgeInsets.symmetric(
+                  vertical: AppDimensions.paddingLarge,
+                ),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Padding(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: AppDimensions.paddingXLarge,
+                      ),
+                      child: Text(
+                        connectedNow ? 'Casten' : 'Cast naar apparaat',
+                        style: const TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.w700,
+                          color: AppColors.textBody,
+                        ),
                       ),
                     ),
-                  )
-                else
-                  ...devices.map(
-                    (device) => _buildDeviceTile(sheetCtx, device),
-                  ),
+                    const SizedBox(height: AppDimensions.spaceMedium),
 
-                if (isConnected) ...[
-                  const Divider(height: 24),
-                  ListTile(
-                    leading: const Icon(
-                      Icons.stop_circle_outlined,
-                      color: AppColors.live,
-                    ),
-                    title: const Text(
-                      'Stop casten',
-                      style: TextStyle(color: AppColors.live),
-                    ),
-                    onTap: () async {
-                      Navigator.of(sheetCtx).pop();
-                      try {
-                        await GoogleCastSessionManager.instance
-                            .endSessionAndStopCasting();
-                      } catch (e) {
-                        debugPrint('[CastButton] End session failed: $e');
-                      }
-                    },
-                  ),
-                ],
-              ],
-            ),
-          ),
+                    if (devices.isEmpty && !connectedNow)
+                      const Padding(
+                        padding: EdgeInsets.all(AppDimensions.paddingXLarge),
+                        child: Text(
+                          'Geen Chromecast-apparaten gevonden.\n'
+                          'Zorg dat je op hetzelfde wifi-netwerk zit.',
+                          style: TextStyle(
+                            color: AppColors.textSecondary,
+                            fontSize: 13,
+                          ),
+                        ),
+                      )
+                    else
+                      ...devices.map(
+                        (device) => _buildDeviceTile(sheetCtx, device),
+                      ),
+
+                    if (connectedNow) ...[
+                      const Divider(height: 24),
+                      _VolumeSlider(session: session),
+                      const Divider(height: 24),
+                      ListTile(
+                        leading: const Icon(
+                          Icons.stop_circle_outlined,
+                          color: AppColors.live,
+                        ),
+                        title: const Text(
+                          'Stop casten',
+                          style: TextStyle(color: AppColors.live),
+                        ),
+                        onTap: () async {
+                          Navigator.of(sheetCtx).pop();
+                          try {
+                            await GoogleCastSessionManager.instance
+                                .endSessionAndStopCasting();
+                          } catch (e) {
+                            debugPrint('[CastButton] End session failed: $e');
+                          }
+                        },
+                      ),
+                    ],
+                  ],
+                ),
+              ),
+            );
+          },
         );
       },
     );
@@ -209,12 +233,112 @@ class CastButton extends StatelessWidget {
                 await GoogleCastSessionManager.instance.startSessionWithDevice(
                   device,
                 );
-                // The session listener in ApolloNav picks this up and
-                // loads the radio stream onto the device.
+                // The session listener in the audio handler picks this
+                // up and loads the radio stream onto the device.
               } catch (e) {
                 debugPrint('[CastButton] Start session failed: $e');
               }
             },
+    );
+  }
+}
+
+// ─── Volume slider ──────────────────────────────────────────────────────────
+//
+// A stateful slider that reflects (and writes) the connected Cast
+// device's volume.
+//
+// We keep an internal `_localValue` so dragging feels responsive: the
+// slider follows the user's finger immediately, and we send updates
+// to the device. When the device confirms the new volume (via the
+// session stream rebuilding the parent), the parent passes a new
+// `session.currentDeviceVolume` in — we adopt that value only when the
+// user is not actively dragging, otherwise we'd fight their gesture.
+
+class _VolumeSlider extends StatefulWidget {
+  final GoogleCastSession? session;
+
+  const _VolumeSlider({required this.session});
+
+  @override
+  State<_VolumeSlider> createState() => _VolumeSliderState();
+}
+
+class _VolumeSliderState extends State<_VolumeSlider> {
+  late double _localValue;
+  bool _isDragging = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _localValue = _clampedSessionVolume(widget.session);
+  }
+
+  @override
+  void didUpdateWidget(covariant _VolumeSlider oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    // Adopt new device volume only when the user isn't dragging.
+    if (!_isDragging) {
+      final fromDevice = _clampedSessionVolume(widget.session);
+      if ((fromDevice - _localValue).abs() > 0.005) {
+        _localValue = fromDevice;
+      }
+    }
+  }
+
+  double _clampedSessionVolume(GoogleCastSession? session) {
+    final v = session?.currentDeviceVolume ?? 0.5;
+    if (v.isNaN) return 0.5;
+    return v.clamp(0.0, 1.0).toDouble();
+  }
+
+  void _send(double value) {
+    try {
+      GoogleCastSessionManager.instance.setDeviceVolume(value);
+    } catch (e) {
+      debugPrint('[CastButton] setDeviceVolume failed: $e');
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(
+        horizontal: AppDimensions.paddingLarge,
+      ),
+      child: Row(
+        children: [
+          const Icon(
+            Icons.volume_down,
+            color: AppColors.textSecondary,
+            size: 22,
+          ),
+          Expanded(
+            child: Slider(
+              value: _localValue,
+              min: 0.0,
+              max: 1.0,
+              activeColor: AppColors.primaryMid,
+              onChangeStart: (_) => _isDragging = true,
+              onChanged: (v) {
+                setState(() => _localValue = v);
+                // Stream the value to the device while dragging so
+                // the volume change feels live, not just on release.
+                _send(v);
+              },
+              onChangeEnd: (v) {
+                _isDragging = false;
+                _send(v);
+              },
+            ),
+          ),
+          const Icon(
+            Icons.volume_up,
+            color: AppColors.textSecondary,
+            size: 22,
+          ),
+        ],
+      ),
     );
   }
 }

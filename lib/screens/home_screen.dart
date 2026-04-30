@@ -58,7 +58,7 @@ class _HomeScreenState extends State<HomeScreen>
               color: AppColors.primaryLight,
               icon: Icons.campaign,
               title: 'Info',
-              subtitle: 'Wie zijn wij en onze adverteerders',
+              subtitle: 'Wie wij en onze adverteerders zijn',
               darkText: true,
               index: 2,
             ),
