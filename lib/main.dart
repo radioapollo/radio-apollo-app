@@ -85,20 +85,6 @@ Future<void> main() async {
 
   // ── Firebase ──────────────────────────────────────────────────────────────
 
-  try {
-    await Firebase.initializeApp(
-      options: DefaultFirebaseOptions.currentPlatform,
-    );
-  } catch (e) {
-    debugPrint('[main] Firebase init failed: $e');
-    runApp(
-      const _ErrorApp(message: 'Kan Firebase niet laden. Herstart de app.'),
-    );
-    return;
-  }
-
-  await _activateAppCheck();
-
   if (!kIsWeb) await _initCast();
 
   await _initUser();
