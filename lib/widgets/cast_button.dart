@@ -332,11 +332,7 @@ class _VolumeSliderState extends State<_VolumeSlider> {
               },
             ),
           ),
-          const Icon(
-            Icons.volume_up,
-            color: AppColors.textSecondary,
-            size: 22,
-          ),
+          const Icon(Icons.volume_up, color: AppColors.textSecondary, size: 22),
         ],
       ),
     );

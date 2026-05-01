@@ -8,6 +8,12 @@
    When the event has an imageUrl, a full-width banner is rendered at
    the top of the sheet. The banner fails silently (hides itself) if
    the image can't be loaded.
+
+   Accent color tiers (must stay in sync with EventCard):
+   - today           → green
+   - within 1 week   → red
+   - within 2 weeks  → blue
+   - further out     → no accent
 */
 
 import 'package:flutter/material.dart';
@@ -36,7 +42,10 @@ class EventDetailSheet extends StatelessWidget {
     );
   }
 
+  bool get _isToday => event.daysUntil == 0;
+
   Color? get _accentColor {
+    if (_isToday) return AppColors.nowPlayingDot;
     if (event.isWithinOneWeek) return AppColors.live;
     if (event.isWithinTwoWeeks) return AppColors.primaryLight;
     return null;

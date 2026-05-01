@@ -64,10 +64,7 @@ class ProfanityFilter {
 
     s = s.replaceAll(RegExp(r'\b(\w)\s+(?=\w\s|\w\b)'), r'$1');
 
-    s = s.replaceAllMapped(
-      RegExp(r'(.)\1{2,}'),
-      (match) => match.group(1)!,
-    );
+    s = s.replaceAllMapped(RegExp(r'(.)\1{2,}'), (match) => match.group(1)!);
 
     final leetMap = {
       '0': 'o',
@@ -140,12 +137,11 @@ class ProfanityCheckResult {
     required this.cleanedText,
   });
 
-  factory ProfanityCheckResult.clean(String text) =>
-      ProfanityCheckResult._(
-        isSevere: false,
-        hasMildProfanity: false,
-        cleanedText: text,
-      );
+  factory ProfanityCheckResult.clean(String text) => ProfanityCheckResult._(
+    isSevere: false,
+    hasMildProfanity: false,
+    cleanedText: text,
+  );
 
   factory ProfanityCheckResult.mild(String cleanedText) =>
       ProfanityCheckResult._(
@@ -154,10 +150,9 @@ class ProfanityCheckResult {
         cleanedText: cleanedText,
       );
 
-  factory ProfanityCheckResult.severe(String text) =>
-      ProfanityCheckResult._(
-        isSevere: true,
-        hasMildProfanity: false,
-        cleanedText: text,
-      );
+  factory ProfanityCheckResult.severe(String text) => ProfanityCheckResult._(
+    isSevere: true,
+    hasMildProfanity: false,
+    cleanedText: text,
+  );
 }

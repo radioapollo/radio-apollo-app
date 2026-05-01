@@ -7,6 +7,8 @@
    It handles:
    - subscribing to [messagesStream] and rendering each message as
      a MessageBubble
+   - jumping straight to the bottom on the very first data load so
+     the user always opens onto the newest message
    - auto-scrolling to the bottom when a new message arrives and the
      user is already near the bottom
    - auto-scrolling when the current user sends their OWN message,
@@ -22,6 +24,21 @@
    All state mutations (counter update, new-messages flag, auto-scroll)
    are deferred to addPostFrameCallback so setState is never called
    during build.
+
+   ─── Initial scroll reliability ────────────────────────────────────────────
+   The previous implementation only used `addPostFrameCallback` once and
+   then animated to maxScrollExtent. That broke for some users on first
+   open because chat bubbles have variable heights and the ListView
+   reports a still-growing maxScrollExtent across the first few layout
+   passes (each bubble only measures its real height once it's about to
+   appear). The animation would then "land" at what was the bottom one
+   frame ago, leaving newer messages cut off.
+
+   The fix: on the very first data arrival, run a short settle loop —
+   multiple jumpTo(maxScrollExtent) calls across consecutive frames,
+   without animation. Each pass corrects for any extent growth from the
+   previous frame. After that, regular animated scrolling takes over for
+   live updates.
 */
 
 import 'package:flutter/material.dart';
@@ -47,6 +64,12 @@ class _ChatMessageListState extends State<ChatMessageList>
   bool _isNearBottom = true;
   bool _hasNewMessages = false;
   double _lastBottomInset = 0;
+
+  /// True until the very first non-empty data snapshot has been
+  /// rendered AND we've successfully landed at the bottom. While this
+  /// is false we use the aggressive "settle" sequence instead of a
+  /// single animated scroll.
+  bool _initialScrollDone = false;
 
   static const double _nearBottomThreshold = 150.0;
 
@@ -110,6 +133,8 @@ class _ChatMessageListState extends State<ChatMessageList>
     }
   }
 
+  /// Animated scroll to the bottom — used for live updates after the
+  /// initial load has settled.
   Future<void> _scrollToBottom({int retries = 3}) async {
     if (!mounted) return;
     if (_hasNewMessages) {
@@ -145,6 +170,57 @@ class _ChatMessageListState extends State<ChatMessageList>
     });
   }
 
+  /// Used on the very first data load. Instead of a single animated
+  /// scroll, we jump (no animation) to maxScrollExtent across several
+  /// frames. Each pass corrects for any extent growth caused by
+  /// variable-height bubbles laying out late, so the user always
+  /// lands at the actual newest message instead of where the bottom
+  /// "used to be" one frame ago.
+  void _settleAtBottom({int passes = 6}) {
+    if (!mounted || passes <= 0) return;
+
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+
+      if (!_scrollController.hasClients ||
+          !_scrollController.position.hasContentDimensions) {
+        // Layout hasn't happened yet — try again next frame.
+        Future.delayed(const Duration(milliseconds: 50), () {
+          if (mounted) _settleAtBottom(passes: passes - 1);
+        });
+        return;
+      }
+
+      final target = _scrollController.position.maxScrollExtent;
+      try {
+        _scrollController.jumpTo(target);
+      } catch (_) {
+        // Ignore — we'll try again next pass.
+      }
+
+      // Schedule one more pass to catch any further extent growth.
+      // We stop early if the position is already at the bottom AND
+      // the extent stopped growing between passes.
+      Future.delayed(const Duration(milliseconds: 32), () {
+        if (!mounted) return;
+        if (!_scrollController.hasClients) {
+          _settleAtBottom(passes: passes - 1);
+          return;
+        }
+        final newMax = _scrollController.position.maxScrollExtent;
+        final atBottom =
+            (newMax - _scrollController.position.pixels).abs() < 1.0;
+        if (atBottom && newMax == target) {
+          // Settled. Mark initial done so future updates use the
+          // animated path.
+          _initialScrollDone = true;
+          return;
+        }
+        _settleAtBottom(passes: passes - 1);
+      });
+    });
+  }
+
   /// All state mutations (counter update + new-messages flag) happen
   /// after the frame completes, never during build.
   ///
@@ -169,10 +245,22 @@ class _ChatMessageListState extends State<ChatMessageList>
         newest != null &&
         newest.isCurrentUser;
 
+    // Capture whether this is the first time we're seeing data so the
+    // post-frame callback below knows which scroll strategy to use.
+    final isFirstLoad = !_initialScrollDone;
+
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
       _lastMessageCount = newCount;
       _lastMessageSignature = newestSignature;
+
+      if (isFirstLoad) {
+        // First time we're rendering messages — guarantee the user
+        // lands at the bottom even if bubble heights are still being
+        // measured across the next few frames.
+        _settleAtBottom();
+        return;
+      }
 
       if (_isNearBottom || newestIsOwn) {
         _scrollToBottom();

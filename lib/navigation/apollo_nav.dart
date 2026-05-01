@@ -72,7 +72,9 @@ class _ApolloNavState extends State<ApolloNav> {
 
   @override
   void dispose() {
-    NotificationRouter.instance.requestedTab.removeListener(_onNotificationRoute);
+    NotificationRouter.instance.requestedTab.removeListener(
+      _onNotificationRoute,
+    );
     _pageController.dispose();
     _connectivitySub?.cancel();
     super.dispose();
@@ -109,7 +111,7 @@ class _ApolloNavState extends State<ApolloNav> {
       curve: Curves.easeInOut,
     );
   }
-  
+
   void _onNotificationRoute() {
     final tab = NotificationRouter.instance.requestedTab.value;
     if (tab == null) return;

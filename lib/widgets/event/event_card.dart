@@ -14,6 +14,12 @@
    etc.), we silently fall back to the default icon.
 
    Tapping the card calls [onTap] so the parent can open the detail sheet.
+
+   Accent color tiers (most → least urgent):
+   - today           → green  (AppColors.nowPlayingDot)
+   - within 1 week   → red    (AppColors.live)
+   - within 2 weeks  → blue   (AppColors.primaryLight)
+   - further out     → no accent
 */
 
 import 'package:flutter/material.dart';
@@ -29,7 +35,12 @@ class EventCard extends StatelessWidget {
 
   const EventCard({super.key, required this.event, required this.onTap});
 
+  /// True when the event is happening today. Promoted out of the
+  /// urgent tier so we can paint it green instead of red.
+  bool get _isToday => event.daysUntil == 0;
+
   Color? get _accentColor {
+    if (_isToday) return AppColors.nowPlayingDot;
     if (event.isWithinOneWeek) return AppColors.live;
     if (event.isWithinTwoWeeks) return AppColors.primaryLight;
     return null;
@@ -151,12 +162,12 @@ class EventCard extends StatelessWidget {
       clipBehavior: Clip.antiAlias,
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(AppDimensions.radiusSmall),
-        // Keep the urgent glow so time-sensitive events still stand out
-        // even when they have their own artwork.
+        // Urgent glow uses the accent color so today's events glow
+        // green instead of red. Falls back to live red for "Bijna".
         boxShadow: isUrgent
             ? [
                 BoxShadow(
-                  color: AppColors.live.withValues(alpha: 0.4),
+                  color: (accent ?? AppColors.live).withValues(alpha: 0.4),
                   blurRadius: 12,
                   spreadRadius: 2,
                 ),
@@ -197,10 +208,12 @@ class EventCard extends StatelessWidget {
             ? accent.withValues(alpha: 0.12)
             : AppColors.cardBlue,
         borderRadius: BorderRadius.circular(AppDimensions.radiusSmall),
+        // Urgent glow uses the accent color so today's events glow
+        // green instead of red. Falls back to live red for "Bijna".
         boxShadow: isUrgent
             ? [
                 BoxShadow(
-                  color: AppColors.live.withValues(alpha: 0.4),
+                  color: (accent ?? AppColors.live).withValues(alpha: 0.4),
                   blurRadius: 12,
                   spreadRadius: 2,
                 ),

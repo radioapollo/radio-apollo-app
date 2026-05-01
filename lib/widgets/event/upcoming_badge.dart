@@ -2,9 +2,11 @@
 
    A small pill badge shown on event cards when the event is close.
 
-   Two variants:
+   Three variants (most→least urgent):
+   - "Vandaag"     — green, with pulsing animation, shown when the event
+                     is today (daysUntil == 0)
    - "Bijna"       — red, with pulsing animation, shown when the event
-                     is within 1 week (urgent)
+                     is within 1 week (urgent, but not today)
    - "Binnenkort"  — blue, static, shown when the event is within 2 weeks
 
    The animation lives here so the consumer only has to pass the Event.
@@ -21,9 +23,28 @@ class UpcomingBadge extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isToday = event.daysUntil == 0;
     final urgent = event.isWithinOneWeek;
-    final label = urgent ? 'Bijna' : 'Binnenkort';
-    final color = urgent ? AppColors.live : AppColors.primaryLight;
+
+    final String label;
+    final Color color;
+    final bool pulse;
+
+    if (isToday) {
+      label = 'Vandaag';
+      // Bright green to clearly signal "this is happening now/today"
+      // and stand out from the red "Bijna" badge.
+      color = AppColors.nowPlayingDot;
+      pulse = true;
+    } else if (urgent) {
+      label = 'Bijna';
+      color = AppColors.live;
+      pulse = true;
+    } else {
+      label = 'Binnenkort';
+      color = AppColors.primaryLight;
+      pulse = false;
+    }
 
     final badge = Container(
       margin: const EdgeInsets.only(left: AppDimensions.spaceSmall),
@@ -33,8 +54,8 @@ class UpcomingBadge extends StatelessWidget {
         borderRadius: BorderRadius.circular(AppDimensions.radiusPill),
         boxShadow: [
           BoxShadow(
-            color: color.withValues(alpha: urgent ? 0.5 : 0.3),
-            blurRadius: urgent ? 8 : 4,
+            color: color.withValues(alpha: pulse ? 0.5 : 0.3),
+            blurRadius: pulse ? 8 : 4,
           ),
         ],
       ),
@@ -48,7 +69,7 @@ class UpcomingBadge extends StatelessWidget {
       ),
     );
 
-    return urgent ? _PulsingBadge(child: badge) : badge;
+    return pulse ? _PulsingBadge(child: badge) : badge;
   }
 }
 

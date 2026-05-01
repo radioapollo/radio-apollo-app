@@ -333,11 +333,7 @@ class NotificationService {
 
 /// What banner (if any) the Settings screen should display about the
 /// OS-level notification permission.
-enum PermissionBannerState {
-  none,
-  notYetAsked,
-  denied,
-}
+enum PermissionBannerState { none, notYetAsked, denied }
 
 /// Top-level channel creation. Idempotent.
 Future<void> ensureNotificationChannels(

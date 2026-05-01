@@ -124,10 +124,7 @@ class ProfanityService {
       ...ProfanityConfig.allSevereWords,
       ...remoteSevere,
     };
-    final mergedMild = <String>{
-      ...ProfanityConfig.allMildWords,
-      ...remoteMild,
-    };
+    final mergedMild = <String>{...ProfanityConfig.allMildWords, ...remoteMild};
 
     _activeSevere = List.unmodifiable(mergedSevere);
     _activeMild = List.unmodifiable(mergedMild);

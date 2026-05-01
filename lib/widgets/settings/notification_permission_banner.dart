@@ -76,9 +76,8 @@ class NotificationPermissionBanner extends StatelessWidget {
               'Meldingen zijn uitgeschakeld in de telefooninstellingen. '
               'De schakelaars hieronder doen voorlopig niets.',
           actionLabel: 'Open instellingen',
-          onAction: () => AppSettings.openAppSettings(
-            type: AppSettingsType.notification,
-          ),
+          onAction: () =>
+              AppSettings.openAppSettings(type: AppSettingsType.notification),
         );
     }
   }
@@ -102,9 +101,7 @@ class NotificationPermissionBanner extends StatelessWidget {
             children: [
               Icon(icon, color: color, size: AppDimensions.iconLarge),
               const SizedBox(width: AppDimensions.spaceMedium),
-              Expanded(
-                child: Text(title, style: AppTextStyles.cardTitle),
-              ),
+              Expanded(child: Text(title, style: AppTextStyles.cardTitle)),
             ],
           ),
           const SizedBox(height: AppDimensions.spaceMedium),
