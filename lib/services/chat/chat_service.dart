@@ -2,7 +2,11 @@
 
    Handles sending and receiving chat messages.
 
-   - Streams messages from Firestore (last 48h)
+   - Streams the most recent 100 messages from Firestore. The collection
+     holds 48h of history (Cloud Function cleanupOldData enforces that),
+     and capping the listener at 100 keeps per-listener read costs low
+     during busy shows. New connections only pull the recent window
+     instead of the entire 48-hour buffer.
    - Sends user messages via the userSendMessage Cloud Function with
      best-effort App Check (server soft-fails so users on Xiaomi/HyperOS
      where Play Integrity is unreliable can still chat, subject to a
@@ -10,10 +14,13 @@
    - Sends admin messages via the adminSendMessage Cloud Function with
      a session token
    - Exposes remaining cooldown seconds for the UI
+   - Forwards unexpected send failures to Crashlytics (CooldownException
+     and ProfanityException are expected and not logged).
 */
 
 import 'dart:convert';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_crashlytics/firebase_crashlytics.dart';
 import 'package:http/http.dart' as http;
 import '../../models/message.dart';
 import '../../utils/date_utils.dart';
@@ -29,6 +36,10 @@ class ChatService {
   static const String _collection = 'chat_messages';
   static const int maxMessageLength = 160;
   static const int cooldownSeconds = 3;
+
+  /// Cap the live listener at this many messages. The collection holds
+  /// 48h of history but no client needs more than ~hundred on screen.
+  static const int _streamLimit = 100;
 
   DateTime? _lastMessageSent;
 
@@ -46,11 +57,15 @@ class ChatService {
   // ── Stream ────────────────────────────────────────────────────────────────
 
   Stream<List<Message>> get messagesStream {
+    // descending + limit pulls the *newest* N messages from the index;
+    // we then reverse to chronological order for the UI. This keeps
+    // per-listener Firestore reads bounded even on busy days.
     return _db
         .collection(_collection)
-        .orderBy('timestamp', descending: false)
+        .orderBy('timestamp', descending: true)
+        .limit(_streamLimit)
         .snapshots()
-        .map(_mapSnapshotToMessages);
+        .map((snap) => _mapSnapshotToMessages(snap).reversed.toList());
   }
 
   List<Message> _mapSnapshotToMessages(
@@ -61,6 +76,9 @@ class ChatService {
 
     return snap.docs
         .where((doc) {
+          // Defensive: server-side cleanup already enforces the 48h
+          // window, but if it ever lags we still don't want to render
+          // ancient messages.
           final ts = doc.data()['timestamp'] as Timestamp?;
           if (ts == null) return true;
           return ts.toDate().isAfter(cutoff);
@@ -105,7 +123,7 @@ class ChatService {
       );
     }
 
-    // NEW: pull the claim token. If missing, ask the user to re-set their
+    // Pull the claim token. If missing, ask the user to re-set their
     // name. This only happens for legacy installs that opened the new app
     // when App Check happened to be unavailable — next successful launch
     // recovers automatically. The error text guides them either way.
@@ -128,46 +146,73 @@ class ChatService {
       );
     }
 
-    final response = await AppCheckHttp.post('userSendMessage', {
-      'username': username,
-      'text': text,
-      'claimToken': claimToken, // NEW
-    });
+    try {
+      final response = await AppCheckHttp.post('userSendMessage', {
+        'username': username,
+        'text': text,
+        'claimToken': claimToken,
+      });
 
-    if (response.statusCode == 429) {
-      throw Exception('Je stuurt berichten te snel. Wacht even.');
-    }
-    if (response.statusCode == 401) {
-      // NEW: token rejected. Could be revoked, expired (we don't expire,
-      // but defensive), or signed with a previous secret. Surface clearly.
-      throw Exception(
-        'Beveiligingstoken ongeldig. Stel je gebruikersnaam opnieuw in via het profielmenu.',
-      );
-    }
-    if (response.statusCode == 400) {
-      throw ProfanityException(_extractError(response, 'Bericht geweigerd.'));
-    }
-    if (response.statusCode != 200) {
-      throw Exception('Bericht kon niet worden verzonden. Probeer opnieuw.');
-    }
+      if (response.statusCode == 429) {
+        throw Exception('Je stuurt berichten te snel. Wacht even.');
+      }
+      if (response.statusCode == 401) {
+        // Token rejected. Could be revoked, expired (we don't expire,
+        // but defensive), or signed with a previous secret. Surface clearly.
+        throw Exception(
+          'Beveiligingstoken ongeldig. Stel je gebruikersnaam opnieuw in via het profielmenu.',
+        );
+      }
+      if (response.statusCode == 400) {
+        throw ProfanityException(
+          _extractError(response, 'Bericht geweigerd.'),
+        );
+      }
+      if (response.statusCode != 200) {
+        throw Exception('Bericht kon niet worden verzonden. Probeer opnieuw.');
+      }
 
-    _lastMessageSent = DateTime.now();
-    return true;
+      _lastMessageSent = DateTime.now();
+      return true;
+    } catch (e, st) {
+      // Don't pollute Crashlytics with expected user-facing errors —
+      // those are already surfaced to the UI. Anything else (network
+      // failure, unexpected status, JSON oddities) gets logged.
+      if (e is! CooldownException && e is! ProfanityException) {
+        FirebaseCrashlytics.instance.recordError(
+          e,
+          st,
+          reason: 'ChatService._sendUserMessage',
+          fatal: false,
+        );
+      }
+      rethrow;
+    }
   }
 
   Future<bool> _sendAdminMessage(String text) async {
     final token = authService.sessionToken;
     if (token == null) return false;
 
-    final response = await AppCheckHttp.post('adminSendMessage', {
-      'token': token,
-      'text': text,
-    });
+    try {
+      final response = await AppCheckHttp.post('adminSendMessage', {
+        'token': token,
+        'text': text,
+      });
 
-    if (response.statusCode != 200) {
-      throw Exception('Bericht kon niet worden verzonden. Probeer opnieuw.');
+      if (response.statusCode != 200) {
+        throw Exception('Bericht kon niet worden verzonden. Probeer opnieuw.');
+      }
+      return true;
+    } catch (e, st) {
+      FirebaseCrashlytics.instance.recordError(
+        e,
+        st,
+        reason: 'ChatService._sendAdminMessage',
+        fatal: false,
+      );
+      rethrow;
     }
-    return true;
   }
 
   // ── Internal ──────────────────────────────────────────────────────────────

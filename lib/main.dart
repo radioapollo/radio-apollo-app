@@ -1,10 +1,10 @@
 /* Main Entry Point
 
-   Initialises Firebase, App Check, the audio service, the current-program
-   service, and Cast context, then launches the app.
+   Initialises Firebase, Crashlytics, App Check, the audio service, the
+   current-program service, and Cast context, then launches the app.
 
    Wraps async startup in a top-level error zone so uncaught errors are
-   logged rather than crashing the app.
+   logged to Crashlytics rather than crashing the app silently.
 */
 
 import 'dart:async';
@@ -15,6 +15,7 @@ import 'package:flutter/services.dart';
 import 'package:audio_service/audio_service.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_app_check/firebase_app_check.dart';
+import 'package:firebase_crashlytics/firebase_crashlytics.dart';
 import 'package:flutter_chrome_cast/flutter_chrome_cast.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'navigation/apollo_nav.dart';
@@ -47,13 +48,14 @@ Future<void> main() async {
   );
   await ensureNotificationChannels(tempPlugin);
 
-  _installErrorHandlers();
-
   await SystemChrome.setPreferredOrientations([
     DeviceOrientation.portraitUp,
     DeviceOrientation.portraitDown,
   ]);
 
+  // Firebase must come up before Crashlytics or any error handler that
+  // wants to talk to Crashlytics. If Firebase itself fails, we render
+  // the fallback screen and bail.
   try {
     await Firebase.initializeApp(
       options: DefaultFirebaseOptions.currentPlatform,
@@ -65,6 +67,13 @@ Future<void> main() async {
     );
     return;
   }
+
+  // Disable Crashlytics in debug builds so "flutter run" doesn't pollute
+  // the production crash dashboard with stack traces from development.
+  await FirebaseCrashlytics.instance
+      .setCrashlyticsCollectionEnabled(!kDebugMode);
+
+  _installErrorHandlers();
 
   // Background message handler must be registered before any other
   // FCM API call. It's a no-op for now (FCM displays the notification
@@ -79,8 +88,14 @@ Future<void> main() async {
   // available (offline first launch on iOS, etc).
   try {
     await NotificationService.instance.init();
-  } catch (e) {
+  } catch (e, st) {
     debugPrint('[main] NotificationService init failed: $e');
+    FirebaseCrashlytics.instance.recordError(
+      e,
+      st,
+      reason: 'NotificationService.init',
+      fatal: false,
+    );
   }
 
   // ── Firebase ──────────────────────────────────────────────────────────────
@@ -91,8 +106,14 @@ Future<void> main() async {
 
   try {
     await ProfanityService.instance.init();
-  } catch (e) {
+  } catch (e, st) {
     debugPrint('[main] ProfanityService init failed: $e');
+    FirebaseCrashlytics.instance.recordError(
+      e,
+      st,
+      reason: 'ProfanityService.init',
+      fatal: false,
+    );
   }
 
   // ── Audio service (must succeed for the app to run) ───────────────────────
@@ -107,8 +128,14 @@ Future<void> main() async {
         androidNotificationOngoing: true,
       ),
     );
-  } catch (e) {
+  } catch (e, st) {
     debugPrint('[main] AudioService init failed: $e');
+    FirebaseCrashlytics.instance.recordError(
+      e,
+      st,
+      reason: 'AudioService.init (fatal)',
+      fatal: true,
+    );
     runApp(
       const _ErrorApp(
         message: 'Audiodienst kon niet starten. Herstart de app.',
@@ -122,8 +149,14 @@ Future<void> main() async {
   final currentProgramService = CurrentProgramService();
   try {
     await currentProgramService.start();
-  } catch (e) {
+  } catch (e, st) {
     debugPrint('[main] CurrentProgramService start failed: $e');
+    FirebaseCrashlytics.instance.recordError(
+      e,
+      st,
+      reason: 'CurrentProgramService.start',
+      fatal: false,
+    );
   }
 
   final programSub = currentProgramService.currentProgram.listen((program) {
@@ -148,9 +181,12 @@ void _installErrorHandlers() {
   FlutterError.onError = (FlutterErrorDetails details) {
     FlutterError.presentError(details);
     debugPrint('[FlutterError] ${details.exceptionAsString()}');
+    // Forward fatal Flutter framework errors to Crashlytics.
+    FirebaseCrashlytics.instance.recordFlutterFatalError(details);
   };
   PlatformDispatcher.instance.onError = (Object error, StackTrace stack) {
     debugPrint('[UncaughtError] $error\n$stack');
+    FirebaseCrashlytics.instance.recordError(error, stack, fatal: true);
     return true;
   };
 }
@@ -165,8 +201,14 @@ Future<void> _activateAppCheck() async {
           ? const AppleDebugProvider()
           : const AppleDeviceCheckProvider(),
     );
-  } catch (e) {
+  } catch (e, st) {
     debugPrint('[main] App Check activation failed: $e');
+    FirebaseCrashlytics.instance.recordError(
+      e,
+      st,
+      reason: 'AppCheck.activate',
+      fatal: false,
+    );
   }
 }
 
@@ -187,20 +229,38 @@ Future<void> _initCast() async {
       GoogleCastContext.instance.setSharedInstanceWithOptions(castOptions);
       try {
         GoogleCastDiscoveryManager.instance.startDiscovery();
-      } catch (e) {
+      } catch (e, st) {
         debugPrint('[main] Cast discovery start failed: $e');
+        FirebaseCrashlytics.instance.recordError(
+          e,
+          st,
+          reason: 'Cast discovery start',
+          fatal: false,
+        );
       }
     }
-  } catch (e) {
+  } catch (e, st) {
     debugPrint('[main] Cast init failed: $e');
+    FirebaseCrashlytics.instance.recordError(
+      e,
+      st,
+      reason: 'Cast init',
+      fatal: false,
+    );
   }
 }
 
 Future<void> _initUser() async {
   try {
     await UserService.instance.init();
-  } catch (e) {
+  } catch (e, st) {
     debugPrint('[main] UserService init failed: $e');
+    FirebaseCrashlytics.instance.recordError(
+      e,
+      st,
+      reason: 'UserService.init',
+      fatal: false,
+    );
   }
 }
 

@@ -39,7 +39,7 @@ class AppCheckHttp {
             uri,
             headers: {
               'Content-Type': 'application/json',
-              if (token != null) 'X-Firebase-AppCheck': token,
+              'X-Firebase-AppCheck': ?token,
             },
             body: jsonEncode(body),
           )

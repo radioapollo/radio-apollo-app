@@ -108,7 +108,7 @@ class ProfanityFilter {
       if (char.toLowerCase() != char.toUpperCase()) {
         pattern += '[${char.toUpperCase()}${char.toLowerCase()}]{1,3}';
       } else {
-        pattern += RegExp.escape(char) + '{1,3}';
+        pattern += '${RegExp.escape(char)}{1,3}';
       }
     }
 
