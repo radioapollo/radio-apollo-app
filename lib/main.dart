@@ -22,6 +22,7 @@ import 'navigation/apollo_nav.dart';
 import 'services/audio_handler.dart';
 import 'services/program/current_program_service.dart';
 import 'services/chat/user_service.dart';
+import 'services/chat/block_service.dart';
 import 'utils/profanity/profanity_service.dart';
 import 'services/notifications/notification_service.dart';
 import 'widgets/service_provider.dart';
@@ -112,6 +113,18 @@ Future<void> main() async {
       e,
       st,
       reason: 'ProfanityService.init',
+      fatal: false,
+    );
+  }
+
+  try {
+    await BlockService.instance.init();
+  } catch (e, st) {
+    debugPrint('[main] BlockService init failed: $e');
+    FirebaseCrashlytics.instance.recordError(
+      e,
+      st,
+      reason: 'BlockService.init',
       fatal: false,
     );
   }

@@ -90,6 +90,7 @@ class ChatService {
           final msgUsername = data['username'] as String? ?? 'Onbekend';
           final role = data['role'] as String? ?? 'user';
           return Message(
+            id: doc.id,
             role: role,
             text: data['text'] as String? ?? '',
             time: AppDateUtils.formatTime(dt),

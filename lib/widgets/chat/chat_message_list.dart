@@ -44,6 +44,7 @@
 import 'package:flutter/material.dart';
 import '../../models/message.dart';
 import '../../theme/app_theme.dart';
+import '../../services/chat/block_service.dart';
 import 'message_bubble.dart';
 
 class ChatMessageList extends StatefulWidget {
@@ -304,41 +305,47 @@ class _ChatMessageListState extends State<ChatMessageList>
   List<Message>? _lastMessages;
 
   Widget _buildStream() {
-    return StreamBuilder<List<Message>>(
-      stream: widget.messagesStream,
-      builder: (context, snapshot) {
-        // First load — nothing cached yet.
-        if (snapshot.connectionState == ConnectionState.waiting &&
-            _lastMessages == null) {
-          return const Center(child: CircularProgressIndicator());
-        }
+    return AnimatedBuilder(
+      animation: BlockService.instance,
+      builder: (context, _) => StreamBuilder<List<Message>>(
+        stream: widget.messagesStream,
+        builder: (context, snapshot) {
+          // First load — nothing cached yet.
+          if (snapshot.connectionState == ConnectionState.waiting &&
+              _lastMessages == null) {
+            return const Center(child: CircularProgressIndicator());
+          }
 
-        if (snapshot.hasError && _lastMessages == null) {
-          return _buildErrorState(snapshot.error);
-        }
+          if (snapshot.hasError && _lastMessages == null) {
+            return _buildErrorState(snapshot.error);
+          }
 
-        final messages = snapshot.data ?? _lastMessages ?? const <Message>[];
+          final rawMessages = snapshot.data ?? _lastMessages ?? const <Message>[];
+          final messages = rawMessages
+              .where((m) => !BlockService.instance.isBlocked(m.username))
+              .toList();
 
-        // Cache the most recent non-null snapshot so we can keep showing
-        // messages if the stream briefly re-enters a waiting state.
-        if (snapshot.hasData) {
-          _lastMessages = messages;
-        }
+          // Cache the most recent non-null snapshot so we can keep showing
+          // messages if the stream briefly re-enters a waiting state.
+          if (snapshot.hasData) {
+            _lastMessages = messages;
+          }
 
-        if (messages.isEmpty) {
-          return _buildEmptyState();
-        }
+          if (messages.isEmpty) {
+            return _buildEmptyState();
+          }
 
-        _handleMessageCountChange(messages);
+          _handleMessageCountChange(messages);
 
-        return ListView.builder(
-          controller: _scrollController,
-          padding: const EdgeInsets.all(AppDimensions.paddingMedium),
-          itemCount: messages.length,
-          itemBuilder: (context, index) =>
-              MessageBubble(message: messages[index]),
-        );
-      },
+          return ListView.builder(
+            controller: _scrollController,
+            padding: const EdgeInsets.all(AppDimensions.paddingMedium),
+            itemCount: messages.length,
+            itemBuilder: (context, index) =>
+                MessageBubble(message: messages[index]),
+          );
+        },
+      ),
     );
   }
 

@@ -3,6 +3,7 @@
    This file defines the structure of a chat message.
 
    It contains:
+   - the Firestore document id (used for reporting)
    - the role of the sender (user or admin)
    - the display username
    - the message text
@@ -11,6 +12,7 @@
 */
 
 class Message {
+  final String? id;
   final String role;
   final String text;
   final String time;
@@ -18,6 +20,7 @@ class Message {
   final bool isCurrentUser;
 
   const Message({
+    this.id,
     required this.role,
     required this.text,
     required this.time,

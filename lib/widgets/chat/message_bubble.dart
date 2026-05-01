@@ -11,6 +11,7 @@
 import 'package:flutter/material.dart';
 import '../../models/message.dart';
 import '../../theme/app_theme.dart';
+import 'message_actions_sheet.dart';
 
 class MessageBubble extends StatelessWidget {
   final Message message;
@@ -23,7 +24,9 @@ class MessageBubble extends StatelessWidget {
     final isAdmin = message.role == 'admin';
     final isUser = isCurrentUser;
 
-    return Container(
+    return GestureDetector(
+    onLongPress: () => MessageActionsSheet.show(context, message),
+    child: Container(
       margin: EdgeInsets.only(
         top: AppDimensions.spaceSmall,
         bottom: AppDimensions.spaceSmall,
@@ -88,6 +91,7 @@ class MessageBubble extends StatelessWidget {
           Text(message.time, style: AppTextStyles.bubbleTime),
         ],
       ),
+    ),
     );
   }
 }
