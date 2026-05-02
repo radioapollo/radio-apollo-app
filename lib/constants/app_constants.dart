@@ -41,7 +41,7 @@ class AppConstants {
 
   // ── External URLs ─────────────────────────────────────────────────────────
   static const String privacyPolicyUrl =
-      'https://radioapollo.github.io/Apollo_Radio/';
+      'https://radioapollo.github.io/radio-apollo-app/';
   static const String termsOfUseUrl =
-      'https://radioapollo.github.io/Apollo_Radio/terms.html';
+      'https://radioapollo.github.io/radio-apollo-app/terms.html';
 }
