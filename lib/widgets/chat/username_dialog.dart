@@ -1,19 +1,27 @@
 /* Username Dialog
 
-   Shown when the user opens the chat screen without a username.
+   Shown when the user opens the chat screen without a username, OR
+   when an existing user hasn't yet accepted the current EULA version.
 
    The user picks a display name (3–20 characters), explicitly accepts
    the gebruiksvoorwaarden via a required checkbox, and the name is
    then checked for uniqueness and saved via UserService.
 
    The dialog IS dismissible — users can tap "Later" to skip and
-   choose a name later via the "Kies een naam" button in the title bar.
+   choose later via the "Kies een naam" button in the title bar.
 
    EULA acceptance
    ───────────────
    Apple Guideline 1.2 requires explicit user acceptance of an EULA
    prohibiting objectionable content before they can post UGC. The
    "Opslaan" button stays disabled until the box is ticked.
+
+   Existing users
+   ──────────────
+   If the user already has a username, the field is pre-filled with
+   it. The acceptance checkbox starts unticked unless they've already
+   accepted the current version, in which case the dialog is
+   essentially a no-op confirmation step.
 */
 
 import 'package:flutter/gestures.dart';
@@ -41,7 +49,7 @@ class UsernameDialog extends StatefulWidget {
 }
 
 class _UsernameDialogState extends State<UsernameDialog> {
-  final _controller = TextEditingController();
+  late final TextEditingController _controller;
   String? _error;
   bool _loading = false;
   late bool _termsAccepted;
@@ -49,8 +57,12 @@ class _UsernameDialogState extends State<UsernameDialog> {
   @override
   void initState() {
     super.initState();
-    // If a previous dialog already accepted the current Terms version,
-    // skip the friction and pre-tick the box.
+    // Pre-fill with existing username if there is one. This makes the
+    // dialog much smoother for existing users who only need to tick
+    // the EULA checkbox.
+    _controller = TextEditingController(
+      text: UserService.instance.username ?? '',
+    );
     _termsAccepted = EulaService.instance.hasAccepted;
   }
 
@@ -83,7 +95,12 @@ class _UsernameDialogState extends State<UsernameDialog> {
 
     try {
       await EulaService.instance.accept();
-      await UserService.instance.setUsername(name);
+      // Only re-claim the username if it changed, since claimUsername()
+      // makes a network call. Existing users who only ticked the EULA
+      // shouldn't need to re-claim.
+      if (name != UserService.instance.username) {
+        await UserService.instance.setUsername(name);
+      }
       if (mounted) Navigator.of(context).pop(name);
     } catch (e) {
       if (mounted) {
@@ -97,26 +114,35 @@ class _UsernameDialogState extends State<UsernameDialog> {
 
   @override
   Widget build(BuildContext context) {
+    final hasExistingUsername = UserService.instance.hasUsername;
+
     return AlertDialog(
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(AppDimensions.radiusXLarge),
       ),
-      title: const Text(
-        'Kies een gebruikersnaam',
-        style: TextStyle(fontWeight: FontWeight.w800, fontSize: 18),
+      title: Text(
+        hasExistingUsername
+            ? 'Bevestig je gebruikersnaam'
+            : 'Kies een gebruikersnaam',
+        style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 18),
       ),
       content: Column(
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text(
-            'Deze naam is zichtbaar voor andere chatters.',
-            style: TextStyle(color: AppColors.textSecondary, fontSize: 13),
+          Text(
+            hasExistingUsername
+                ? 'Accepteer onze gebruiksvoorwaarden om te kunnen blijven chatten.'
+                : 'Deze naam is zichtbaar voor andere chatters.',
+            style: const TextStyle(
+              color: AppColors.textSecondary,
+              fontSize: 13,
+            ),
           ),
           const SizedBox(height: 16),
           TextField(
             controller: _controller,
-            autofocus: true,
+            autofocus: !hasExistingUsername,
             maxLength: 20,
             enabled: !_loading,
             decoration: InputDecoration(

@@ -22,12 +22,15 @@
    - Admin messages in orange with a radio icon
    - Long-press the logo to open the admin login
    - Keyboard stays open between messages so the user can keep typing
+   - Existing users without EULA acceptance are prompted on chat open
+     and again as a safety net if they try to send before accepting
 */
 
 import 'dart:async';
 import 'package:flutter/material.dart';
 import '../services/chat/chat_service.dart';
 import '../services/chat/auth_service.dart';
+import '../services/chat/eula_service.dart';
 import '../services/chat/user_service.dart';
 import '../widgets/chat/chat_header.dart';
 import '../widgets/chat/chat_title.dart';
@@ -121,11 +124,18 @@ class _ChatScreenState extends State<ChatScreen>
   }
 
   /// Initialises UserService and shows the username dialog if needed.
+  /// The dialog appears when:
+  ///   - the user has no username yet, OR
+  ///   - the user hasn't accepted the current Terms version yet
+  ///     (e.g. existing users from before the EULA was added).
+  ///
   /// The dialog is dismissible — if the user cancels, they can still
-  /// read the chat but cannot send messages until they pick a name.
+  /// read the chat but cannot send messages until they accept.
   Future<void> _ensureUsername() async {
     await UserService.instance.init();
-    if (!UserService.instance.hasUsername && mounted) {
+    final needsUsername = !UserService.instance.hasUsername;
+    final needsEula = !EulaService.instance.hasAccepted;
+    if ((needsUsername || needsEula) && mounted) {
       await UsernameDialog.show(context);
       if (mounted) setState(() {});
     }
@@ -198,6 +208,16 @@ class _ChatScreenState extends State<ChatScreen>
       if (!mounted) return;
       // Put the text back so the user doesn't lose what they typed
       _controller.text = text;
+
+      // Special case: if the EULA hasn't been accepted yet (e.g. an
+      // existing user from before the EULA was added), pop the dialog
+      // so they can accept and continue, instead of just showing an
+      // error with no obvious next step.
+      if (e.toString().contains('gebruiksvoorwaarden')) {
+        await _promptUsername();
+        return;
+      }
+
       _showError(e.toString().replaceFirst('Exception: ', ''));
     } finally {
       if (mounted) setState(() => _sending = false);
@@ -205,12 +225,12 @@ class _ChatScreenState extends State<ChatScreen>
   }
 
   void _openReports() {
-      Navigator.of(context).push(
-        MaterialPageRoute(
-          builder: (_) => const AdminReportsScreen(),
-        ),
-      );
-    }
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (_) => const AdminReportsScreen(),
+      ),
+    );
+  }
 
   // ── Cooldown ──────────────────────────────────────────────────────────────
 
