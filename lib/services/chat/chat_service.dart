@@ -22,6 +22,7 @@ import 'dart:convert';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_crashlytics/firebase_crashlytics.dart';
 import 'package:http/http.dart' as http;
+import 'package:radio_apollo/services/chat/eula_service.dart';
 import '../../models/message.dart';
 import '../../utils/date_utils.dart';
 import '../../utils/profanity/profanity_filter.dart';
@@ -73,6 +74,7 @@ class ChatService {
   ) {
     final cutoff = DateTime.now().subtract(const Duration(hours: 48));
     final localUsername = UserService.instance.username;
+    final isAdmin = authService.isAdmin;
 
     return snap.docs
         .where((doc) {
@@ -96,6 +98,7 @@ class ChatService {
             time: AppDateUtils.formatTime(dt),
             username: msgUsername,
             isCurrentUser:
+                !isAdmin &&
                 localUsername != null &&
                 msgUsername == localUsername &&
                 role != 'admin',
@@ -121,6 +124,12 @@ class ChatService {
     if (username == null || username.isEmpty) {
       throw Exception(
         'Stel eerst een gebruikersnaam in voor je een bericht stuurt.',
+      );
+    }
+    // ─── EULA gate ─────────────────────────────────────────────────────────
+    if (!EulaService.instance.hasAccepted) {
+      throw Exception(
+        'Accepteer eerst de gebruiksvoorwaarden om te kunnen chatten.',
       );
     }
 

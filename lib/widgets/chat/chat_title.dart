@@ -4,11 +4,15 @@
    Also shows the logout button when in admin mode,
    or a "Kies een naam" button when the user has no username yet.
 
+   When in admin mode, also shows a "Meldingen" button that opens
+   the reports inbox.
+
    This is a pure presentation widget — all state is passed in
    via constructor parameters.
 */
 
 import 'package:flutter/material.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import '../../theme/app_theme.dart';
 
 class ChatTitle extends StatelessWidget {
@@ -17,6 +21,7 @@ class ChatTitle extends StatelessWidget {
   final bool hasUsername;
   final VoidCallback onLogout;
   final VoidCallback? onPickUsername;
+  final VoidCallback? onOpenReports;
 
   const ChatTitle({
     super.key,
@@ -25,6 +30,7 @@ class ChatTitle extends StatelessWidget {
     required this.onLogout,
     this.username,
     this.onPickUsername,
+    this.onOpenReports,
   });
 
   @override
@@ -65,6 +71,9 @@ class ChatTitle extends StatelessWidget {
             ),
           ),
 
+          // ── Reports button (admin only, with badge) ───────────────────────
+          if (isAdmin && onOpenReports != null) _ReportsButton(onTap: onOpenReports!),
+
           // ── Logout button (admin only) ────────────────────────────────────
           if (isAdmin)
             TextButton.icon(
@@ -99,6 +108,72 @@ class ChatTitle extends StatelessWidget {
             ),
         ],
       ),
+    );
+  }
+}
+
+// ════════════════════════════════════════════════════════════════════════════
+// _ReportsButton
+//
+// Live count of pending reports as a small badge on a flag icon.
+// Tapping opens the reports inbox screen.
+// ════════════════════════════════════════════════════════════════════════════
+
+class _ReportsButton extends StatelessWidget {
+  final VoidCallback onTap;
+  const _ReportsButton({required this.onTap});
+
+  @override
+  Widget build(BuildContext context) {
+    return StreamBuilder<QuerySnapshot>(
+      stream: FirebaseFirestore.instance
+          .collection('chat_reports')
+          .where('status', isEqualTo: 'pending')
+          .snapshots(),
+      builder: (context, snap) {
+        final count = snap.data?.docs.length ?? 0;
+        return Stack(
+          clipBehavior: Clip.none,
+          children: [
+            IconButton(
+              icon: const Icon(
+                Icons.flag_outlined,
+                color: AppColors.textPrimary,
+              ),
+              onPressed: onTap,
+              tooltip: 'Meldingen',
+            ),
+            if (count > 0)
+              Positioned(
+                top: 4,
+                right: 4,
+                child: Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 5,
+                    vertical: 1,
+                  ),
+                  decoration: BoxDecoration(
+                    color: AppColors.live,
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  constraints: const BoxConstraints(
+                    minWidth: 16,
+                    minHeight: 16,
+                  ),
+                  child: Text(
+                    count > 99 ? '99+' : '$count',
+                    style: const TextStyle(
+                      color: AppColors.textPrimary,
+                      fontSize: 10,
+                      fontWeight: FontWeight.w700,
+                    ),
+                    textAlign: TextAlign.center,
+                  ),
+                ),
+              ),
+          ],
+        );
+      },
     );
   }
 }

@@ -16,6 +16,9 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 import '../../constants/constants.dart';
 import 'auth_service.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import '../../models/report.dart';
+
 
 class AdminModerationService {
   AdminModerationService._();
@@ -72,5 +75,31 @@ class AdminModerationService {
       } catch (_) {}
       throw Exception(message);
     }
+  }
+
+  // ── Reports ───────────────────────────────────────────────────────────────
+
+  /// Live stream of pending reports, newest first.
+  Stream<List<Report>> pendingReportsStream() {
+    return FirebaseFirestore.instance
+        .collection('chat_reports')
+        .where('status', isEqualTo: 'pending')
+        .orderBy('timestamp', descending: true)
+        .limit(100)
+        .snapshots()
+        .map((snap) => snap.docs.map(Report.fromDoc).toList());
+  }
+
+  /// Mark a report as resolved (admin took action) or dismissed (no action).
+  Future<void> updateReport({
+    required String reportId,
+    required String status,
+    String? action,
+  }) async {
+    await _post('adminUpdateReport', {
+      'reportId': reportId,
+      'status': status,
+      'action': ?action,
+    });
   }
 }

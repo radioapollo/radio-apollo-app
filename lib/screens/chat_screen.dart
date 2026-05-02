@@ -37,6 +37,7 @@ import '../widgets/chat/username_prompt.dart';
 import '../widgets/chat/username_dialog.dart';
 import '../theme/app_theme.dart';
 import '../models/message.dart';
+import 'admin_reports_screen.dart';
 
 class ChatScreen extends StatefulWidget {
   final ChatService chatService;
@@ -62,7 +63,7 @@ class _ChatScreenState extends State<ChatScreen>
   final TextEditingController _controller = TextEditingController();
   final FocusNode _textFieldFocus = FocusNode();
 
-  late final Stream<List<Message>> _messagesStream;
+  late Stream<List<Message>> _messagesStream;
 
   int _charsLeft = ChatService.maxMessageLength;
   bool _usernameChecked = false;
@@ -203,6 +204,14 @@ class _ChatScreenState extends State<ChatScreen>
     }
   }
 
+  void _openReports() {
+      Navigator.of(context).push(
+        MaterialPageRoute(
+          builder: (_) => const AdminReportsScreen(),
+        ),
+      );
+    }
+
   // ── Cooldown ──────────────────────────────────────────────────────────────
 
   /// Starts the visible countdown on the send button. Ticks once per
@@ -274,11 +283,17 @@ class _ChatScreenState extends State<ChatScreen>
     );
   }
 
-  void _onAdminLogin() => setState(() {});
+  void _onAdminLogin() {
+    setState(() {
+      _messagesStream = _chatService.messagesStream;
+    });
+  }
 
   void _onLogout() {
     _authService.logout();
-    setState(() {});
+    setState(() {
+      _messagesStream = _chatService.messagesStream;
+    });
   }
 
   // ── Build ─────────────────────────────────────────────────────────────────
@@ -309,6 +324,7 @@ class _ChatScreenState extends State<ChatScreen>
                 hasUsername: hasUsername,
                 onLogout: _onLogout,
                 onPickUsername: _promptUsername,
+                onOpenReports: _openReports,
               ),
               const SizedBox(height: AppDimensions.spaceMedium),
               ChatMessageList(messagesStream: _messagesStream),

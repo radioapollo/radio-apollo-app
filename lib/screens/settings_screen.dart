@@ -37,8 +37,10 @@ import '../services/notifications/notification_service.dart';
 import '../services/notifications/notification_category.dart';
 import '../theme/app_theme.dart';
 import '../constants/constants.dart';
+import '../utils/url_launcher_utils.dart';
 import '../widgets/settings/notification_permission_banner.dart';
 import '../widgets/settings/notification_toggle_tile.dart';
+import 'blocked_users_screen.dart';
 
 class SettingsScreen extends StatefulWidget {
   const SettingsScreen({super.key});
@@ -261,6 +263,66 @@ class _SettingsScreenState extends State<SettingsScreen>
             onChanged: (v) => _onToggle(category, v),
           );
         }),
+
+        // ── Chat section ─────────────────────────────────────────────────
+        const SizedBox(height: AppDimensions.spaceXLarge),
+        const Text('Chat', style: AppTextStyles.screenTitleSmall),
+        const SizedBox(height: AppDimensions.spaceLarge),
+
+        ListTile(
+          contentPadding: EdgeInsets.zero,
+          leading: const Icon(
+            Icons.block,
+            color: AppColors.textPrimary,
+          ),
+          title: const Text(
+            'Geblokkeerde gebruikers',
+            style: TextStyle(
+              color: AppColors.textPrimary,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+          subtitle: const Text(
+            'Bekijk en deblokkeer gebruikers die je hebt geblokkeerd.',
+            style: TextStyle(color: AppColors.textSecondary, fontSize: 13),
+          ),
+          trailing: const Icon(
+            Icons.chevron_right,
+            color: AppColors.chevronIcon,
+          ),
+          onTap: () {
+            Navigator.of(context).push(
+              MaterialPageRoute(
+                builder: (_) => const BlockedUsersScreen(),
+              ),
+            );
+          },
+        ),
+
+        ListTile(
+          contentPadding: EdgeInsets.zero,
+          leading: const Icon(
+            Icons.description_outlined,
+            color: AppColors.textPrimary,
+          ),
+          title: const Text(
+            'Gebruiksvoorwaarden',
+            style: TextStyle(
+              color: AppColors.textPrimary,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+          subtitle: const Text(
+            'Lees de regels voor de chatfunctie.',
+            style: TextStyle(color: AppColors.textSecondary, fontSize: 13),
+          ),
+          trailing: const Icon(
+            Icons.open_in_new,
+            color: AppColors.chevronIcon,
+            size: 18,
+          ),
+          onTap: () => UrlLauncherUtils.openUrl(AppConstants.termsOfUseUrl),
+        ),
       ],
     );
   }

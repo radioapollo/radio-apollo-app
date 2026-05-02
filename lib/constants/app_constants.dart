@@ -38,4 +38,10 @@ class AppConstants {
 
   static String cloudFunctionUrl(String functionName) =>
       'https://$region-$projectId.cloudfunctions.net/$functionName';
+
+  // ── External URLs ─────────────────────────────────────────────────────────
+  static const String privacyPolicyUrl =
+      'https://radioapollo.github.io/Apollo_Radio/';
+  static const String termsOfUseUrl =
+      'https://radioapollo.github.io/Apollo_Radio/terms.html';
 }

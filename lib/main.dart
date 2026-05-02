@@ -30,6 +30,7 @@ import 'firebase_options.dart';
 import 'constants/constants.dart';
 import 'theme/app_theme.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
+import 'services/chat/eula_service.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -125,6 +126,17 @@ Future<void> main() async {
       e,
       st,
       reason: 'BlockService.init',
+      fatal: false,
+    );
+  }
+
+  try {
+    await EulaService.instance.init();
+  } catch (e, st) {
+    debugPrint('[main] EulaService init failed: $e');
+    FirebaseCrashlytics.instance.recordError(
+      e, st,
+      reason: 'EulaService.init',
       fatal: false,
     );
   }

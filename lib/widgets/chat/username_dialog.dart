@@ -2,19 +2,27 @@
 
    Shown when the user opens the chat screen without a username.
 
-   The user picks a display name (3–20 characters) which is then
-   checked for uniqueness and saved via UserService.
+   The user picks a display name (3–20 characters), explicitly accepts
+   the gebruiksvoorwaarden via a required checkbox, and the name is
+   then checked for uniqueness and saved via UserService.
 
    The dialog IS dismissible — users can tap "Later" to skip and
    choose a name later via the "Kies een naam" button in the title bar.
-   Sending messages is blocked at the UI level (ChatScreen shows
-   UsernamePrompt instead of the input field) and at the service level
-   (ChatService throws if no username is set).
+
+   EULA acceptance
+   ───────────────
+   Apple Guideline 1.2 requires explicit user acceptance of an EULA
+   prohibiting objectionable content before they can post UGC. The
+   "Opslaan" button stays disabled until the box is ticked.
 */
 
+import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
+import '../../constants/constants.dart';
+import '../../services/chat/eula_service.dart';
 import '../../services/chat/user_service.dart';
 import '../../theme/app_theme.dart';
+import '../../utils/url_launcher_utils.dart';
 
 class UsernameDialog extends StatefulWidget {
   const UsernameDialog({super.key});
@@ -36,6 +44,15 @@ class _UsernameDialogState extends State<UsernameDialog> {
   final _controller = TextEditingController();
   String? _error;
   bool _loading = false;
+  late bool _termsAccepted;
+
+  @override
+  void initState() {
+    super.initState();
+    // If a previous dialog already accepted the current Terms version,
+    // skip the friction and pre-tick the box.
+    _termsAccepted = EulaService.instance.hasAccepted;
+  }
 
   @override
   void dispose() {
@@ -53,6 +70,11 @@ class _UsernameDialogState extends State<UsernameDialog> {
       setState(() => _error = 'Maximaal 20 tekens toegestaan.');
       return;
     }
+    if (!_termsAccepted) {
+      setState(() => _error =
+          'Je moet de gebruiksvoorwaarden accepteren om te kunnen chatten.');
+      return;
+    }
 
     setState(() {
       _loading = true;
@@ -60,6 +82,7 @@ class _UsernameDialogState extends State<UsernameDialog> {
     });
 
     try {
+      await EulaService.instance.accept();
       await UserService.instance.setUsername(name);
       if (mounted) Navigator.of(context).pop(name);
     } catch (e) {
@@ -116,10 +139,60 @@ class _UsernameDialogState extends State<UsernameDialog> {
               if (_error != null) setState(() => _error = null);
             },
           ),
+          const SizedBox(height: 8),
+
+          // ── EULA checkbox ────────────────────────────────────────────────
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Checkbox(
+                value: _termsAccepted,
+                onChanged: _loading
+                    ? null
+                    : (v) => setState(() {
+                          _termsAccepted = v ?? false;
+                          if (_error != null) _error = null;
+                        }),
+              ),
+              Expanded(
+                child: Padding(
+                  padding: const EdgeInsets.only(top: 14),
+                  child: Text.rich(
+                    TextSpan(
+                      style: const TextStyle(
+                        color: AppColors.textBody,
+                        fontSize: 13,
+                        height: 1.35,
+                      ),
+                      children: [
+                        const TextSpan(text: 'Ik ga akkoord met de '),
+                        TextSpan(
+                          text: 'gebruiksvoorwaarden',
+                          style: const TextStyle(
+                            color: AppColors.primaryLight,
+                            fontWeight: FontWeight.w600,
+                            decoration: TextDecoration.underline,
+                          ),
+                          recognizer: TapGestureRecognizer()
+                            ..onTap = () => UrlLauncherUtils.openUrl(
+                                  AppConstants.termsOfUseUrl,
+                                ),
+                        ),
+                        const TextSpan(
+                          text:
+                              ' en begrijp dat ongepaste of beledigende '
+                              'berichten verwijderd worden.',
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
         ],
       ),
       actions: [
-        // "Later" allows skipping — the input stays blocked until a name is set
         TextButton(
           onPressed: _loading ? null : () => Navigator.of(context).pop(null),
           child: const Text(
