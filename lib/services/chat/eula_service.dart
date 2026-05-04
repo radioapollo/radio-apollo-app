@@ -17,8 +17,6 @@ class EulaService extends ChangeNotifier {
   EulaService._();
   static final EulaService instance = EulaService._();
 
-  /// Bump this when the Terms text changes meaningfully — users will
-  /// be required to accept again on next chat send.
   static const String currentVersion = '2026-05-02';
 
   static const _acceptedKey = 'chat_eula_accepted_version';
@@ -28,7 +26,6 @@ class EulaService extends ChangeNotifier {
 
   bool get isInitialised => _initialised;
 
-  /// True if the user has accepted the current version of the Terms.
   bool get hasAccepted => _acceptedVersion == currentVersion;
 
   Future<void> init() async {

@@ -35,8 +35,6 @@ class EventCard extends StatelessWidget {
 
   const EventCard({super.key, required this.event, required this.onTap});
 
-  /// True when the event is happening today. Promoted out of the
-  /// urgent tier so we can paint it green instead of red.
   bool get _isToday => event.daysUntil == 0;
 
   Color? get _accentColor {
@@ -130,9 +128,7 @@ class EventCard extends StatelessWidget {
     required bool isUpcoming,
     required Color? accent,
   }) {
-    // Thumbnail dimensions match the visual footprint of the old
-    // icon container so upcoming/urgent glow effects land correctly
-    // regardless of which leading variant is shown.
+
     const double size = 44;
 
     if (event.hasImage) {
@@ -162,8 +158,7 @@ class EventCard extends StatelessWidget {
       clipBehavior: Clip.antiAlias,
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(AppDimensions.radiusSmall),
-        // Urgent glow uses the accent color so today's events glow
-        // green instead of red. Falls back to live red for "Bijna".
+
         boxShadow: isUrgent
             ? [
                 BoxShadow(
@@ -177,12 +172,9 @@ class EventCard extends StatelessWidget {
       child: CachedNetworkImage(
         imageUrl: event.imageUrl!,
         fit: BoxFit.cover,
-        // Placeholder while loading — subtle so it doesn't flicker.
+
         placeholder: (_, _) => Container(color: AppColors.cardBlue),
-        // Fall back to the default icon if the image 404s, the device
-        // is offline, or the URL is malformed. We pass the same visual
-        // configuration so the fallback is indistinguishable from a
-        // card that never had an image set.
+
         errorWidget: (_, _, _) => _buildDefaultIcon(
           size: size,
           isUrgent: isUrgent,
@@ -208,8 +200,7 @@ class EventCard extends StatelessWidget {
             ? accent.withValues(alpha: 0.12)
             : AppColors.cardBlue,
         borderRadius: BorderRadius.circular(AppDimensions.radiusSmall),
-        // Urgent glow uses the accent color so today's events glow
-        // green instead of red. Falls back to live red for "Bijna".
+
         boxShadow: isUrgent
             ? [
                 BoxShadow(

@@ -21,9 +21,6 @@ class AppCheckHttp {
   static const Duration _appCheckTimeout = Duration(seconds: 5);
   static const Duration _httpTimeout = Duration(seconds: 15);
 
-  /// POSTs `body` (as JSON) to the named Cloud Function and returns the
-  /// raw response. Throws on network failure or HTTP timeout, but never
-  /// on App Check failure unless `requireAppCheck` is true.
   static Future<http.Response> post(
     String functionName,
     Map<String, dynamic> body, {

@@ -15,12 +15,9 @@ class ProfanityConfig {
   ProfanityConfig._();
 
   // ── SEVERE WORDS ─────────────────────────────────────────────────────────
-  //
-  // These trigger instant message rejection. Include slurs, hate speech,
-  // extreme sexual/violent language, and anything that should never appear.
 
   static const List<String> severeWordsDutch = [
-    // Racial/ethnic slurs
+
     'kut-marokkaan',
     'kutmarokkaan',
     'kutmongool',
@@ -46,8 +43,6 @@ class ProfanityConfig {
     'niksnut',
     'nikkerslet',
 
-    // Disease-based slurs (extremely offensive in Dutch)
-    // Both standalone and compound forms
     'kanker',
     'kankerhoer',
     'kankerhond',
@@ -81,7 +76,6 @@ class ProfanityConfig {
     'pokken',
     'pokkenlijer',
 
-    // Extreme sexual/violent
     'hoerenjong',
     'hoerenkind',
     'hoerenzoon',
@@ -93,7 +87,6 @@ class ProfanityConfig {
     'verkrachten',
     'verkrachter',
 
-    // Homophobic slurs
     'flikker',
     'flikkers',
     'nicht',
@@ -106,7 +99,6 @@ class ProfanityConfig {
     'pedo',
     'pedofiel',
 
-    // Ableist slurs
     'debiel',
     'debielen',
     'randdebiel',
@@ -114,7 +106,7 @@ class ProfanityConfig {
   ];
 
   static const List<String> severeWordsEnglish = [
-    // Racial/ethnic slurs
+
     'nigger',
     'nigga',
     'chink',
@@ -128,34 +120,27 @@ class ProfanityConfig {
     'beaner',
     'paki',
 
-    // Homophobic slurs
     'faggot',
     'fag',
     'dyke',
     'tranny',
 
-    // Ableist slurs
     'retard',
     'retarded',
     'spastic',
 
-    // Extreme sexual/violent
     'rape',
     'molest',
     'rapist',
 
-    // Hate speech patterns
     'kill yourself',
     'kys',
   ];
 
   // ── MILD WORDS ───────────────────────────────────────────────────────────
-  //
-  // These get auto-censored to asterisks but the message still goes through.
-  // Common swear words, crude language that's vulgar but not hateful.
 
   static const List<String> mildWordsDutch = [
-    // Common profanity
+
     'kut',
     'kutstreek',
     'kuttenkop',
@@ -169,7 +154,6 @@ class ProfanityConfig {
     'klojo',
     'kluns',
 
-    // Religious/blasphemy
     'godverdomme',
     'godverdamme',
     'verdomme',
@@ -177,8 +161,6 @@ class ProfanityConfig {
     'jezus',
     'christus',
 
-    // Anatomical
-    // Note: 'gat' removed - too many false positives with 'gaat' (goes)
     'pik',
     'piemel',
     'kont',
@@ -188,8 +170,6 @@ class ProfanityConfig {
     'aars',
     'zak',
 
-    // Common insults
-    // Note: 'hoer' removed - false positives with 'hoe' (how). Compounds like 'hoerenzoon' still in severe.
     'stom',
     'idioot',
     'dwaas',
@@ -220,7 +200,6 @@ class ProfanityConfig {
     'zeikerd',
     'zeur',
 
-    // Sexual terms (mild)
     'pijpen',
     'aftrekken',
     'beffen',
@@ -230,7 +209,6 @@ class ProfanityConfig {
     'vingeren',
     'zuigen',
 
-    // Scatological
     'schijt',
     'schijten',
     'poep',
@@ -244,7 +222,6 @@ class ProfanityConfig {
     'pis',
     'pissen',
 
-    // Milder insults
     'aasgier',
     'aap',
     'baviaan',
@@ -334,7 +311,6 @@ class ProfanityConfig {
     'zeikous',
     'zwijn',
 
-    // From Wiktionary list (A-Z selection)
     'aambeiienlikker',
     'aapmens',
     'aardappel',

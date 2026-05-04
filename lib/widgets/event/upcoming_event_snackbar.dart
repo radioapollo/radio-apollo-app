@@ -17,8 +17,6 @@ class UpcomingEventSnackbar {
 
   static bool _shownThisSession = false;
 
-  /// Shows the snackbar if [events] contains at least one upcoming event
-  /// and the snackbar has not been shown yet this session.
   static void maybeShow(BuildContext context, List<Event> events) {
     if (_shownThisSession) return;
 
@@ -27,7 +25,6 @@ class UpcomingEventSnackbar {
 
     _shownThisSession = true;
 
-    // Defer until after the current frame so the Scaffold is available.
     WidgetsBinding.instance.addPostFrameCallback((_) {
       final messenger = ScaffoldMessenger.maybeOf(context);
       if (messenger == null) return;

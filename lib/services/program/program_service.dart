@@ -28,20 +28,10 @@ import '../../utils/date_utils.dart';
 class ProgramService {
   final _db = FirebaseFirestore.instance;
 
-  /// One cached broadcast stream per weekday, keyed by the Dutch day name.
-  /// Built lazily on first request.
   final Map<String, Stream<List<Map<String, String>>>> _dayStreamCache = {};
 
-  /// The most recent value emitted by each cached stream, kept around so
-  /// StreamBuilder subscribers can be handed it as `initialData` when they
-  /// re-subscribe (for example after a widget rebuild). Without this, a
-  /// new subscriber to a broadcast stream has to wait for the next Firestore
-  /// emission before seeing any data, which looks like a flash of "empty".
   final Map<String, List<Map<String, String>>> _latestValueByDay = {};
 
-  /// Returns the most recent value we've seen for [day], or null if we
-  /// haven't received one yet. Screens can pass this to `StreamBuilder`'s
-  /// `initialData` to render immediately on rebuild.
   List<Map<String, String>>? latestForDay(String day) => _latestValueByDay[day];
 
   static const List<String> weekdays = [
@@ -76,10 +66,6 @@ class ProgramService {
 
   // ── Live stream ───────────────────────────────────────────────────────────
 
-  /// Returns the cached stream for [day] if we've already built one,
-  /// otherwise creates a fresh broadcast stream, caches it, and returns
-  /// that. The resulting stream is safe to subscribe to, unsubscribe
-  /// from, and re-subscribe to without re-querying Firestore.
   Stream<List<Map<String, String>>> getProgramsForDay(String day) {
     return _dayStreamCache.putIfAbsent(day, () {
       return _db
@@ -95,8 +81,7 @@ class ProgramService {
               ).compareTo(_s(b.data(), 'startTime')),
             );
             final programs = docs.map((doc) => _mapDoc(doc.data())).toList();
-            // Remember the latest value so re-subscribers can get it
-            // as initialData and avoid a flash of empty state.
+
             _latestValueByDay[day] = programs;
             return programs;
           })

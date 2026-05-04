@@ -114,10 +114,6 @@ class BlockedUsersScreen extends StatelessWidget {
   }
 }
 
-// ════════════════════════════════════════════════════════════════════════════
-// _BlockedRow
-// ════════════════════════════════════════════════════════════════════════════
-
 class _BlockedRow extends StatelessWidget {
   final String username;
   const _BlockedRow({required this.username});

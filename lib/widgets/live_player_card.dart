@@ -71,7 +71,7 @@ class LivePlayerCard extends StatelessWidget {
                       ),
                     ),
                   ),
-                  // Gradient overlay for text readability
+
                   Positioned.fill(
                     child: DecoratedBox(
                       decoration: BoxDecoration(
@@ -96,7 +96,7 @@ class LivePlayerCard extends StatelessWidget {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      // Row: LIVE badge + time slot + cast button + tap indicator
+
                       Row(
                         children: [
                           Container(
@@ -118,8 +118,7 @@ class LivePlayerCard extends StatelessWidget {
                             ),
                           ],
                           const Spacer(),
-                          // Cast button — hidden until a device is discovered
-                          // or a session is active.
+
                           const CastButton(size: 22),
                           if (onTap != null) ...[
                             const SizedBox(width: AppDimensions.spaceMedium),
@@ -147,10 +146,9 @@ class LivePlayerCard extends StatelessWidget {
 
                       const SizedBox(height: AppDimensions.spaceMedium),
 
-                      // Row: play button + program info
                       Row(
                         children: [
-                          // Play/pause button (left side)
+
                           GestureDetector(
                             onTap: onPlayPause,
                             child: Icon(
@@ -164,12 +162,11 @@ class LivePlayerCard extends StatelessWidget {
 
                           const SizedBox(width: AppDimensions.paddingLarge),
 
-                          // Program info (right side)
                           Expanded(
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                // Program title or fallback
+
                                 Text(
                                   hasProgram ? program.title! : 'RADIO APOLLO',
                                   style: AppTextStyles.stationName,
@@ -177,7 +174,6 @@ class LivePlayerCard extends StatelessWidget {
                                   overflow: TextOverflow.ellipsis,
                                 ),
 
-                                // Presenter
                                 if (hasProgram &&
                                     program.presenter != null &&
                                     program.presenter!.isNotEmpty)
@@ -193,7 +189,6 @@ class LivePlayerCard extends StatelessWidget {
                                     ),
                                   ),
 
-                                // Currently playing song
                                 Padding(
                                   padding: const EdgeInsets.only(
                                     top: AppDimensions.spaceSmall,

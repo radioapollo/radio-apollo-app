@@ -112,13 +112,6 @@ class ChatTitle extends StatelessWidget {
   }
 }
 
-// ════════════════════════════════════════════════════════════════════════════
-// _ReportsButton
-//
-// Live count of pending reports as a small badge on a flag icon.
-// Tapping opens the reports inbox screen.
-// ════════════════════════════════════════════════════════════════════════════
-
 class _ReportsButton extends StatelessWidget {
   final VoidCallback onTap;
   const _ReportsButton({required this.onTap});

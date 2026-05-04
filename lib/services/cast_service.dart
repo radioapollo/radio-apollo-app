@@ -13,7 +13,6 @@ class CastService {
   static final CastService instance = CastService._();
   CastService._();
 
-  /// Cast the live radio stream to the connected Chromecast device.
   Future<void> castRadioStream({String? programTitle, String? imageUrl}) async {
     final images = <GoogleCastImage>[];
     if (imageUrl != null && imageUrl.isNotEmpty) {

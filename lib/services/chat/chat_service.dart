@@ -38,8 +38,6 @@ class ChatService {
   static const int maxMessageLength = 160;
   static const int cooldownSeconds = 3;
 
-  /// Cap the live listener at this many messages. The collection holds
-  /// 48h of history but no client needs more than ~hundred on screen.
   static const int _streamLimit = 100;
 
   DateTime? _lastMessageSent;
@@ -58,9 +56,7 @@ class ChatService {
   // ── Stream ────────────────────────────────────────────────────────────────
 
   Stream<List<Message>> get messagesStream {
-    // descending + limit pulls the *newest* N messages from the index;
-    // we then reverse to chronological order for the UI. This keeps
-    // per-listener Firestore reads bounded even on busy days.
+
     return _db
         .collection(_collection)
         .orderBy('timestamp', descending: true)
@@ -78,9 +74,7 @@ class ChatService {
 
     return snap.docs
         .where((doc) {
-          // Defensive: server-side cleanup already enforces the 48h
-          // window, but if it ever lags we still don't want to render
-          // ancient messages.
+
           final ts = doc.data()['timestamp'] as Timestamp?;
           if (ts == null) return true;
           return ts.toDate().isAfter(cutoff);
@@ -133,10 +127,6 @@ class ChatService {
       );
     }
 
-    // Pull the claim token. If missing, ask the user to re-set their
-    // name. This only happens for legacy installs that opened the new app
-    // when App Check happened to be unavailable — next successful launch
-    // recovers automatically. The error text guides them either way.
     final claimToken = UserService.instance.claimToken;
     if (claimToken == null || claimToken.isEmpty) {
       throw Exception(
@@ -149,7 +139,6 @@ class ChatService {
       throw CooldownException(remaining);
     }
 
-    // Client-side profanity check for instant feedback; server re-checks.
     if (ProfanityFilter.check(text).isSevere) {
       throw ProfanityException(
         'Dit bericht kan niet worden verzonden. Blijf vriendelijk.',
@@ -167,8 +156,7 @@ class ChatService {
         throw Exception('Je stuurt berichten te snel. Wacht even.');
       }
       if (response.statusCode == 401) {
-        // Token rejected. Could be revoked, expired (we don't expire,
-        // but defensive), or signed with a previous secret. Surface clearly.
+
         throw Exception(
           'Beveiligingstoken ongeldig. Stel je gebruikersnaam opnieuw in via het profielmenu.',
         );
@@ -185,9 +173,7 @@ class ChatService {
       _lastMessageSent = DateTime.now();
       return true;
     } catch (e, st) {
-      // Don't pollute Crashlytics with expected user-facing errors —
-      // those are already surfaced to the UI. Anything else (network
-      // failure, unexpected status, JSON oddities) gets logged.
+
       if (e is! CooldownException && e is! ProfanityException) {
         FirebaseCrashlytics.instance.recordError(
           e,

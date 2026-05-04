@@ -49,26 +49,18 @@ class RadioAudioHandler extends BaseAudioHandler {
   Uri? _programArtUri;
 
   // ── Cast state ────────────────────────────────────────────────────────────
-  //
-  // Tracks whether a Cast session is currently active. When true, all
-  // playback is delegated to the Cast device and the local player is
-  // kept stopped.
 
   StreamSubscription<GoogleCastSession?>? _castSessionSub;
   StreamSubscription<GoggleCastMediaStatus?>? _castMediaStatusSub;
   bool _isCasting = false;
 
-  /// Whether a Cast session is currently active (radio is on speakers,
-  /// not on the phone).
   bool get isCasting => _isCasting;
 
   RadioAudioHandler() {
     _initDefaultArt();
 
     _player.playerStateStream.listen((state) {
-      // While casting, the local player is intentionally idle; do not
-      // let its state overwrite the PlaybackState that we derive from
-      // the Cast device.
+
       if (_isCasting) return;
 
       final playing = state.playing;
@@ -102,7 +94,7 @@ class RadioAudioHandler extends BaseAudioHandler {
   // ── Cast listeners ────────────────────────────────────────────────────────
 
   void _initCastListeners() {
-    // Session changes → flip into / out of cast mode.
+
     _castSessionSub = GoogleCastSessionManager.instance.currentSessionStream
         .listen((session) async {
           final connected =
@@ -117,8 +109,6 @@ class RadioAudioHandler extends BaseAudioHandler {
           }
         });
 
-    // Media status changes on the Cast device → mirror them into our
-    // PlaybackState so the notification and the in-app icon are accurate.
     _castMediaStatusSub = GoogleCastRemoteMediaClient.instance.mediaStatusStream
         .listen((status) {
           if (!_isCasting) return;
@@ -129,21 +119,14 @@ class RadioAudioHandler extends BaseAudioHandler {
   Future<void> _enterCastMode() async {
     _isCasting = true;
 
-    // Silence the local player immediately to avoid double-audio.
     try {
       await _player.stop();
     } catch (e) {
       debugPrint('[AudioHandler] Local stop on cast start failed: $e');
     }
 
-    // Keep metadata polling running while casting so the song title in
-    // the notification stays fresh.
     _startMetadataPolling();
 
-    // Load the stream onto the Cast device. This handler now owns the
-    // Cast session lifecycle entirely (ApolloNav no longer listens),
-    // so this is the single place the stream gets loaded onto the
-    // device when the session opens.
     try {
       await CastService.instance.castRadioStream(
         programTitle: _currentProgram.isNotEmpty ? _currentProgram : null,
@@ -153,19 +136,12 @@ class RadioAudioHandler extends BaseAudioHandler {
       debugPrint('[AudioHandler] castRadioStream failed: $e');
     }
 
-    // Optimistic playback state: we just told the Cast device to play.
-    // The mediaStatusStream listener will refine this once the device
-    // confirms.
     _publishCastPlaybackState(null, optimisticPlaying: true);
   }
 
   Future<void> _exitCastMode() async {
     _isCasting = false;
 
-    // We do NOT auto-resume on the phone when casting ends. The user
-    // explicitly stopped casting; resuming on the phone would be
-    // surprising. Instead, publish a stopped state so the UI shows
-    // a play button and the user can tap to resume locally.
     _stopMetadataPolling();
 
     playbackState.add(
@@ -202,10 +178,6 @@ class RadioAudioHandler extends BaseAudioHandler {
     );
   }
 
-  // Conservative mapping that only relies on the player states we are
-  // certain exist in flutter_chrome_cast (playing, paused, buffering,
-  // idle, unknown). Anything else maps to `ready`, which is the safe
-  // default for a live stream's notification.
   AudioProcessingState _mapCastState(CastMediaPlayerState? state) {
     if (state == CastMediaPlayerState.buffering) {
       return AudioProcessingState.buffering;
@@ -340,8 +312,7 @@ class RadioAudioHandler extends BaseAudioHandler {
     );
 
     if (_isCasting) {
-      // Tell the Cast device to (re)start. If no media is loaded yet
-      // (e.g. session just started), load it; otherwise resume.
+
       try {
         final hasMedia =
             GoogleCastRemoteMediaClient.instance.mediaStatus != null;
@@ -371,9 +342,7 @@ class RadioAudioHandler extends BaseAudioHandler {
   Future<void> pause() async {
     if (_isCasting) {
       try {
-        // For a live stream, "pause" on the Cast device is more like
-        // stop — but pause() is what the receiver responds to and what
-        // keeps the session alive. Resume will reload via play().
+
         await GoogleCastRemoteMediaClient.instance.pause();
       } catch (e) {
         debugPrint('[AudioHandler] Cast pause failed: $e');

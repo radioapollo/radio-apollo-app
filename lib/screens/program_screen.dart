@@ -40,7 +40,7 @@ import '../theme/app_theme.dart';
 import '../constants/constants.dart';
 
 class ProgramScreen extends StatefulWidget {
-  /// Set to true when this tab is the active/visible one.
+
   final bool isActive;
 
   const ProgramScreen({super.key, this.isActive = false});
@@ -75,7 +75,7 @@ class _ProgramScreenState extends State<ProgramScreen>
   @override
   void didUpdateWidget(covariant ProgramScreen oldWidget) {
     super.didUpdateWidget(oldWidget);
-    // Reset to today when the user navigates back to this tab.
+
     if (widget.isActive && !oldWidget.isActive) {
       _resetToToday();
     }
@@ -121,7 +121,7 @@ class _ProgramScreenState extends State<ProgramScreen>
 
   @override
   Widget build(BuildContext context) {
-    super.build(context); // required by AutomaticKeepAliveClientMixin
+    super.build(context);
     final selectedDay = _days[_selectedIndex];
     final isToday = _isToday();
 
@@ -134,7 +134,7 @@ class _ProgramScreenState extends State<ProgramScreen>
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Fixed header
+
               Padding(
                 padding: const EdgeInsets.fromLTRB(
                   AppDimensions.paddingXLarge,
@@ -166,7 +166,6 @@ class _ProgramScreenState extends State<ProgramScreen>
                 ),
               ),
 
-              // Scrollable program list
               Expanded(
                 child: Container(
                   margin: const EdgeInsets.fromLTRB(
@@ -176,16 +175,12 @@ class _ProgramScreenState extends State<ProgramScreen>
                     AppDimensions.paddingXLarge,
                   ),
                   child: StreamBuilder<List<Map<String, String>>>(
-                    // Same stream identity on every rebuild for this day,
-                    // so StreamBuilder keeps its last snapshot.
+
                     stream: _programService.getProgramsForDay(selectedDay),
-                    // If we've already loaded this day once during the
-                    // session, render the cached value on the very first
-                    // frame instead of flashing an empty state.
+
                     initialData: _programService.latestForDay(selectedDay),
                     builder: (context, snapshot) {
-                      // Only show the spinner on the very first cold load
-                      // for a day we have no cached data for.
+
                       if (snapshot.connectionState == ConnectionState.waiting &&
                           !snapshot.hasData) {
                         return const Center(

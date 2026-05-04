@@ -53,8 +53,6 @@ class _SettingsScreenState extends State<SettingsScreen>
     with WidgetsBindingObserver {
   final _service = NotificationService.instance;
 
-  /// Cached state per category so toggle taps are instant. Repopulated
-  /// from the service on initState and after every change.
   final Map<NotificationCategory, bool> _enabled = {};
 
   bool _loading = true;
@@ -75,8 +73,7 @@ class _SettingsScreenState extends State<SettingsScreen>
 
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
-    // When the user comes back from Android system settings, re-read
-    // the permission state so the banner can update.
+
     if (state == AppLifecycleState.resumed) {
       _refreshAuthStatus();
     }
@@ -107,9 +104,6 @@ class _SettingsScreenState extends State<SettingsScreen>
 
   // ── Actions ───────────────────────────────────────────────────────────────
 
-  /// Triggered from the banner button in the `notYetAsked` state, and
-  /// also internally from `_onToggle` when the user flips a switch on
-  /// without permission yet granted.
   Future<void> _requestPermission() async {
     final granted = await _service.requestPermission();
     if (!mounted) return;
@@ -124,14 +118,9 @@ class _SettingsScreenState extends State<SettingsScreen>
   }
 
   Future<void> _onToggle(NotificationCategory category, bool value) async {
-    // Optimistic update so the switch animates immediately. If we end
-    // up needing to roll back (permission denied at the OS prompt),
-    // we'll flip it again in the rollback path below.
+
     setState(() => _enabled[category] = value);
 
-    // Turning a switch ON is the moment to ensure we have permission.
-    // requestPermission() is idempotent — if permission was already
-    // granted, it returns immediately without showing a dialog.
     if (value && !_service.isAuthorized) {
       final granted = await _service.requestPermission();
       if (!mounted) return;
@@ -139,8 +128,7 @@ class _SettingsScreenState extends State<SettingsScreen>
       setState(() => _bannerState = _service.bannerState);
 
       if (!granted) {
-        // User declined the OS prompt (or was previously denied and
-        // the OS won't ask again). Roll back the switch.
+
         setState(() => _enabled[category] = false);
         _showSnackBar(
           'Meldingen zijn geweigerd. Je kan ze later inschakelen via '
@@ -150,9 +138,6 @@ class _SettingsScreenState extends State<SettingsScreen>
       }
     }
 
-    // Persist the (possibly post-permission) toggle state. The service
-    // is a no-op on FCM subscriptions when permission isn't granted,
-    // and reconciles itself once permission lands.
     await _service.setEnabled(category, value);
   }
 
@@ -247,14 +232,11 @@ class _SettingsScreenState extends State<SettingsScreen>
         const Text('Meldingen', style: AppTextStyles.screenTitleSmall),
         const SizedBox(height: AppDimensions.spaceLarge),
 
-        // Banner shown only when the OS-level permission needs the
-        // user's attention. See PermissionBannerState for the cases.
         NotificationPermissionBanner(
           state: _bannerState,
           onRequestPermission: _requestPermission,
         ),
 
-        // Per-category toggles
         ...NotificationCategory.values.map((category) {
           return NotificationToggleTile(
             title: category.displayName,

@@ -29,9 +29,7 @@ class _AppVersionFooterState extends State<AppVersionFooter> {
   }
 
   Future<void> _loadVersion() async {
-    // PackageInfo.fromPlatform() reads values set by the build system
-    // (ultimately from pubspec.yaml), so bumping the version in one
-    // place is enough — no separate sync with a Dart constant needed.
+
     final info = await PackageInfo.fromPlatform();
     if (!mounted) return;
     setState(() {
@@ -55,8 +53,7 @@ class _AppVersionFooterState extends State<AppVersionFooter> {
         ),
         const SizedBox(height: AppDimensions.spaceSmall),
         Center(
-          // While the version loads (briefly), show a placeholder with
-          // the same height so the layout doesn't jump.
+
           child: Text(
             _version != null ? 'Versie $_version' : ' ',
             style: const TextStyle(color: AppColors.creditText, fontSize: 11),

@@ -92,8 +92,6 @@ class AppDateUtils {
     final parts = input.trim().toLowerCase().split(RegExp(r'\s+'));
     if (parts.length != 3) return null;
 
-    // Support multi-day formats like "30/31" or "30-31" — use the first day
-    // so that events like "30/31 mei 2026" sort on the 30th.
     final dayRaw = parts[0].split(RegExp(r'[/\-]')).first;
     final day = int.tryParse(dayRaw);
     final month = _dutchMonths[parts[1]];

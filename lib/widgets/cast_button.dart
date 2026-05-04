@@ -44,10 +44,9 @@ import 'package:flutter_chrome_cast/session.dart';
 import '../theme/app_theme.dart';
 
 class CastButton extends StatelessWidget {
-  /// Size of the cast icon.
+
   final double size;
 
-  /// Colour of the cast icon.
   final Color color;
 
   const CastButton({
@@ -72,7 +71,6 @@ class CastButton extends StatelessWidget {
                 GoogleCastSessionManager.instance.connectionState ==
                 GoogleCastConnectState.connected;
 
-            // Nothing to do: no devices and no active session.
             if (devices.isEmpty && !isConnected) {
               return const SizedBox.shrink();
             }
@@ -112,8 +110,7 @@ class CastButton extends StatelessWidget {
         ),
       ),
       builder: (sheetCtx) {
-        // Rebuild the sheet contents whenever the session changes so
-        // the volume slider stays in sync with the device.
+
         return StreamBuilder<GoogleCastSession?>(
           stream: GoogleCastSessionManager.instance.currentSessionStream,
           initialData: GoogleCastSessionManager.instance.currentSession,
@@ -233,8 +230,7 @@ class CastButton extends StatelessWidget {
                 await GoogleCastSessionManager.instance.startSessionWithDevice(
                   device,
                 );
-                // The session listener in the audio handler picks this
-                // up and loads the radio stream onto the device.
+
               } catch (e) {
                 debugPrint('[CastButton] Start session failed: $e');
               }
@@ -244,16 +240,6 @@ class CastButton extends StatelessWidget {
 }
 
 // ─── Volume slider ──────────────────────────────────────────────────────────
-//
-// A stateful slider that reflects (and writes) the connected Cast
-// device's volume.
-//
-// We keep an internal `_localValue` so dragging feels responsive: the
-// slider follows the user's finger immediately, and we send updates
-// to the device. When the device confirms the new volume (via the
-// session stream rebuilding the parent), the parent passes a new
-// `session.currentDeviceVolume` in — we adopt that value only when the
-// user is not actively dragging, otherwise we'd fight their gesture.
 
 class _VolumeSlider extends StatefulWidget {
   final GoogleCastSession? session;
@@ -277,7 +263,7 @@ class _VolumeSliderState extends State<_VolumeSlider> {
   @override
   void didUpdateWidget(covariant _VolumeSlider oldWidget) {
     super.didUpdateWidget(oldWidget);
-    // Adopt new device volume only when the user isn't dragging.
+
     if (!_isDragging) {
       final fromDevice = _clampedSessionVolume(widget.session);
       if ((fromDevice - _localValue).abs() > 0.005) {
@@ -322,8 +308,7 @@ class _VolumeSliderState extends State<_VolumeSlider> {
               onChangeStart: (_) => _isDragging = true,
               onChanged: (v) {
                 setState(() => _localValue = v);
-                // Stream the value to the device while dragging so
-                // the volume change feels live, not just on release.
+
                 _send(v);
               },
               onChangeEnd: (v) {

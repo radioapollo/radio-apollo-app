@@ -89,7 +89,7 @@ class _ApolloNavState extends State<ApolloNav> {
       );
       _updateConnectivity(results);
     } catch (_) {
-      // If the check times out or fails, assume offline so the banner shows
+
       if (mounted) setState(() => _isOffline = true);
     }
   }
@@ -130,10 +130,7 @@ class _ApolloNavState extends State<ApolloNav> {
           Expanded(
             child: PageView(
               controller: _pageController,
-              // Stricter physics: requires a more intentional horizontal
-              // swipe before the page starts to move. This stops the
-              // program list's vertical drag from accidentally flicking
-              // to the Info tab when the user's finger wobbles slightly.
+
               physics: const _StricterPageScrollPhysics(),
               onPageChanged: (index) => setState(() => _index = index),
               children: [
@@ -217,20 +214,6 @@ class _ApolloNavState extends State<ApolloNav> {
 }
 
 // ─── Page scroll physics ────────────────────────────────────────────────────
-//
-// The default PageScrollPhysics is very eager: the tiniest horizontal
-// component in a gesture immediately starts moving the page. During a
-// vertical drag on a list (such as the program list) a small diagonal
-// jitter was enough to flick the user onto the next tab.
-//
-// Two tweaks fix this:
-//   1. A larger `dragStartDistanceMotionThreshold` — the finger has to
-//      travel further before the PageView will claim the gesture. This
-//      is what lets a vertical list win the horizontal-vs-vertical
-//      arbitration that happens at the start of every drag.
-//   2. A stricter fling requirement — short, low-velocity swipes no
-//      longer count as "change tab" and instead snap back to the
-//      current page, which fixes the "flitst en hapert" feel.
 
 class _StricterPageScrollPhysics extends PageScrollPhysics {
   const _StricterPageScrollPhysics({super.parent});
@@ -240,15 +223,9 @@ class _StricterPageScrollPhysics extends PageScrollPhysics {
     return _StricterPageScrollPhysics(parent: buildParent(ancestor));
   }
 
-  // Require the finger to travel this many logical pixels before the
-  // PageView will decide the gesture is a horizontal page swipe.
-  // The default is ~3.5 — 18 is generous enough that diagonal jitter
-  // during a vertical scroll is resolved in favour of the vertical
-  // gesture.
   @override
   double get dragStartDistanceMotionThreshold => 18.0;
 
-  // Require a more deliberate fling before the page actually advances.
   @override
   double get minFlingVelocity => 400;
 

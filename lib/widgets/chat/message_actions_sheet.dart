@@ -30,11 +30,9 @@ class MessageActionsSheet {
     final isAdminMessage = message.role == 'admin';
     final username = message.username;
 
-    // Nothing to do on own messages, and admins can't moderate other admins.
     if (isOwn) return;
     if (isAdminMessage && !isAdmin) {
-      // Regular users can still report admin messages in theory,
-      // but in practice you might prefer not to. Up to you — we keep it.
+
     }
 
     await showModalBottomSheet<void>(

@@ -36,8 +36,7 @@ class EventService {
       final events = snap.docs
           .map((doc) {
             final data = doc.data();
-            // imageUrl is optional — older event documents won't have it,
-            // and that's fine. The UI falls back to the default icon.
+
             final rawImageUrl = data['imageUrl'] as String?;
             return Event(
               title: data['title'] as String? ?? '',
@@ -48,8 +47,7 @@ class EventService {
             );
           })
           // ── Remove events whose date has already passed ─────────────
-          // Events with an unparseable date are kept so they stay
-          // visible instead of silently disappearing.
+
           .where((e) {
             final d = AppDateUtils.parseDutchDate(e.date);
             if (d == null) return true;

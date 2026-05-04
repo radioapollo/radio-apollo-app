@@ -130,10 +130,6 @@ class AdminReportsScreen extends StatelessWidget {
   }
 }
 
-// ════════════════════════════════════════════════════════════════════════════
-// _ReportCard
-// ════════════════════════════════════════════════════════════════════════════
-
 class _ReportCard extends StatefulWidget {
   final Report report;
   const _ReportCard({required this.report});
@@ -160,7 +156,7 @@ class _ReportCardState extends State<_ReportCard> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Header: reason + time
+
           Row(
             children: [
               Expanded(
@@ -185,7 +181,6 @@ class _ReportCardState extends State<_ReportCard> {
           ),
           const SizedBox(height: AppDimensions.spaceSmall),
 
-          // Reported username + text
           if (r.reportedUsername != null)
             Padding(
               padding: const EdgeInsets.only(bottom: 4),
@@ -215,7 +210,6 @@ class _ReportCardState extends State<_ReportCard> {
           ),
           const SizedBox(height: AppDimensions.spaceSmall),
 
-          // Reporter info
           if (r.reporterUsername != null)
             Text(
               'Gemeld door: ${r.reporterUsername}',
@@ -226,7 +220,6 @@ class _ReportCardState extends State<_ReportCard> {
             ),
           const SizedBox(height: AppDimensions.spaceMedium),
 
-          // Action buttons
           if (_busy)
             const Center(
               child: SizedBox(
@@ -354,11 +347,11 @@ class _ReportCardState extends State<_ReportCard> {
         r.reportedUsername!,
         reason: reasonController.text.trim(),
       );
-      // Also delete the offending message if we have its ID.
+
       if (r.messageId != null) {
         try {
           await AdminModerationService.instance.deleteMessage(r.messageId!);
-        } catch (_) {/* non-fatal */}
+        } catch (_) {}
       }
       await AdminModerationService.instance.updateReport(
         reportId: r.id,

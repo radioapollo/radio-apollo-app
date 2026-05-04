@@ -28,7 +28,6 @@ class EventDetailSheet extends StatelessWidget {
 
   const EventDetailSheet({super.key, required this.event});
 
-  /// Convenience to show the sheet as a modal.
   static Future<void> show(BuildContext context, Event event) {
     return showModalBottomSheet<void>(
       context: context,
@@ -63,9 +62,7 @@ class EventDetailSheet extends StatelessWidget {
       expand: false,
       builder: (context, scrollController) => SingleChildScrollView(
         controller: scrollController,
-        // No top padding when we have an image — we want the banner
-        // to stretch to the rounded corners of the sheet. Side and
-        // bottom padding are still applied to the content below.
+
         padding: EdgeInsets.zero,
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -81,9 +78,7 @@ class EventDetailSheet extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // Drag handle only shown when there's no image —
-                  // the sheet's rounded top + banner gives enough of a
-                  // visual affordance on its own.
+
                   if (!event.hasImage) _buildDragHandle(accent),
                   _buildTitle(),
                   const SizedBox(height: AppDimensions.spaceLarge),
@@ -108,9 +103,7 @@ class EventDetailSheet extends StatelessWidget {
   // ── Banner image ──────────────────────────────────────────────────────────
 
   Widget _buildImageBanner() {
-    // Aspect ratio 16:9 gives a cinematic feel without eating too much
-    // vertical space. CachedNetworkImage handles loading, caching, and
-    // graceful failure.
+
     return ClipRRect(
       borderRadius: const BorderRadius.vertical(
         top: Radius.circular(AppDimensions.radiusXLarge),
@@ -121,8 +114,7 @@ class EventDetailSheet extends StatelessWidget {
           imageUrl: event.imageUrl!,
           fit: BoxFit.cover,
           placeholder: (_, _) => Container(color: AppColors.cardBlue),
-          // If the image can't load, collapse the banner so the sheet
-          // degrades gracefully to its old icon-less layout.
+
           errorWidget: (_, _, _) => const SizedBox.shrink(),
         ),
       ),

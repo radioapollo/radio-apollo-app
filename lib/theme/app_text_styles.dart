@@ -10,7 +10,6 @@ import 'app_dimensions.dart';
 class AppTextStyles {
   AppTextStyles._();
 
-  // Screen headings
   static const TextStyle screenTitle = TextStyle(
     color: AppColors.textPrimary,
     fontSize: 26,
@@ -23,7 +22,6 @@ class AppTextStyles {
     fontWeight: FontWeight.w700,
   );
 
-  // Chat header
   static const TextStyle chatTitle = TextStyle(
     color: AppColors.textPrimary,
     fontSize: 22,
@@ -36,7 +34,6 @@ class AppTextStyles {
     fontWeight: FontWeight.bold,
   );
 
-  // Cards (light background)
   static const TextStyle cardTitle = TextStyle(
     color: AppColors.textBody,
     fontSize: 16,
@@ -54,7 +51,6 @@ class AppTextStyles {
     fontSize: 12,
   );
 
-  // Cards (dark background)
   static const TextStyle darkCardTitle = TextStyle(
     color: AppColors.textOnDark,
     fontSize: 18,
@@ -77,7 +73,6 @@ class AppTextStyles {
     height: 1.4,
   );
 
-  // ApolloCard vertical/horizontal labels
   static const TextStyle apolloCardTitle = TextStyle(
     fontSize: 18,
     fontWeight: FontWeight.w800,
@@ -89,7 +84,6 @@ class AppTextStyles {
     fontWeight: FontWeight.w600,
   );
 
-  // Live player
   static const TextStyle liveLabel = TextStyle(
     color: AppColors.textOnDark,
     fontSize: 12,
@@ -114,13 +108,11 @@ class AppTextStyles {
     fontSize: 13,
   );
 
-  // Day selector
   static const TextStyle dayLabel = TextStyle(
     color: AppColors.textOnDark,
     fontWeight: FontWeight.w600,
   );
 
-  // Chat bubbles
   static const TextStyle bubbleText = TextStyle(fontSize: 15);
 
   static const TextStyle bubbleTime = TextStyle(
@@ -128,7 +120,6 @@ class AppTextStyles {
     fontSize: 11,
   );
 
-  // Input field
   static const TextStyle inputText = TextStyle(color: AppColors.textOnDark);
 
   static const TextStyle inputHint = TextStyle(
@@ -137,7 +128,6 @@ class AppTextStyles {
 
   static const TextStyle noDataText = TextStyle(color: AppColors.textSecondary);
 
-  // Nu bezig badge
   static const TextStyle nuBezigLabel = TextStyle(
     color: AppColors.textOnDark,
     fontSize: AppDimensions.nuBezigFontSize,

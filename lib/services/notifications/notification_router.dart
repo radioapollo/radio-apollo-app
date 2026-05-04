@@ -42,37 +42,28 @@ class NotificationRouter {
   NotificationRouter._();
   static final NotificationRouter instance = NotificationRouter._();
 
-  /// Tab index ApolloNav should switch to. Null when there is nothing
-  /// pending. ApolloNav reads, switches, and calls [consume] to reset.
   final ValueNotifier<int?> requestedTab = ValueNotifier<int?>(null);
 
-  /// Translates a notification's `category` data field into a tab
-  /// index and stores it. Safe to call before ApolloNav has mounted —
-  /// the value sticks until consumed.
   void setRequestedTabForCategory(String? categoryString) {
     final tab = _tabForCategory(categoryString);
     if (tab == null) return;
     requestedTab.value = tab;
   }
 
-  /// Called by ApolloNav after acting on a requested tab. Resetting to
-  /// null prevents the same tap from re-firing on the next rebuild.
   void consume() {
     requestedTab.value = null;
   }
 
   // ── Internal ──────────────────────────────────────────────────────────────
 
-  /// Maps a `data.category` value (the topic name we put in every
-  /// outgoing FCM payload) to a tab index in ApolloNav.
   int? _tabForCategory(String? raw) {
     if (raw == null) return null;
     switch (raw) {
       case 'studio_messages':
       case 'chat_activity':
-        return 4; // Chat tab
+        return 4;
       case 'events':
-        return 3; // Evenementen tab
+        return 3;
       default:
         debugPrint('[NotificationRouter] Unknown category: $raw');
         return null;

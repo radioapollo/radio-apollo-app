@@ -31,7 +31,7 @@ class _HomeScreenState extends State<HomeScreen>
 
   @override
   Widget build(BuildContext context) {
-    super.build(context); // Required for AutomaticKeepAliveClientMixin
+    super.build(context);
     final services = ServiceProvider.of(context);
 
     return PageWithHeader(

@@ -66,10 +66,6 @@ class _ChatMessageListState extends State<ChatMessageList>
   bool _hasNewMessages = false;
   double _lastBottomInset = 0;
 
-  /// True until the very first non-empty data snapshot has been
-  /// rendered AND we've successfully landed at the bottom. While this
-  /// is false we use the aggressive "settle" sequence instead of a
-  /// single animated scroll.
   bool _initialScrollDone = false;
 
   static const double _nearBottomThreshold = 150.0;
@@ -89,23 +85,14 @@ class _ChatMessageListState extends State<ChatMessageList>
     super.dispose();
   }
 
-  // Detect keyboard open/close via viewInsets changes.
-  //
-  // When the keyboard opens we ALWAYS scroll to the bottom so the most
-  // recent messages remain visible above the keyboard. This used to only
-  // fire when the user was already near the bottom, but that caused the
-  // confusing behaviour where tapping the input field after scrolling
-  // up would leave old messages in view while the user typed.
   @override
   void didChangeMetrics() {
     super.didChangeMetrics();
     final view = View.of(context);
     final bottomInset = view.viewInsets.bottom;
 
-    // Keyboard opened (bottom inset increased)
     if (bottomInset > _lastBottomInset + 10) {
-      // Wait for the keyboard animation to finish before scrolling,
-      // otherwise the maxScrollExtent is out of date.
+
       Future.delayed(const Duration(milliseconds: 280), () {
         if (mounted) _scrollToBottom();
       });
@@ -134,8 +121,6 @@ class _ChatMessageListState extends State<ChatMessageList>
     }
   }
 
-  /// Animated scroll to the bottom — used for live updates after the
-  /// initial load has settled.
   Future<void> _scrollToBottom({int retries = 3}) async {
     if (!mounted) return;
     if (_hasNewMessages) {
@@ -147,7 +132,7 @@ class _ChatMessageListState extends State<ChatMessageList>
 
       if (!_scrollController.hasClients ||
           !_scrollController.position.hasContentDimensions) {
-        // Retry after layout completes
+
         if (retries > 0) {
           await Future.delayed(const Duration(milliseconds: 100));
           _scrollToBottom(retries: retries - 1);
@@ -162,7 +147,7 @@ class _ChatMessageListState extends State<ChatMessageList>
           curve: Curves.easeOut,
         );
       } catch (_) {
-        // Handle animation in progress
+
         if (retries > 0) {
           await Future.delayed(const Duration(milliseconds: 100));
           _scrollToBottom(retries: retries - 1);
@@ -171,12 +156,6 @@ class _ChatMessageListState extends State<ChatMessageList>
     });
   }
 
-  /// Used on the very first data load. Instead of a single animated
-  /// scroll, we jump (no animation) to maxScrollExtent across several
-  /// frames. Each pass corrects for any extent growth caused by
-  /// variable-height bubbles laying out late, so the user always
-  /// lands at the actual newest message instead of where the bottom
-  /// "used to be" one frame ago.
   void _settleAtBottom({int passes = 6}) {
     if (!mounted || passes <= 0) return;
 
@@ -185,7 +164,7 @@ class _ChatMessageListState extends State<ChatMessageList>
 
       if (!_scrollController.hasClients ||
           !_scrollController.position.hasContentDimensions) {
-        // Layout hasn't happened yet — try again next frame.
+
         Future.delayed(const Duration(milliseconds: 50), () {
           if (mounted) _settleAtBottom(passes: passes - 1);
         });
@@ -196,12 +175,9 @@ class _ChatMessageListState extends State<ChatMessageList>
       try {
         _scrollController.jumpTo(target);
       } catch (_) {
-        // Ignore — we'll try again next pass.
+
       }
 
-      // Schedule one more pass to catch any further extent growth.
-      // We stop early if the position is already at the bottom AND
-      // the extent stopped growing between passes.
       Future.delayed(const Duration(milliseconds: 32), () {
         if (!mounted) return;
         if (!_scrollController.hasClients) {
@@ -212,8 +188,7 @@ class _ChatMessageListState extends State<ChatMessageList>
         final atBottom =
             (newMax - _scrollController.position.pixels).abs() < 1.0;
         if (atBottom && newMax == target) {
-          // Settled. Mark initial done so future updates use the
-          // animated path.
+
           _initialScrollDone = true;
           return;
         }
@@ -222,18 +197,10 @@ class _ChatMessageListState extends State<ChatMessageList>
     });
   }
 
-  /// All state mutations (counter update + new-messages flag) happen
-  /// after the frame completes, never during build.
-  ///
-  /// If the newest message is from the current user, we always scroll
-  /// down regardless of where the user was looking — they just sent
-  /// something and expect to see it appear.
   void _handleMessageCountChange(List<Message> messages) {
     final newCount = messages.length;
     if (newCount == _lastMessageCount) return;
 
-    // Detect whether this update was caused by the current user sending
-    // a message. If so we always scroll, even if they had scrolled up.
     final newest = messages.isNotEmpty ? messages.last : null;
     final newestSignature = newest == null
         ? null
@@ -246,8 +213,6 @@ class _ChatMessageListState extends State<ChatMessageList>
         newest != null &&
         newest.isCurrentUser;
 
-    // Capture whether this is the first time we're seeing data so the
-    // post-frame callback below knows which scroll strategy to use.
     final isFirstLoad = !_initialScrollDone;
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -256,9 +221,7 @@ class _ChatMessageListState extends State<ChatMessageList>
       _lastMessageSignature = newestSignature;
 
       if (isFirstLoad) {
-        // First time we're rendering messages — guarantee the user
-        // lands at the bottom even if bubble heights are still being
-        // measured across the next few frames.
+
         _settleAtBottom();
         return;
       }
@@ -295,12 +258,6 @@ class _ChatMessageListState extends State<ChatMessageList>
   }
 
   // ── Stream builder ────────────────────────────────────────────────────────
-  //
-  // While the first snapshot is loading we show a small loader. Once we
-  // have received at least one snapshot we keep the data pinned to the
-  // screen even during re-subscribes so the UI never flashes back to a
-  // full-screen spinner — that prevented the input field below from
-  // feeling responsive ("je kan pas typen als alle berichten geladen zijn").
 
   List<Message>? _lastMessages;
 
@@ -310,7 +267,7 @@ class _ChatMessageListState extends State<ChatMessageList>
       builder: (context, _) => StreamBuilder<List<Message>>(
         stream: widget.messagesStream,
         builder: (context, snapshot) {
-          // First load — nothing cached yet.
+
           if (snapshot.connectionState == ConnectionState.waiting &&
               _lastMessages == null) {
             return const Center(child: CircularProgressIndicator());
@@ -325,8 +282,6 @@ class _ChatMessageListState extends State<ChatMessageList>
               .where((m) => !BlockService.instance.isBlocked(m.username))
               .toList();
 
-          // Cache the most recent non-null snapshot so we can keep showing
-          // messages if the stream briefly re-enters a waiting state.
           if (snapshot.hasData) {
             _lastMessages = messages;
           }
@@ -350,9 +305,6 @@ class _ChatMessageListState extends State<ChatMessageList>
   }
 
   // ── Error state ───────────────────────────────────────────────────────────
-  //
-  // Network/Firestore errors are distinguished from other errors so the
-  // user sees a helpful message instead of a raw exception string.
 
   Widget _buildErrorState(Object? error) {
     final err = error.toString().toLowerCase();

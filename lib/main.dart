@@ -35,8 +35,6 @@ import 'services/chat/eula_service.dart';
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  // Create notification channels as early as possible — the FCM service
-  // looks them up by ID and falls back to default if they don't exist.
   final tempPlugin = FlutterLocalNotificationsPlugin();
   await tempPlugin.initialize(
     const InitializationSettings(
@@ -55,9 +53,6 @@ Future<void> main() async {
     DeviceOrientation.portraitDown,
   ]);
 
-  // Firebase must come up before Crashlytics or any error handler that
-  // wants to talk to Crashlytics. If Firebase itself fails, we render
-  // the fallback screen and bail.
   try {
     await Firebase.initializeApp(
       options: DefaultFirebaseOptions.currentPlatform,
@@ -70,24 +65,15 @@ Future<void> main() async {
     return;
   }
 
-  // Disable Crashlytics in debug builds so "flutter run" doesn't pollute
-  // the production crash dashboard with stack traces from development.
   await FirebaseCrashlytics.instance
       .setCrashlyticsCollectionEnabled(!kDebugMode);
 
   _installErrorHandlers();
 
-  // Background message handler must be registered before any other
-  // FCM API call. It's a no-op for now (FCM displays the notification
-  // itself when the app isn't in the foreground) but having it wired
-  // up means future silent-data messages will Just Work.
   FirebaseMessaging.onBackgroundMessage(firebaseMessagingBackgroundHandler);
 
   await _activateAppCheck();
 
-  // Notifications. Does not prompt — that happens on first interaction
-  // with the Settings screen. Safe to fail silently if Firebase isn't
-  // available (offline first launch on iOS, etc).
   try {
     await NotificationService.instance.init();
   } catch (e, st) {
@@ -206,7 +192,7 @@ void _installErrorHandlers() {
   FlutterError.onError = (FlutterErrorDetails details) {
     FlutterError.presentError(details);
     debugPrint('[FlutterError] ${details.exceptionAsString()}');
-    // Forward fatal Flutter framework errors to Crashlytics.
+
     FirebaseCrashlytics.instance.recordFlutterFatalError(details);
   };
   PlatformDispatcher.instance.onError = (Object error, StackTrace stack) {

@@ -45,7 +45,7 @@ class _EventScreenState extends State<EventScreen>
 
   @override
   Widget build(BuildContext context) {
-    super.build(context); // Required for AutomaticKeepAliveClientMixin
+    super.build(context);
     return SizedBox.expand(
       child: Container(
         decoration: const BoxDecoration(
@@ -97,7 +97,7 @@ class _EventScreenState extends State<EventScreen>
       stream: _eventsStream,
       initialData: _eventService.latestEvents,
       builder: (context, snapshot) {
-        // Only show the spinner on the very first cold load.
+
         if (snapshot.connectionState == ConnectionState.waiting &&
             !snapshot.hasData) {
           return const Center(

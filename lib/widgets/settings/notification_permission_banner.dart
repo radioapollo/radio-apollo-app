@@ -38,9 +38,6 @@ import '../../theme/app_theme.dart';
 class NotificationPermissionBanner extends StatelessWidget {
   final PermissionBannerState state;
 
-  /// Called when the user taps the action button in the `notYetAsked`
-  /// state. The screen wires this to NotificationService.requestPermission
-  /// and refreshes its own UI based on the result.
   final Future<void> Function() onRequestPermission;
 
   const NotificationPermissionBanner({

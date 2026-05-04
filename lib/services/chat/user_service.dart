@@ -20,40 +20,37 @@ class UserService {
   static final UserService instance = UserService._();
 
   static const String _key = 'chat_username';
-  static const String _tokenKey = 'chat_claim_token'; // NEW
+  static const String _tokenKey = 'chat_claim_token';
   final _db = FirebaseFirestore.instance;
 
   String? _username;
-  String? _claimToken; // NEW
+  String? _claimToken;
 
   // ── Getters ───────────────────────────────────────────────────────────────
 
   String? get username => _username;
   bool get hasUsername => _username != null && _username!.isNotEmpty;
-  String? get claimToken => _claimToken; // NEW
+  String? get claimToken => _claimToken;
 
   // ── Lifecycle ─────────────────────────────────────────────────────────────
 
   Future<void> init() async {
     final prefs = await SharedPreferences.getInstance();
     final saved = prefs.getString(_key);
-    final savedToken = prefs.getString(_tokenKey); // NEW
+    final savedToken = prefs.getString(_tokenKey);
     if (saved == null || saved.isEmpty) return;
 
-    _claimToken = savedToken; // restore (may be null for legacy installs)
+    _claimToken = savedToken;
 
     DocumentSnapshot<Map<String, dynamic>>? doc;
     try {
       doc = await _db.collection('usernames').doc(saved.toLowerCase()).get();
     } catch (_) {
-      // Network error — keep the local value, best-effort.
+
       _username = saved;
       return;
     }
 
-    // If we have the username locally, but no token (legacy install) OR no
-    // Firestore doc, try to claim. The server treats a re-claim with the same
-    // displayName as a token reissue, so this is idempotent.
     final needsReclaim = !doc.exists || _claimToken == null;
 
     if (!needsReclaim) {
@@ -67,19 +64,14 @@ class UserService {
       _claimToken = newToken;
       await prefs.setString(_tokenKey, newToken);
     } catch (_) {
-      // Couldn't re-claim. Two possibilities:
-      //   - App Check failed transiently (e.g. Xiaomi) — keep the local
-      //     username so the UI doesn't disappear, leave _claimToken null.
-      //     Sends will fail until next launch retries init() successfully.
-      //   - Name was taken by someone else (shouldn't happen, but possible
-      //     if the doc was wiped server-side) — clear local state.
+
       if (!doc.exists) {
         await prefs.remove(_key);
         await prefs.remove(_tokenKey);
         _username = null;
         _claimToken = null;
       } else {
-        // Doc exists but we couldn't get a token. Keep username, no token.
+
         _username = saved;
       }
     }
@@ -95,30 +87,27 @@ class UserService {
 
     final prefs = await SharedPreferences.getInstance();
     await prefs.setString(_key, trimmed);
-    await prefs.setString(_tokenKey, newToken); // NEW
+    await prefs.setString(_tokenKey, newToken);
     _username = trimmed;
-    _claimToken = newToken; // NEW
+    _claimToken = newToken;
   }
 
   // ── Internal ──────────────────────────────────────────────────────────────
 
-  /// Throws an Exception with a user-friendly message on failure.
-  /// Returns the claim token issued by the server.
   Future<String> _claimViaCloudFunction(String name) async {
     final response = await AppCheckHttp.post('claimUsername', {
       'name': name,
     }, requireAppCheck: true);
 
     if (response.statusCode == 200) {
-      // Parse the token from the response body.
+
       try {
         final body = jsonDecode(response.body);
         if (body is Map && body['claimToken'] is String) {
           return body['claimToken'] as String;
         }
       } catch (_) {}
-      // Server returned 200 but no token? Treat as failure — sends will
-      // not work without one.
+
       throw Exception('Server gaf geen geldig token terug. Probeer opnieuw.');
     }
 

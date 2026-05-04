@@ -85,28 +85,16 @@ class NotificationService {
   AuthorizationStatus _authStatus = AuthorizationStatus.notDetermined;
   bool _hasAskedForPermission = false;
 
-  /// Key in shared_preferences. Tracks whether we've ever called
-  /// requestPermission(). Needed because on Android 13+,
-  /// getNotificationSettings() returns `denied` both for a fresh
-  /// install AND for a real denial — there's no way to tell them
-  /// apart from the OS, so we have to remember it ourselves.
   static const _hasAskedKey = 'notif_has_asked';
 
-  /// Last known OS-level permission status.
   AuthorizationStatus get authorizationStatus => _authStatus;
 
-  /// Whether requestPermission() has ever been called (in this install).
-  /// True after the first prompt, regardless of what the user chose.
   bool get hasAskedForPermission => _hasAskedForPermission;
 
-  /// True when the user has granted (or provisionally granted) OS-level
-  /// permission to show notifications.
   bool get isAuthorized =>
       _authStatus == AuthorizationStatus.authorized ||
       _authStatus == AuthorizationStatus.provisional;
 
-  /// Banner state used by the Settings screen to explain why
-  /// notifications won't arrive, if anything is wrong.
   PermissionBannerState get bannerState {
     if (isAuthorized) return PermissionBannerState.none;
     if (_hasAskedForPermission) return PermissionBannerState.denied;
@@ -154,10 +142,6 @@ class NotificationService {
     _authStatus = settings.authorizationStatus;
   }
 
-  /// Re-reads the OS permission status. Call this when the Settings
-  /// screen reopens — the user may have toggled notifications in
-  /// system settings while away, and we want the banner to reflect
-  /// reality on return.
   Future<void> refresh() async {
     await _refreshAuthStatus();
   }
@@ -188,11 +172,6 @@ class NotificationService {
     final notification = message.notification;
     if (notification == null) return;
 
-    // Drop chat_activity notifications for messages the user sent
-    // themselves. The Cloud Function includes the sender's username in
-    // data.sender; we compare it (case-insensitively to match Firestore
-    // doc IDs) with the locally claimed name. If it matches, return
-    // without rendering.
     if (_isOwnMessage(message.data)) {
       debugPrint(
         '[NotificationService] Suppressing self-notification for '
@@ -235,10 +214,6 @@ class NotificationService {
     );
   }
 
-  /// Returns true when the FCM data identifies the local user as the
-  /// sender, so we should drop the notification. Currently only fires
-  /// for chat_activity messages; other categories don't include
-  /// `sender` so the check no-ops harmlessly.
   bool _isOwnMessage(Map<String, dynamic> data) {
     final sender = (data['sender'] as String?)?.trim().toLowerCase();
     if (sender == null || sender.isEmpty) return false;
@@ -331,11 +306,8 @@ class NotificationService {
   String _prefsKey(NotificationCategory category) => 'notif_${category.topic}';
 }
 
-/// What banner (if any) the Settings screen should display about the
-/// OS-level notification permission.
 enum PermissionBannerState { none, notYetAsked, denied }
 
-/// Top-level channel creation. Idempotent.
 Future<void> ensureNotificationChannels(
   FlutterLocalNotificationsPlugin plugin,
 ) async {
@@ -362,9 +334,6 @@ Future<void> ensureNotificationChannels(
   );
 }
 
-/// Top-level background message handler. Must be a top-level or
-/// static function annotated with @pragma('vm:entry-point') so the
-/// Flutter engine can find it from the background isolate.
 @pragma('vm:entry-point')
 Future<void> firebaseMessagingBackgroundHandler(RemoteMessage message) async {
   final plugin = FlutterLocalNotificationsPlugin();

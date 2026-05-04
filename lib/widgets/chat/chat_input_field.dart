@@ -70,7 +70,7 @@ class ChatInputField extends StatelessWidget {
                   style: AppTextStyles.inputText,
                   maxLength: maxLength,
                   enabled:
-                      true, // Always enabled - only send button is disabled
+                      true,
                   buildCounter:
                       (
                         _, {
@@ -100,11 +100,6 @@ class ChatInputField extends StatelessWidget {
   }
 
   // ── Subline below the text field ──────────────────────────────────────────
-  //
-  // Shows, in order of priority:
-  //   1. the cooldown hint flash (if the user just tapped send while waiting)
-  //   2. the character counter (if near the limit)
-  //   3. nothing
 
   Widget _buildSubline() {
     if (showCooldownHint) {
@@ -151,8 +146,7 @@ class ChatInputField extends StatelessWidget {
     }
 
     if (_onCooldown) {
-      // Tappable so the user's tap reaches _sendMessage, which will
-      // flash the cooldown hint. The pill itself just shows the seconds.
+
       return GestureDetector(
         onTap: onSend,
         child: Container(

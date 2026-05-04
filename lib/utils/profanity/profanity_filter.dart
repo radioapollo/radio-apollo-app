@@ -22,7 +22,6 @@ import 'profanity_service.dart';
 class ProfanityFilter {
   ProfanityFilter._();
 
-  /// Check a message for profanity and return a result object.
   static ProfanityCheckResult check(String message) {
     if (message.trim().isEmpty) {
       return ProfanityCheckResult.clean(message);
@@ -30,7 +29,6 @@ class ProfanityFilter {
 
     final normalized = _normalize(message);
 
-    // Live merged lists (hardcoded fallback + Firestore additions).
     final severeWords = ProfanityService.instance.activeSevereWords;
     final mildWords = ProfanityService.instance.activeMildWords;
 
@@ -123,8 +121,6 @@ class ProfanityFilter {
 }
 
 // ── Result ──────────────────────────────────────────────────────────────────
-// If your project already defines ProfanityCheckResult somewhere else,
-// delete this section and add the appropriate import at the top.
 
 class ProfanityCheckResult {
   final bool isSevere;

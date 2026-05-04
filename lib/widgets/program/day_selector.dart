@@ -55,15 +55,11 @@ class _DaySelectorState extends State<DaySelector> {
   }
 
   // ── Auto-scroll to selected day ───────────────────────────────────────────
-  //
-  // Items use intrinsic width so we can't know their exact render width.
-  // We estimate from the longest day name to keep the centering close.
 
   void _scrollToSelected() {
-    // Cancel any pending scroll to prevent jitter
+
     _scrollDebounce?.cancel();
 
-    // Debounce scroll animation
     _scrollDebounce = Timer(const Duration(milliseconds: 50), () {
       if (!_scrollController.hasClients ||
           !_scrollController.position.hasContentDimensions) {
@@ -106,8 +102,7 @@ class _DaySelectorState extends State<DaySelector> {
             child: GestureDetector(
               onTap: () => widget.onDaySelected(index),
               child: Container(
-                // Intrinsic width — container sizes to its text content.
-                // Prevents clipping on smaller screens or longer labels.
+
                 padding: const EdgeInsets.symmetric(
                   horizontal: 16,
                   vertical: 0,
@@ -122,7 +117,7 @@ class _DaySelectorState extends State<DaySelector> {
                 child: Text(
                   widget.days[index],
                   style: AppTextStyles.dayLabel,
-                  softWrap: false, // keep label on one line
+                  softWrap: false,
                 ),
               ),
             ),

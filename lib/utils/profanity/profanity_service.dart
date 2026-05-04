@@ -43,8 +43,6 @@ class ProfanityService {
 
   // ── Public state ──────────────────────────────────────────────────────────
 
-  /// Combined list: hardcoded fallback + Firestore additions.
-  /// Read by [ProfanityFilter] on every check.
   List<String> get activeSevereWords => _activeSevere;
   List<String> get activeMildWords => _activeMild;
 
@@ -64,17 +62,11 @@ class ProfanityService {
 
   // ── Lifecycle ─────────────────────────────────────────────────────────────
 
-  /// Called once from `main()` after Firebase is up. Returns once the
-  /// initial fetch completes (or fails). Live updates continue in the
-  /// background after this returns.
   Future<void> init() async {
     if (_initialised) return;
 
     final ref = FirebaseFirestore.instance.doc(_docPath);
 
-    // 1. One-shot fetch with a short timeout so a slow/offline network
-    //    doesn't block app startup. The hardcoded list is already in
-    //    place as the fallback.
     try {
       final snap = await ref
           .get(const GetOptions(source: Source.serverAndCache))
@@ -86,9 +78,6 @@ class ProfanityService {
       );
     }
 
-    // 2. Live updates. Firestore handles reconnects internally — if the
-    //    connection drops we'll just continue using the last known
-    //    (or hardcoded) list until it comes back.
     _liveSub = ref.snapshots().listen(
       (snap) {
         _applySnapshot(snap.data());
@@ -101,8 +90,6 @@ class ProfanityService {
     _initialised = true;
   }
 
-  /// Stop listening. Mostly for tests — in production this lives for
-  /// the entire app lifetime.
   Future<void> dispose() async {
     await _liveSub?.cancel();
     _liveSub = null;
@@ -111,11 +98,6 @@ class ProfanityService {
 
   // ── Internal ──────────────────────────────────────────────────────────────
 
-  /// Merge Firestore data into the active lists.
-  ///
-  /// Strategy: hardcoded list is always present (safety net), and any
-  /// extra words from Firestore are appended. Duplicates are removed
-  /// automatically by the Set conversion.
   void _applySnapshot(Map<String, dynamic>? data) {
     final remoteSevere = _normalise(data?['severeWords']);
     final remoteMild = _normalise(data?['mildWords']);
@@ -136,8 +118,6 @@ class ProfanityService {
     );
   }
 
-  /// Coerce a Firestore array field into a clean `List<String>`:
-  /// lowercased, trimmed, deduplicated, no empty entries.
   List<String> _normalise(dynamic raw) {
     if (raw is! List) return const [];
     final out = <String>{};

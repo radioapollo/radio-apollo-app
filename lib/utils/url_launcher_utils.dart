@@ -13,7 +13,6 @@ import 'package:url_launcher/url_launcher.dart';
 class UrlLauncherUtils {
   UrlLauncherUtils._();
 
-  /// Opens an http(s) URL in an external browser.
   static Future<void> openUrl(String url) async {
     final uri = Uri.parse(url);
     if (await canLaunchUrl(uri)) {
@@ -21,7 +20,6 @@ class UrlLauncherUtils {
     }
   }
 
-  /// Opens the dialer for the given phone number.
   static Future<void> dialPhone(String number) async {
     final uri = Uri(scheme: 'tel', path: number);
     if (await canLaunchUrl(uri)) {
@@ -29,7 +27,6 @@ class UrlLauncherUtils {
     }
   }
 
-  /// Opens the default mail client with the given email address.
   static Future<void> sendEmail(String email) async {
     final uri = Uri(scheme: 'mailto', path: email);
     if (await canLaunchUrl(uri)) {

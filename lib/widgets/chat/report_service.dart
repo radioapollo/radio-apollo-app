@@ -22,7 +22,6 @@ class ReportService {
 
   static const _collection = 'chat_reports';
 
-  /// Returns true on success, false on any failure. Never throws.
   Future<bool> report({
     required String? messageId,
     required String? reportedUsername,

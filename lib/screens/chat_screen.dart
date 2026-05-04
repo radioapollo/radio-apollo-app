@@ -46,8 +46,6 @@ class ChatScreen extends StatefulWidget {
   final ChatService chatService;
   final AuthService authService;
 
-  /// Set to true when this tab is the active/visible one.
-  /// Used to defer the username prompt until the user opens the chat.
   final bool isActive;
 
   const ChatScreen({
@@ -123,14 +121,6 @@ class _ChatScreenState extends State<ChatScreen>
     });
   }
 
-  /// Initialises UserService and shows the username dialog if needed.
-  /// The dialog appears when:
-  ///   - the user has no username yet, OR
-  ///   - the user hasn't accepted the current Terms version yet
-  ///     (e.g. existing users from before the EULA was added).
-  ///
-  /// The dialog is dismissible — if the user cancels, they can still
-  /// read the chat but cannot send messages until they accept.
   Future<void> _ensureUsername() async {
     await UserService.instance.init();
     final needsUsername = !UserService.instance.hasUsername;
@@ -141,8 +131,6 @@ class _ChatScreenState extends State<ChatScreen>
     }
   }
 
-  /// Opens the username dialog on demand (e.g. from the title bar button
-  /// or the input-area prompt).
   Future<void> _promptUsername() async {
     final name = await UsernameDialog.show(context);
     if (name != null && mounted) {
@@ -152,14 +140,9 @@ class _ChatScreenState extends State<ChatScreen>
 
   // ── Send ──────────────────────────────────────────────────────────────────
 
-  /// Safety guard: should never be reached because the UI hides the input
-  /// field when hasUsername is false, but guards against any edge-case
-  /// where _sendMessage is somehow called without a username.
   Future<void> _sendMessage() async {
     if (_sending) return;
 
-    // Admins bypass the per-user cooldown entirely, so don't flash or
-    // block them. Regular users see the hint if they tap while waiting.
     if (!_authService.isAdmin && _cooldownRemaining > 0) {
       _flashCooldownHint();
       return;
@@ -173,11 +156,7 @@ class _ChatScreenState extends State<ChatScreen>
     }
 
     final text = _controller.text;
-    // Remember whether the keyboard/focus was up so we can restore it
-    // exactly as it was once the message has flown out. This is the fix
-    // for "tussen berichten in moet er opnieuw op tekstvak getikt worden":
-    // the send flow briefly rebuilds, and if we only request focus when
-    // it's still held we end up losing it to the bottom of the tree.
+
     final keepFocus = _textFieldFocus.hasFocus;
 
     _controller.clear();
@@ -186,33 +165,24 @@ class _ChatScreenState extends State<ChatScreen>
     try {
       await _chatService.sendMessage(text);
 
-      // Always restore focus to the input field after a successful send,
-      // regardless of what happened during the async gap. This keeps the
-      // keyboard open so the user can type the next message immediately.
       if (mounted && keepFocus && !_textFieldFocus.hasFocus) {
         _textFieldFocus.requestFocus();
       }
 
-      // Only regular users have a send cooldown — admins are unlimited.
       if (!_authService.isAdmin) {
         _startCooldown();
       }
     } on CooldownException catch (e) {
-      // Rare: the service's clock disagreed with ours. Start the countdown
-      // using the service's number instead of showing a red error.
+
       if (!mounted) return;
       _controller.text = text;
       _startCooldown(seconds: e.secondsRemaining);
       _flashCooldownHint();
     } catch (e) {
       if (!mounted) return;
-      // Put the text back so the user doesn't lose what they typed
+
       _controller.text = text;
 
-      // Special case: if the EULA hasn't been accepted yet (e.g. an
-      // existing user from before the EULA was added), pop the dialog
-      // so they can accept and continue, instead of just showing an
-      // error with no obvious next step.
       if (e.toString().contains('gebruiksvoorwaarden')) {
         await _promptUsername();
         return;
@@ -234,18 +204,6 @@ class _ChatScreenState extends State<ChatScreen>
 
   // ── Cooldown ──────────────────────────────────────────────────────────────
 
-  /// Starts the visible countdown on the send button. Ticks once per
-  /// second until it reaches zero, then cancels itself.
-  ///
-  /// The previous implementation re-read the remaining seconds from the
-  /// service on each tick. That caused two visible issues:
-  ///   1. The pill could briefly show the wrong number (0 → 3 → 2 → 1)
-  ///      because the service's reference time is set after the network
-  ///      request returns, while the UI starts ticking before then.
-  ///   2. If the user sent a message through the admin path (which does
-  ///      NOT update _lastMessageSent on the service), the countdown
-  ///      would immediately snap to 0.
-  /// Instead we just decrement a local counter — simple and stable.
   void _startCooldown({int? seconds}) {
     _cooldownTicker?.cancel();
 
@@ -275,8 +233,6 @@ class _ChatScreenState extends State<ChatScreen>
     });
   }
 
-  /// Briefly shows an inline "nog Xs" hint inside the input field when the
-  /// user taps send during cooldown. Auto-dismisses after 1.5s.
   void _flashCooldownHint() {
     _hintDismissTimer?.cancel();
     setState(() => _showCooldownHint = true);
@@ -320,7 +276,7 @@ class _ChatScreenState extends State<ChatScreen>
 
   @override
   Widget build(BuildContext context) {
-    super.build(context); // required by AutomaticKeepAliveClientMixin
+    super.build(context);
 
     final hasUsername = UserService.instance.hasUsername;
     final isAdmin = _authService.isAdmin;

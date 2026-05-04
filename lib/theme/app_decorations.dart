@@ -11,15 +11,11 @@ import 'app_dimensions.dart';
 class AppDecorations {
   AppDecorations._();
 
-  // --- Background ---
-
   static const DecorationImage backgroundWatermark = DecorationImage(
     image: AssetImage('assets/images/Background/Watermerk.JPG'),
     fit: BoxFit.cover,
     alignment: Alignment.topCenter,
   );
-
-  // --- Dark card (used in program list, info, chat list) ---
 
   static BoxDecoration darkCard({double radius = AppDimensions.radiusLarge}) =>
       BoxDecoration(
@@ -31,8 +27,6 @@ class AppDecorations {
         ),
       );
 
-  // --- Current program card ---
-
   static BoxDecoration currentProgramCard() => BoxDecoration(
     color: AppColors.primaryLight,
     borderRadius: BorderRadius.circular(AppDimensions.radiusXLarge),
@@ -42,14 +36,10 @@ class AppDecorations {
     ),
   );
 
-  // --- Nu bezig badge ---
-
   static BoxDecoration nuBezigBadge() => BoxDecoration(
     color: AppColors.overlayLight,
     borderRadius: BorderRadius.circular(AppDimensions.radiusFull),
   );
-
-  // --- Light card (used in events, sponsors, home cards) ---
 
   static BoxDecoration lightCard({
     double radius = AppDimensions.radiusMedium,
@@ -62,8 +52,6 @@ class AppDecorations {
     ),
   );
 
-  // --- Colored ApolloCard ---
-
   static BoxDecoration colorCard({
     required Color color,
     double radius = AppDimensions.radiusXLarge,
@@ -74,8 +62,6 @@ class AppDecorations {
     border: border,
   );
 
-  // --- Chat input field ---
-
   static BoxDecoration chatInputFull() => BoxDecoration(
     color: AppColors.navyMedium,
     borderRadius: BorderRadius.circular(AppDimensions.radiusMedium),
@@ -84,8 +70,6 @@ class AppDecorations {
       width: AppDimensions.borderThin,
     ),
   );
-
-  // --- Chat message list container ---
 
   static BoxDecoration chatList() => BoxDecoration(
     color: AppColors.navyDeep,
@@ -96,29 +80,21 @@ class AppDecorations {
     ),
   );
 
-  // --- Live player card ---
-
   static BoxDecoration livePlayerCard() => BoxDecoration(
     color: AppColors.navyDark,
     borderRadius: BorderRadius.circular(AppDimensions.radiusXXLarge),
   );
-
-  // --- LIVE badge ---
 
   static BoxDecoration liveBadge() => BoxDecoration(
     color: AppColors.live,
     borderRadius: BorderRadius.circular(AppDimensions.radiusFull),
   );
 
-  // --- Icon container (used inside cards) ---
-
   static BoxDecoration iconContainer({
     required Color color,
     double radius = AppDimensions.radiusSmall,
   }) =>
       BoxDecoration(color: color, borderRadius: BorderRadius.circular(radius));
-
-  // --- Program card icon background ---
 
   static const BoxDecoration programIconBg = BoxDecoration(
     color: AppColors.borderSubtle,
@@ -127,12 +103,8 @@ class AppDecorations {
     ),
   );
 
-  // --- Sticky header background ---
-
   static BoxDecoration stickyHeader() =>
       BoxDecoration(color: AppColors.stickyHeaderBg);
-
-  // --- Bottom nav bar ---
 
   static const BoxDecoration bottomNav = BoxDecoration(
     color: AppColors.bottomNavBg,
@@ -141,8 +113,6 @@ class AppDecorations {
       topRight: Radius.circular(AppDimensions.radiusXLarge),
     ),
   );
-
-  // --- Chat bubble ---
 
   static BoxDecoration chatBubble({
     required bool isAdmin,

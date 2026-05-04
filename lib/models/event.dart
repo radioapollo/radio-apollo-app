@@ -28,15 +28,10 @@ class Event {
     this.imageUrl,
   });
 
-  /// True when a usable image URL is present.
-  /// Checks that the string is non-null and non-empty after trimming —
-  /// Firestore sometimes stores empty strings rather than missing fields.
   bool get hasImage => imageUrl != null && imageUrl!.trim().isNotEmpty;
 
-  /// Parsed DateTime from the Dutch date string. Null if parsing fails.
   DateTime? get parsedDate => AppDateUtils.parseDutchDate(date);
 
-  /// Number of full days between today (at midnight) and the event date.
   int? get daysUntil {
     final d = parsedDate;
     if (d == null) return null;
@@ -46,13 +41,11 @@ class Event {
     return eventDay.difference(nowDay).inDays;
   }
 
-  /// True when the event is within the next 7 days (today included).
   bool get isWithinOneWeek {
     final n = daysUntil;
     return n != null && n >= 0 && n <= 7;
   }
 
-  /// True when the event is within the next 14 days (today included).
   bool get isWithinTwoWeeks {
     final n = daysUntil;
     return n != null && n >= 0 && n <= 14;

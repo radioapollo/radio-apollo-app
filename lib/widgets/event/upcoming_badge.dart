@@ -32,8 +32,7 @@ class UpcomingBadge extends StatelessWidget {
 
     if (isToday) {
       label = 'Vandaag';
-      // Bright green to clearly signal "this is happening now/today"
-      // and stand out from the red "Bijna" badge.
+
       color = AppColors.nowPlayingDot;
       pulse = true;
     } else if (urgent) {

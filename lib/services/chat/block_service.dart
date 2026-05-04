@@ -42,7 +42,6 @@ class BlockService extends ChangeNotifier {
 
   bool get isInitialised => _initialised;
 
-  /// Read-only view of the current block list (lowercase).
   Set<String> get blocked => Set.unmodifiable(_blocked);
 
   bool isBlocked(String? username) {
@@ -69,7 +68,7 @@ class BlockService extends ChangeNotifier {
             .toSet();
       }
     } catch (_) {
-      // Corrupted entry — drop it silently.
+
       await prefs.remove(_key);
     }
   }

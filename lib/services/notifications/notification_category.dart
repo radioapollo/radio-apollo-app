@@ -55,11 +55,6 @@ enum NotificationCategory {
     highImportance: false,
   );
 
-  // Note: a `showStarting` category is planned for when listeners can
-  // mark programs as favorites. It's intentionally not listed here yet
-  // because there's no Cloud Function publishing to it and no way to
-  // pick a favorite, so showing the toggle would be misleading.
-
   const NotificationCategory({
     required this.topic,
     required this.channelId,

@@ -16,9 +16,6 @@ class AppConstants {
       'http://radioapollo.beheerstream.nl:8006/stats?json=1';
 
   // ── App version ───────────────────────────────────────────────────────────
-  //
-  // Shown at the bottom of the info screen. Keep in sync with the
-  // `version:` field in pubspec.yaml.
 
   static const String appVersion = '1.0.0';
 

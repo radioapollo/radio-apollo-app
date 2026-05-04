@@ -47,7 +47,6 @@ class _InfoScreenState extends State<InfoScreen>
     with AutomaticKeepAliveClientMixin {
   final _infoService = InfoService();
 
-  // Capture the streams once so StreamBuilder has a stable identity.
   late final Stream<String> _aboutTextStream = _infoService.aboutTextStream;
   late final Stream<List<Sponsor>> _sponsorsStream =
       _infoService.sponsorsStream;
@@ -57,7 +56,7 @@ class _InfoScreenState extends State<InfoScreen>
 
   @override
   Widget build(BuildContext context) {
-    super.build(context); // Required for AutomaticKeepAliveClientMixin
+    super.build(context);
     return SizedBox.expand(
       child: Container(
         decoration: const BoxDecoration(
@@ -161,7 +160,7 @@ class _InfoScreenState extends State<InfoScreen>
       stream: _aboutTextStream,
       initialData: _infoService.latestAboutText,
       builder: (context, snapshot) {
-        // Only show the spinner on the very first cold load.
+
         if (snapshot.connectionState == ConnectionState.waiting &&
             !snapshot.hasData) {
           return const Center(

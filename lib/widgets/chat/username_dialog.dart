@@ -35,7 +35,6 @@ import '../../utils/url_launcher_utils.dart';
 class UsernameDialog extends StatefulWidget {
   const UsernameDialog({super.key});
 
-  /// Shows the dialog and returns the chosen name, or null if dismissed.
   static Future<String?> show(BuildContext context) {
     return showDialog<String>(
       context: context,
@@ -57,9 +56,7 @@ class _UsernameDialogState extends State<UsernameDialog> {
   @override
   void initState() {
     super.initState();
-    // Pre-fill with existing username if there is one. This makes the
-    // dialog much smoother for existing users who only need to tick
-    // the EULA checkbox.
+
     _controller = TextEditingController(
       text: UserService.instance.username ?? '',
     );
@@ -95,9 +92,7 @@ class _UsernameDialogState extends State<UsernameDialog> {
 
     try {
       await EulaService.instance.accept();
-      // Only re-claim the username if it changed, since claimUsername()
-      // makes a network call. Existing users who only ticked the EULA
-      // shouldn't need to re-claim.
+
       if (name != UserService.instance.username) {
         await UserService.instance.setUsername(name);
       }
