@@ -3,13 +3,13 @@
    Main chat screen where users talk to the studio in real time.
 
    This screen is an orchestrator — it manages the username flow,
-   admin state, and text input, then delegates all rendering to
-   dedicated child widgets:
+   admin state, text input, and reply state, then delegates all
+   rendering to dedicated child widgets:
 
    - ChatHeader        → logo + long-press admin login
    - ChatTitle         → title, username badge, logout / pick-name button
    - ChatMessageList   → StreamBuilder with loading/error/empty states
-   - ChatInputField    → text field + send button
+   - ChatInputField    → text field + send button + reply banner
    - UsernamePrompt    → tappable bar shown when no username is set
 
    Features:
@@ -20,7 +20,12 @@
    - 160 character limit with a countdown near the limit
    - Own messages on the right (blue), others on the left
    - Admin messages in orange with a radio icon
+   - Per-message action row (like / reply / flag) under each bubble
+   - Reply state managed at this level: tapping reply on a bubble
+     stores the target in `_replyingTo`, which the input field shows
+     as a banner. Sending forwards the target to ChatService.
    - Long-press the logo to open the admin login
+   - Long-press a message: admin only, opens moderation actions
    - Keyboard stays open between messages so the user can keep typing
    - Existing users without EULA acceptance are prompted on chat open
      and again as a safety net if they try to send before accepting
@@ -73,6 +78,8 @@ class _ChatScreenState extends State<ChatScreen>
   bool _showCooldownHint = false;
   Timer? _cooldownTicker;
   Timer? _hintDismissTimer;
+
+  Message? _replyingTo;
 
   ChatService get _chatService => widget.chatService;
   AuthService get _authService => widget.authService;
@@ -138,6 +145,21 @@ class _ChatScreenState extends State<ChatScreen>
     }
   }
 
+  // ── Reply handlers ────────────────────────────────────────────────────────
+
+  void _onReplyTo(Message message) {
+    if (!UserService.instance.hasUsername && !_authService.isAdmin) {
+      _promptUsername();
+      return;
+    }
+    setState(() => _replyingTo = message);
+    _textFieldFocus.requestFocus();
+  }
+
+  void _onCancelReply() {
+    setState(() => _replyingTo = null);
+  }
+
   // ── Send ──────────────────────────────────────────────────────────────────
 
   Future<void> _sendMessage() async {
@@ -156,100 +178,68 @@ class _ChatScreenState extends State<ChatScreen>
     }
 
     final text = _controller.text;
+    final replyTarget = _replyingTo;
 
-    final keepFocus = _textFieldFocus.hasFocus;
-
-    _controller.clear();
     setState(() => _sending = true);
-
     try {
-      await _chatService.sendMessage(text);
-
-      if (mounted && keepFocus && !_textFieldFocus.hasFocus) {
-        _textFieldFocus.requestFocus();
-      }
-
-      if (!_authService.isAdmin) {
-        _startCooldown();
+      final ok = await _chatService.sendMessage(text, replyingTo: replyTarget);
+      if (!mounted) return;
+      if (ok) {
+        _controller.clear();
+        setState(() {
+          _replyingTo = null;
+          _charsLeft = ChatService.maxMessageLength;
+        });
+        _startCooldownTicker();
       }
     } on CooldownException catch (e) {
-
-      if (!mounted) return;
-      _controller.text = text;
-      _startCooldown(seconds: e.secondsRemaining);
-      _flashCooldownHint();
+      _flashCooldownHint(initial: e.secondsRemaining);
+    } on ProfanityException catch (e) {
+      _showSnack(e.message);
     } catch (e) {
-      if (!mounted) return;
-
-      _controller.text = text;
-
-      if (e.toString().contains('gebruiksvoorwaarden')) {
-        await _promptUsername();
-        return;
-      }
-
-      _showError(e.toString().replaceFirst('Exception: ', ''));
+      _showSnack(e.toString().replaceFirst('Exception: ', ''));
     } finally {
       if (mounted) setState(() => _sending = false);
     }
   }
 
-  void _openReports() {
-    Navigator.of(context).push(
-      MaterialPageRoute(
-        builder: (_) => const AdminReportsScreen(),
-      ),
-    );
-  }
-
   // ── Cooldown ──────────────────────────────────────────────────────────────
 
-  void _startCooldown({int? seconds}) {
+  void _startCooldownTicker() {
     _cooldownTicker?.cancel();
-
-    if (!mounted) return;
-
-    final initial = seconds ?? ChatService.cooldownSeconds;
-    setState(() {
-      _cooldownRemaining = initial;
-    });
+    setState(() => _cooldownRemaining = ChatService.cooldownSeconds);
 
     _cooldownTicker = Timer.periodic(const Duration(seconds: 1), (timer) {
-      if (!mounted) {
+      if (!mounted) return timer.cancel();
+      final remaining = _chatService.cooldownRemaining();
+      if (remaining <= 0) {
         timer.cancel();
-        _cooldownTicker = null;
-        return;
-      }
-
-      final next = _cooldownRemaining - 1;
-
-      if (next <= 0) {
-        timer.cancel();
-        _cooldownTicker = null;
         setState(() => _cooldownRemaining = 0);
       } else {
-        setState(() => _cooldownRemaining = next);
+        setState(() => _cooldownRemaining = remaining);
       }
     });
   }
 
-  void _flashCooldownHint() {
-    _hintDismissTimer?.cancel();
+  void _flashCooldownHint({int? initial}) {
+    if (initial != null) {
+      setState(() => _cooldownRemaining = initial);
+      _startCooldownTicker();
+    }
     setState(() => _showCooldownHint = true);
-    _hintDismissTimer = Timer(const Duration(milliseconds: 1500), () {
+    _hintDismissTimer?.cancel();
+    _hintDismissTimer = Timer(const Duration(seconds: 2), () {
       if (!mounted) return;
       setState(() => _showCooldownHint = false);
     });
   }
 
-  // ── Error snackbar (real errors only) ─────────────────────────────────────
+  // ── Snackbar / admin login / reports ──────────────────────────────────────
 
-  void _showError(String message) {
+  void _showSnack(String message) {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text(message),
-        backgroundColor: AppColors.live,
-        behavior: SnackBarBehavior.floating,
         duration: const Duration(seconds: 4),
         margin: const EdgeInsets.all(AppDimensions.paddingLarge),
         shape: RoundedRectangleBorder(
@@ -270,6 +260,12 @@ class _ChatScreenState extends State<ChatScreen>
     setState(() {
       _messagesStream = _chatService.messagesStream;
     });
+  }
+
+  void _openReports() {
+    Navigator.of(context).push(
+      MaterialPageRoute(builder: (_) => const AdminReportsScreen()),
+    );
   }
 
   // ── Build ─────────────────────────────────────────────────────────────────
@@ -303,7 +299,10 @@ class _ChatScreenState extends State<ChatScreen>
                 onOpenReports: _openReports,
               ),
               const SizedBox(height: AppDimensions.spaceMedium),
-              ChatMessageList(messagesStream: _messagesStream),
+              ChatMessageList(
+                messagesStream: _messagesStream,
+                onReply: _onReplyTo,
+              ),
 
               // ── Input area: real input or "pick a name" prompt ──────────
               if (hasUsername || isAdmin)
@@ -316,6 +315,8 @@ class _ChatScreenState extends State<ChatScreen>
                   isSending: _sending,
                   cooldownRemaining: _cooldownRemaining,
                   showCooldownHint: _showCooldownHint,
+                  replyingTo: _replyingTo,
+                  onCancelReply: _onCancelReply,
                 )
               else
                 UsernamePrompt(onTap: _promptUsername),

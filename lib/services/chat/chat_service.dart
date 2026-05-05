@@ -13,6 +13,13 @@
      stricter rate limit)
    - Sends admin messages via the adminSendMessage Cloud Function with
      a session token
+   - Optionally attaches a `replyTo` snapshot when sending so the
+     server stores it on the new message and the parent's replyCount
+     gets incremented (server-side logic in the Cloud Functions).
+   - Maps each Firestore doc into a Message including the new
+     `likes`, `likedByMe`, `replyCount`, and `replyTo` fields. Likes
+     are a counter + a `likedBy.{username}` map maintained by
+     LikeService.
    - Exposes remaining cooldown seconds for the UI
    - Forwards unexpected send failures to Crashlytics (CooldownException
      and ProfanityException are expected and not logged).
@@ -37,6 +44,7 @@ class ChatService {
   static const String _collection = 'chat_messages';
   static const int maxMessageLength = 160;
   static const int cooldownSeconds = 3;
+  static const int replyPreviewMaxChars = 80;
 
   static const int _streamLimit = 100;
 
@@ -56,7 +64,6 @@ class ChatService {
   // ── Stream ────────────────────────────────────────────────────────────────
 
   Stream<List<Message>> get messagesStream {
-
     return _db
         .collection(_collection)
         .orderBy('timestamp', descending: true)
@@ -74,7 +81,6 @@ class ChatService {
 
     return snap.docs
         .where((doc) {
-
           final ts = doc.data()['timestamp'] as Timestamp?;
           if (ts == null) return true;
           return ts.toDate().isAfter(cutoff);
@@ -85,6 +91,24 @@ class ChatService {
           final dt = ts?.toDate() ?? DateTime.now();
           final msgUsername = data['username'] as String? ?? 'Onbekend';
           final role = data['role'] as String? ?? 'user';
+
+          final likes = (data['likes'] as num?)?.toInt() ?? 0;
+          final likedByMap =
+              (data['likedBy'] as Map<String, dynamic>?) ?? const {};
+          final likedByMe =
+              localUsername != null && likedByMap[localUsername] == true;
+          final replyCount = (data['replyCount'] as num?)?.toInt() ?? 0;
+
+          ReplyPreview? replyTo;
+          final rt = data['replyTo'];
+          if (rt is Map<String, dynamic>) {
+            replyTo = ReplyPreview(
+              messageId: rt['messageId'] as String?,
+              username: (rt['username'] as String?) ?? 'Onbekend',
+              textPreview: (rt['textPreview'] as String?) ?? '',
+            );
+          }
+
           return Message(
             id: doc.id,
             role: role,
@@ -96,6 +120,10 @@ class ChatService {
                 localUsername != null &&
                 msgUsername == localUsername &&
                 role != 'admin',
+            likes: likes,
+            likedByMe: likedByMe,
+            replyCount: replyCount,
+            replyTo: replyTo,
           );
         })
         .toList();
@@ -103,24 +131,45 @@ class ChatService {
 
   // ── Send ──────────────────────────────────────────────────────────────────
 
-  Future<bool> sendMessage(String text) async {
+  Future<bool> sendMessage(String text, {Message? replyingTo}) async {
     final trimmed = text.trim();
     if (trimmed.isEmpty || trimmed.length > maxMessageLength) return false;
 
+    final replyPayload = _buildReplyPayload(replyingTo);
+
     if (authService.isAdmin) {
-      return _sendAdminMessage(trimmed);
+      return _sendAdminMessage(trimmed, replyPayload: replyPayload);
     }
-    return _sendUserMessage(trimmed);
+    return _sendUserMessage(trimmed, replyPayload: replyPayload);
   }
 
-  Future<bool> _sendUserMessage(String text) async {
+  /// Builds the small `replyTo` snapshot that's sent to the server.
+  /// Returns null if there's no reply target. The `textPreview` is
+  /// truncated client-side as a courtesy; the server enforces an
+  /// upper bound too.
+  Map<String, dynamic>? _buildReplyPayload(Message? replyingTo) {
+    if (replyingTo == null || replyingTo.id == null) return null;
+    var preview = replyingTo.text.trim();
+    if (preview.length > replyPreviewMaxChars) {
+      preview = '${preview.substring(0, replyPreviewMaxChars - 1)}…';
+    }
+    return {
+      'messageId': replyingTo.id,
+      'username': replyingTo.username ?? 'Onbekend',
+      'textPreview': preview,
+    };
+  }
+
+  Future<bool> _sendUserMessage(
+    String text, {
+    Map<String, dynamic>? replyPayload,
+  }) async {
     final username = UserService.instance.username;
     if (username == null || username.isEmpty) {
       throw Exception(
         'Stel eerst een gebruikersnaam in voor je een bericht stuurt.',
       );
     }
-    // ─── EULA gate ─────────────────────────────────────────────────────────
     if (!EulaService.instance.hasAccepted) {
       throw Exception(
         'Accepteer eerst de gebruiksvoorwaarden om te kunnen chatten.',
@@ -150,13 +199,13 @@ class ChatService {
         'username': username,
         'text': text,
         'claimToken': claimToken,
+        if (replyPayload != null) 'replyTo': replyPayload,
       });
 
       if (response.statusCode == 429) {
         throw Exception('Je stuurt berichten te snel. Wacht even.');
       }
       if (response.statusCode == 401) {
-
         throw Exception(
           'Beveiligingstoken ongeldig. Stel je gebruikersnaam opnieuw in via het profielmenu.',
         );
@@ -173,7 +222,6 @@ class ChatService {
       _lastMessageSent = DateTime.now();
       return true;
     } catch (e, st) {
-
       if (e is! CooldownException && e is! ProfanityException) {
         FirebaseCrashlytics.instance.recordError(
           e,
@@ -186,7 +234,10 @@ class ChatService {
     }
   }
 
-  Future<bool> _sendAdminMessage(String text) async {
+  Future<bool> _sendAdminMessage(
+    String text, {
+    Map<String, dynamic>? replyPayload,
+  }) async {
     final token = authService.sessionToken;
     if (token == null) return false;
 
@@ -194,6 +245,7 @@ class ChatService {
       final response = await AppCheckHttp.post('adminSendMessage', {
         'token': token,
         'text': text,
+        if (replyPayload != null) 'replyTo': replyPayload,
       });
 
       if (response.statusCode != 200) {

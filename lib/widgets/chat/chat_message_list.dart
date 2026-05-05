@@ -20,6 +20,8 @@
    - distinguishing network/Firestore errors from empty state so
      the user sees a helpful wifi-off icon and hint instead of a
      misleading "no messages" message during outages
+   - forwarding the [onReply] callback to each MessageBubble so the
+     parent chat screen can manage the active reply target
 
    All state mutations (counter update, new-messages flag, auto-scroll)
    are deferred to addPostFrameCallback so setState is never called
@@ -49,8 +51,13 @@ import 'message_bubble.dart';
 
 class ChatMessageList extends StatefulWidget {
   final Stream<List<Message>> messagesStream;
+  final ValueChanged<Message>? onReply;
 
-  const ChatMessageList({super.key, required this.messagesStream});
+  const ChatMessageList({
+    super.key,
+    required this.messagesStream,
+    this.onReply,
+  });
 
   @override
   State<ChatMessageList> createState() => _ChatMessageListState();
@@ -92,7 +99,6 @@ class _ChatMessageListState extends State<ChatMessageList>
     final bottomInset = view.viewInsets.bottom;
 
     if (bottomInset > _lastBottomInset + 10) {
-
       Future.delayed(const Duration(milliseconds: 280), () {
         if (mounted) _scrollToBottom();
       });
@@ -132,7 +138,6 @@ class _ChatMessageListState extends State<ChatMessageList>
 
       if (!_scrollController.hasClients ||
           !_scrollController.position.hasContentDimensions) {
-
         if (retries > 0) {
           await Future.delayed(const Duration(milliseconds: 100));
           _scrollToBottom(retries: retries - 1);
@@ -147,7 +152,6 @@ class _ChatMessageListState extends State<ChatMessageList>
           curve: Curves.easeOut,
         );
       } catch (_) {
-
         if (retries > 0) {
           await Future.delayed(const Duration(milliseconds: 100));
           _scrollToBottom(retries: retries - 1);
@@ -164,7 +168,6 @@ class _ChatMessageListState extends State<ChatMessageList>
 
       if (!_scrollController.hasClients ||
           !_scrollController.position.hasContentDimensions) {
-
         Future.delayed(const Duration(milliseconds: 50), () {
           if (mounted) _settleAtBottom(passes: passes - 1);
         });
@@ -174,9 +177,7 @@ class _ChatMessageListState extends State<ChatMessageList>
       final target = _scrollController.position.maxScrollExtent;
       try {
         _scrollController.jumpTo(target);
-      } catch (_) {
-
-      }
+      } catch (_) {}
 
       Future.delayed(const Duration(milliseconds: 32), () {
         if (!mounted) return;
@@ -188,7 +189,6 @@ class _ChatMessageListState extends State<ChatMessageList>
         final atBottom =
             (newMax - _scrollController.position.pixels).abs() < 1.0;
         if (atBottom && newMax == target) {
-
           _initialScrollDone = true;
           return;
         }
@@ -221,7 +221,6 @@ class _ChatMessageListState extends State<ChatMessageList>
       _lastMessageSignature = newestSignature;
 
       if (isFirstLoad) {
-
         _settleAtBottom();
         return;
       }
@@ -267,7 +266,6 @@ class _ChatMessageListState extends State<ChatMessageList>
       builder: (context, _) => StreamBuilder<List<Message>>(
         stream: widget.messagesStream,
         builder: (context, snapshot) {
-
           if (snapshot.connectionState == ConnectionState.waiting &&
               _lastMessages == null) {
             return const Center(child: CircularProgressIndicator());
@@ -277,7 +275,8 @@ class _ChatMessageListState extends State<ChatMessageList>
             return _buildErrorState(snapshot.error);
           }
 
-          final rawMessages = snapshot.data ?? _lastMessages ?? const <Message>[];
+          final rawMessages =
+              snapshot.data ?? _lastMessages ?? const <Message>[];
           final messages = rawMessages
               .where((m) => !BlockService.instance.isBlocked(m.username))
               .toList();
@@ -296,8 +295,10 @@ class _ChatMessageListState extends State<ChatMessageList>
             controller: _scrollController,
             padding: const EdgeInsets.all(AppDimensions.paddingMedium),
             itemCount: messages.length,
-            itemBuilder: (context, index) =>
-                MessageBubble(message: messages[index]),
+            itemBuilder: (context, index) => MessageBubble(
+              message: messages[index],
+              onReply: widget.onReply,
+            ),
           );
         },
       ),
@@ -349,12 +350,12 @@ class _ChatMessageListState extends State<ChatMessageList>
       child: Text(
         'Nog geen berichten.\nWees de eerste!',
         textAlign: TextAlign.center,
-        style: TextStyle(color: AppColors.textSecondary, fontSize: 13),
+        style: TextStyle(color: AppColors.textSecondary, fontSize: 14),
       ),
     );
   }
 
-  // ── "New messages" chip ───────────────────────────────────────────────────
+  // ── New-messages floating chip ────────────────────────────────────────────
 
   Widget _buildNewMessagesChip() {
     return Positioned(
@@ -363,20 +364,38 @@ class _ChatMessageListState extends State<ChatMessageList>
       right: 0,
       child: Center(
         child: GestureDetector(
-          onTap: _scrollToBottom,
+          onTap: () => _scrollToBottom(),
           child: Container(
-            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 7),
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
             decoration: BoxDecoration(
               color: AppColors.primaryLight,
               borderRadius: BorderRadius.circular(AppDimensions.radiusFull),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withValues(alpha: 0.2),
+                  blurRadius: 6,
+                  offset: const Offset(0, 2),
+                ),
+              ],
             ),
-            child: const Text(
-              'Nieuwe berichten ↓',
-              style: TextStyle(
-                color: AppColors.white,
-                fontSize: 12,
-                fontWeight: FontWeight.w600,
-              ),
+            child: const Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(
+                  Icons.arrow_downward,
+                  color: AppColors.textOnDark,
+                  size: 14,
+                ),
+                SizedBox(width: 6),
+                Text(
+                  'Nieuwe berichten',
+                  style: TextStyle(
+                    color: AppColors.textOnDark,
+                    fontSize: 12,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ],
             ),
           ),
         ),
