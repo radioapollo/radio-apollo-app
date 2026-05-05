@@ -2,7 +2,7 @@ name: radio_apollo
 description: "The radio apollo app."
 publish_to: 'none'
 
-version: 1.5.0+15
+version: 1.5.0+16
 
 environment:
   sdk: ^3.11.1
