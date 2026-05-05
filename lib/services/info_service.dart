@@ -6,6 +6,14 @@
    - streaming the about text from Firestore
    - streaming the list of sponsors from Firestore
 
+   ─── Singleton ─────────────────────────────────────────────────────────────
+   The service is a singleton (`InfoService.instance`) so all callers
+   share the same cached streams and latest-value snapshots. This is
+   how `UserService`, `BlockService`, and `EulaService` are structured
+   too. The audio handler reads sponsor names from this service to
+   filter commercials out of the recently-played list, so it must see
+   the same data as the Info screen.
+
    ─── Stream caching ────────────────────────────────────────────────────────
    Both streams are built once as broadcast streams and reused across
    rebuilds. Each stream also remembers its latest emitted value so
@@ -19,6 +27,9 @@ import '../models/sponsor.dart';
 import '../constants/constants.dart';
 
 class InfoService {
+  InfoService._();
+  static final InfoService instance = InfoService._();
+
   final _db = FirebaseFirestore.instance;
 
   Stream<String>? _aboutTextStream;

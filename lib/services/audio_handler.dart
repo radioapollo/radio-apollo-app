@@ -26,6 +26,29 @@
    - fetching the current song title every 10 seconds from the stats endpoint
    - stripping HTML entities from the song title metadata
    - showing a default logo as notification artwork when no program image is set
+   - keeping an in-memory history of recently played songs (capped at 20)
+     exposed as a stream for UI widgets to subscribe to
+
+   Song-vs-filler classification
+   ─────────────────────────────
+   The stats endpoint's `songtitle` field doesn't distinguish between
+   actual songs ("Coldplay - Yellow") and stream filler — show names,
+   station IDs, presenter intros, commercials, etc. The broadcasting
+   software just pushes whatever string the studio configured.
+
+   We classify each metadata read as either a real song or filler. Real
+   songs go onto the recently played list and are shown as "Artist —
+   Title" in the player card / lock screen. Filler is suppressed: the
+   recent list is not touched, and the player card / lock screen show
+   the generic "Luister live" placeholder. See [_isRealSong].
+
+   Filler is detected via four signals:
+   - missing or empty " - " separator
+   - the string overlapping the current program name
+   - matching a small static blocklist of known station strings
+   - the artist (left half) matching a known sponsor name —
+     populated dynamically via [updateSponsorNames] from main.dart's
+     subscription to InfoService's sponsors stream
 */
 
 import 'dart:async';
@@ -38,6 +61,7 @@ import 'package:just_audio/just_audio.dart';
 import 'package:http/http.dart' as http;
 import 'package:flutter_chrome_cast/flutter_chrome_cast.dart';
 import '../constants/constants.dart';
+import '../models/recent_song.dart';
 import 'cast_service.dart';
 
 class RadioAudioHandler extends BaseAudioHandler {
@@ -47,6 +71,46 @@ class RadioAudioHandler extends BaseAudioHandler {
   String _lastSongTitle = '';
   Uri? _defaultArtUri;
   Uri? _programArtUri;
+
+  // ── Recently played history ───────────────────────────────────────────────
+
+  static const int _maxRecentSongs = 20;
+  final List<RecentSong> _recentSongs = [];
+  final StreamController<List<RecentSong>> _recentSongsController =
+      StreamController<List<RecentSong>>.broadcast();
+
+  /// Latest snapshot of recently played songs, newest first.
+  List<RecentSong> get recentSongs => List.unmodifiable(_recentSongs);
+
+  /// Broadcast stream of the recently played list.
+  Stream<List<RecentSong>> get recentSongsStream =>
+      _recentSongsController.stream;
+
+  // ── Filler blocklist ──────────────────────────────────────────────────────
+
+  static const List<String> _fillerKeywords = [
+    'radio apollo',
+    'live uitzending',
+    'live stream',
+    'unknown',
+    'no metadata',
+    '<unknown>',
+  ];
+
+  // Lowercased sponsor names. Populated by [updateSponsorNames] from
+  // main.dart, which subscribes to InfoService.sponsorsStream. A song
+  // whose artist (left of the dash) matches a sponsor name is treated
+  // as a commercial and filtered out.
+  List<String> _sponsorNames = const [];
+
+  /// Replaces the current sponsor blocklist. Names are stored lowercased
+  /// for case-insensitive comparison. Pass an empty list to clear it.
+  void updateSponsorNames(List<String> names) {
+    _sponsorNames = names
+        .map((s) => s.trim().toLowerCase())
+        .where((s) => s.isNotEmpty)
+        .toList(growable: false);
+  }
 
   // ── Cast state ────────────────────────────────────────────────────────────
 
@@ -60,7 +124,6 @@ class RadioAudioHandler extends BaseAudioHandler {
     _initDefaultArt();
 
     _player.playerStateStream.listen((state) {
-
       if (_isCasting) return;
 
       final playing = state.playing;
@@ -94,7 +157,6 @@ class RadioAudioHandler extends BaseAudioHandler {
   // ── Cast listeners ────────────────────────────────────────────────────────
 
   void _initCastListeners() {
-
     _castSessionSub = GoogleCastSessionManager.instance.currentSessionStream
         .listen((session) async {
           final connected =
@@ -229,6 +291,63 @@ class RadioAudioHandler extends BaseAudioHandler {
         .trim();
   }
 
+  // ── Song / filler classification ──────────────────────────────────────────
+  //
+  // Returns true if [raw] looks like an actual song ("Artist - Title").
+  // Filters out:
+  //   - Anything without a " - " separator
+  //   - Empty halves (e.g. " - Title" or "Artist - ")
+  //   - Strings overlapping the current program name on either side
+  //   - Strings matching a small static known-filler blocklist
+  //   - Strings whose left half (the "artist") matches a known sponsor
+  //     name — this catches commercials like "Garage Janssens - Sale"
+
+  bool _isRealSong(String raw) {
+    final trimmed = raw.trim();
+    if (trimmed.isEmpty) return false;
+
+    final lower = trimmed.toLowerCase();
+    for (final keyword in _fillerKeywords) {
+      if (lower.contains(keyword)) return false;
+    }
+
+    final dashIndex = trimmed.indexOf(' - ');
+    if (dashIndex <= 0) return false;
+
+    final left = trimmed.substring(0, dashIndex).trim();
+    final right = trimmed.substring(dashIndex + 3).trim();
+    if (left.isEmpty || right.isEmpty) return false;
+
+    final leftLower = left.toLowerCase();
+    final rightLower = right.toLowerCase();
+
+    if (_currentProgram.isNotEmpty) {
+      final programLower = _currentProgram.toLowerCase();
+
+      if (programLower.contains(leftLower) ||
+          leftLower.contains(programLower) ||
+          programLower.contains(rightLower) ||
+          rightLower.contains(programLower)) {
+        return false;
+      }
+    }
+
+    // Sponsor blocklist — match the artist position only. A sponsor
+    // name appearing on the *right* side (in a song title) is fine and
+    // shouldn't filter the song out. Use both equality and substring
+    // checks so "Tony's Muziekhuis Aktie" still matches "Tony's
+    // Muziekhuis", and vice versa.
+    for (final sponsor in _sponsorNames) {
+      if (leftLower == sponsor ||
+          leftLower.contains(sponsor) ||
+          sponsor.contains(leftLower)) {
+        return false;
+      }
+    }
+
+    return true;
+  }
+
   // ── Metadata polling ──────────────────────────────────────────────────────
 
   void _startMetadataPolling() {
@@ -258,12 +377,36 @@ class RadioAudioHandler extends BaseAudioHandler {
 
         if (songTitle.isNotEmpty && songTitle != _lastSongTitle) {
           _lastSongTitle = songTitle;
-          _updateMediaItem(songTitle);
+
+          if (_isRealSong(songTitle)) {
+            _updateMediaItem(songTitle);
+            _pushRecentSong(songTitle);
+          } else {
+            _updateMediaItemAsLive();
+          }
         }
       }
     } catch (e) {
       debugPrint('[AudioHandler] Stats fetch error: $e');
     }
+  }
+
+  // ── Recently played helpers ───────────────────────────────────────────────
+
+  void _pushRecentSong(String rawTitle) {
+    final song = RecentSong.parse(rawTitle);
+
+    if (_recentSongs.isNotEmpty &&
+        _recentSongs.first.display == song.display) {
+      return;
+    }
+
+    _recentSongs.insert(0, song);
+    if (_recentSongs.length > _maxRecentSongs) {
+      _recentSongs.removeLast();
+    }
+
+    _recentSongsController.add(List.unmodifiable(_recentSongs));
   }
 
   // ── Media item ────────────────────────────────────────────────────────────
@@ -288,13 +431,37 @@ class RadioAudioHandler extends BaseAudioHandler {
     );
   }
 
+  /// Pushes a "live placeholder" MediaItem when the stream metadata is
+  /// filler rather than a real song.
+  void _updateMediaItemAsLive() {
+    final album = _currentProgram.isNotEmpty
+        ? '$_currentProgram — Radio Apollo'
+        : 'Radio Apollo';
+    final artUri = _programArtUri ?? _defaultArtUri;
+
+    mediaItem.add(
+      MediaItem(
+        id: AppConstants.streamUrl,
+        title: '',
+        artist: '',
+        album: album,
+        artUri: artUri,
+      ),
+    );
+  }
+
   void setCurrentProgram(String programName, {String? imageUrl}) {
     _currentProgram = programName;
     _programArtUri = (imageUrl != null && imageUrl.isNotEmpty)
         ? Uri.parse(imageUrl)
         : null;
+
     if (_lastSongTitle.isNotEmpty) {
-      _updateMediaItem(_lastSongTitle);
+      if (_isRealSong(_lastSongTitle)) {
+        _updateMediaItem(_lastSongTitle);
+      } else {
+        _updateMediaItemAsLive();
+      }
     }
   }
 
@@ -312,7 +479,6 @@ class RadioAudioHandler extends BaseAudioHandler {
     );
 
     if (_isCasting) {
-
       try {
         final hasMedia =
             GoogleCastRemoteMediaClient.instance.mediaStatus != null;
@@ -342,7 +508,6 @@ class RadioAudioHandler extends BaseAudioHandler {
   Future<void> pause() async {
     if (_isCasting) {
       try {
-
         await GoogleCastRemoteMediaClient.instance.pause();
       } catch (e) {
         debugPrint('[AudioHandler] Cast pause failed: $e');
@@ -396,6 +561,7 @@ class RadioAudioHandler extends BaseAudioHandler {
     _stopMetadataPolling();
     await _castSessionSub?.cancel();
     await _castMediaStatusSub?.cancel();
+    await _recentSongsController.close();
     await super.onTaskRemoved();
   }
 }

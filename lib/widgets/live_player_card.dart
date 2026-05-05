@@ -24,6 +24,8 @@ import 'service_provider.dart';
 import 'cast_button.dart';
 import '../services/program/current_program_service.dart';
 import '../theme/app_theme.dart';
+import '../models/recent_song.dart' show RecentSong;
+import 'player/recently_played_sheet.dart';
 
 class LivePlayerCard extends StatelessWidget {
   final bool isPlaying;
@@ -157,6 +159,16 @@ class LivePlayerCard extends StatelessWidget {
                                   : Icons.play_circle_fill,
                               color: AppColors.textOnDark,
                               size: AppDimensions.iconPlayPause,
+                            ),
+                          ),
+                          
+                          const SizedBox(width: AppDimensions.spaceMedium),
+                          GestureDetector(
+                            onTap: () => RecentlyPlayedSheet.show(context, audioHandler),
+                            child: const Icon(
+                              Icons.queue_music,
+                              color: AppColors.textOnDark,
+                              size: 28,
                             ),
                           ),
 

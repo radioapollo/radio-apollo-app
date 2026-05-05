@@ -45,7 +45,7 @@ class InfoScreen extends StatefulWidget {
 
 class _InfoScreenState extends State<InfoScreen>
     with AutomaticKeepAliveClientMixin {
-  final _infoService = InfoService();
+  final _infoService = InfoService.instance;
 
   late final Stream<String> _aboutTextStream = _infoService.aboutTextStream;
   late final Stream<List<Sponsor>> _sponsorsStream =

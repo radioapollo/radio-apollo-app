@@ -5,6 +5,24 @@
 
    Wraps async startup in a top-level error zone so uncaught errors are
    logged to Crashlytics rather than crashing the app silently.
+
+   Web compatibility
+   ─────────────────
+   `firebase_crashlytics` does not have a web implementation. Calling
+   into it on web throws an assertion at startup because the platform
+   plugin constants are missing. All Crashlytics calls therefore go
+   through `_recordError` / `_recordFlutterFatalError`, which no-op
+   when `kIsWeb` is true. The same guard wraps the one-time
+   `setCrashlyticsCollectionEnabled` call.
+
+   Sponsor blocklist wiring
+   ────────────────────────
+   The audio handler filters commercials out of the recently-played
+   list by matching the artist position against known sponsor names.
+   We subscribe to InfoService.sponsorsStream once here at startup and
+   forward each emission to `audioHandler.updateSponsorNames(...)`.
+   Subscription is cancelled in `_ApolloAppState.dispose()` alongside
+   the existing program subscription.
 */
 
 import 'dart:async';
@@ -20,6 +38,7 @@ import 'package:flutter_chrome_cast/flutter_chrome_cast.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'navigation/apollo_nav.dart';
 import 'services/audio_handler.dart';
+import 'services/info_service.dart';
 import 'services/program/current_program_service.dart';
 import 'services/chat/user_service.dart';
 import 'services/chat/block_service.dart';
@@ -65,8 +84,10 @@ Future<void> main() async {
     return;
   }
 
-  await FirebaseCrashlytics.instance
-      .setCrashlyticsCollectionEnabled(!kDebugMode);
+  if (!kIsWeb) {
+    await FirebaseCrashlytics.instance
+        .setCrashlyticsCollectionEnabled(!kDebugMode);
+  }
 
   _installErrorHandlers();
 
@@ -78,12 +99,7 @@ Future<void> main() async {
     await NotificationService.instance.init();
   } catch (e, st) {
     debugPrint('[main] NotificationService init failed: $e');
-    FirebaseCrashlytics.instance.recordError(
-      e,
-      st,
-      reason: 'NotificationService.init',
-      fatal: false,
-    );
+    _recordError(e, st, reason: 'NotificationService.init');
   }
 
   // ── Firebase ──────────────────────────────────────────────────────────────
@@ -96,35 +112,21 @@ Future<void> main() async {
     await ProfanityService.instance.init();
   } catch (e, st) {
     debugPrint('[main] ProfanityService init failed: $e');
-    FirebaseCrashlytics.instance.recordError(
-      e,
-      st,
-      reason: 'ProfanityService.init',
-      fatal: false,
-    );
+    _recordError(e, st, reason: 'ProfanityService.init');
   }
 
   try {
     await BlockService.instance.init();
   } catch (e, st) {
     debugPrint('[main] BlockService init failed: $e');
-    FirebaseCrashlytics.instance.recordError(
-      e,
-      st,
-      reason: 'BlockService.init',
-      fatal: false,
-    );
+    _recordError(e, st, reason: 'BlockService.init');
   }
 
   try {
     await EulaService.instance.init();
   } catch (e, st) {
     debugPrint('[main] EulaService init failed: $e');
-    FirebaseCrashlytics.instance.recordError(
-      e, st,
-      reason: 'EulaService.init',
-      fatal: false,
-    );
+    _recordError(e, st, reason: 'EulaService.init');
   }
 
   // ── Audio service (must succeed for the app to run) ───────────────────────
@@ -141,12 +143,7 @@ Future<void> main() async {
     );
   } catch (e, st) {
     debugPrint('[main] AudioService init failed: $e');
-    FirebaseCrashlytics.instance.recordError(
-      e,
-      st,
-      reason: 'AudioService.init (fatal)',
-      fatal: true,
-    );
+    _recordError(e, st, reason: 'AudioService.init (fatal)', fatal: true);
     runApp(
       const _ErrorApp(
         message: 'Audiodienst kon niet starten. Herstart de app.',
@@ -162,12 +159,7 @@ Future<void> main() async {
     await currentProgramService.start();
   } catch (e, st) {
     debugPrint('[main] CurrentProgramService start failed: $e');
-    FirebaseCrashlytics.instance.recordError(
-      e,
-      st,
-      reason: 'CurrentProgramService.start',
-      fatal: false,
-    );
+    _recordError(e, st, reason: 'CurrentProgramService.start');
   }
 
   final programSub = currentProgramService.currentProgram.listen((program) {
@@ -177,13 +169,54 @@ Future<void> main() async {
     );
   });
 
+  // ── Sponsor blocklist for commercial filtering ────────────────────────────
+
+  // Seed the audio handler with whatever sponsors InfoService already
+  // has cached (typically empty on cold start, populated on warm start).
+  final cachedSponsors = InfoService.instance.latestSponsors;
+  if (cachedSponsors != null) {
+    audioHandler.updateSponsorNames(
+      cachedSponsors.map((s) => s.title).toList(),
+    );
+  }
+
+  // Forward every sponsor-list change to the audio handler.
+  final sponsorSub = InfoService.instance.sponsorsStream.listen((sponsors) {
+    audioHandler.updateSponsorNames(
+      sponsors.map((s) => s.title).toList(),
+    );
+  });
+
   runApp(
     ApolloApp(
       audioHandler: audioHandler,
       currentProgramService: currentProgramService,
       programSubscription: programSub,
+      sponsorSubscription: sponsorSub,
     ),
   );
+}
+
+// ── Crashlytics helpers (web-safe) ──────────────────────────────────────────
+
+void _recordError(
+  Object e,
+  StackTrace st, {
+  String? reason,
+  bool fatal = false,
+}) {
+  if (kIsWeb) return;
+  FirebaseCrashlytics.instance.recordError(
+    e,
+    st,
+    reason: reason,
+    fatal: fatal,
+  );
+}
+
+void _recordFlutterFatalError(FlutterErrorDetails details) {
+  if (kIsWeb) return;
+  FirebaseCrashlytics.instance.recordFlutterFatalError(details);
 }
 
 // ── Startup helpers ─────────────────────────────────────────────────────────
@@ -192,12 +225,11 @@ void _installErrorHandlers() {
   FlutterError.onError = (FlutterErrorDetails details) {
     FlutterError.presentError(details);
     debugPrint('[FlutterError] ${details.exceptionAsString()}');
-
-    FirebaseCrashlytics.instance.recordFlutterFatalError(details);
+    _recordFlutterFatalError(details);
   };
   PlatformDispatcher.instance.onError = (Object error, StackTrace stack) {
     debugPrint('[UncaughtError] $error\n$stack');
-    FirebaseCrashlytics.instance.recordError(error, stack, fatal: true);
+    _recordError(error, stack, fatal: true);
     return true;
   };
 }
@@ -214,12 +246,7 @@ Future<void> _activateAppCheck() async {
     );
   } catch (e, st) {
     debugPrint('[main] App Check activation failed: $e');
-    FirebaseCrashlytics.instance.recordError(
-      e,
-      st,
-      reason: 'AppCheck.activate',
-      fatal: false,
-    );
+    _recordError(e, st, reason: 'AppCheck.activate');
   }
 }
 
@@ -242,22 +269,12 @@ Future<void> _initCast() async {
         GoogleCastDiscoveryManager.instance.startDiscovery();
       } catch (e, st) {
         debugPrint('[main] Cast discovery start failed: $e');
-        FirebaseCrashlytics.instance.recordError(
-          e,
-          st,
-          reason: 'Cast discovery start',
-          fatal: false,
-        );
+        _recordError(e, st, reason: 'Cast discovery start');
       }
     }
   } catch (e, st) {
     debugPrint('[main] Cast init failed: $e');
-    FirebaseCrashlytics.instance.recordError(
-      e,
-      st,
-      reason: 'Cast init',
-      fatal: false,
-    );
+    _recordError(e, st, reason: 'Cast init');
   }
 }
 
@@ -266,12 +283,7 @@ Future<void> _initUser() async {
     await UserService.instance.init();
   } catch (e, st) {
     debugPrint('[main] UserService init failed: $e');
-    FirebaseCrashlytics.instance.recordError(
-      e,
-      st,
-      reason: 'UserService.init',
-      fatal: false,
-    );
+    _recordError(e, st, reason: 'UserService.init');
   }
 }
 
@@ -307,12 +319,14 @@ class ApolloApp extends StatefulWidget {
   final RadioAudioHandler audioHandler;
   final CurrentProgramService currentProgramService;
   final StreamSubscription programSubscription;
+  final StreamSubscription sponsorSubscription;
 
   const ApolloApp({
     super.key,
     required this.audioHandler,
     required this.currentProgramService,
     required this.programSubscription,
+    required this.sponsorSubscription,
   });
 
   @override
@@ -323,6 +337,7 @@ class _ApolloAppState extends State<ApolloApp> {
   @override
   void dispose() {
     widget.programSubscription.cancel();
+    widget.sponsorSubscription.cancel();
     widget.currentProgramService.stop();
     super.dispose();
   }

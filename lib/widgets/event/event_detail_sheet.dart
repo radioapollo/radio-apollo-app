@@ -22,6 +22,7 @@ import '../../models/event.dart';
 import '../../theme/app_theme.dart';
 import 'event_icon_row.dart';
 import 'upcoming_badge.dart';
+import 'add_to_calendar_button.dart';
 
 class EventDetailSheet extends StatelessWidget {
   final Event event;
@@ -91,6 +92,8 @@ class EventDetailSheet extends StatelessWidget {
                   EventIconRow(icon: Icons.location_on, label: event.location),
                   const SizedBox(height: AppDimensions.spaceLarge),
                   Text(event.what, style: AppTextStyles.cardSubtitle),
+                  const SizedBox(height: AppDimensions.spaceXLarge),
+                  AddToCalendarButton(event: event),
                 ],
               ),
             ),

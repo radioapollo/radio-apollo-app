@@ -16,7 +16,7 @@ dependencies:
   just_audio: ^0.9.36
   audio_service: ^0.18.12
   audio_session: ^0.1.16
-  shared_preferences: ^2.3.0   # NEW — stores username locally on device
+  shared_preferences: ^2.3.0 
   cached_network_image: ^3.4.1
   connectivity_plus: ^6.0.0
   flutter_chrome_cast: ^1.4.5
@@ -27,6 +27,7 @@ dependencies:
   flutter_local_notifications: ^19.4.0
   app_settings: ^6.1.0
   firebase_crashlytics: ^5.2.0
+  add_2_calendar: ^3.0.1
 
 dev_dependencies:
   flutter_test:
