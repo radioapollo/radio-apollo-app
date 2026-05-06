@@ -24,7 +24,6 @@ import 'service_provider.dart';
 import 'cast_button.dart';
 import '../services/program/current_program_service.dart';
 import '../theme/app_theme.dart';
-import '../models/recent_song.dart' show RecentSong;
 import 'player/recently_played_sheet.dart';
 
 class LivePlayerCard extends StatelessWidget {

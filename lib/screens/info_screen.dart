@@ -59,7 +59,7 @@ class _InfoScreenState extends State<InfoScreen>
     super.build(context);
     return SizedBox.expand(
       child: Container(
-        decoration: const BoxDecoration(
+        decoration: BoxDecoration(
           image: AppDecorations.backgroundWatermark,
         ),
         child: SafeArea(
@@ -96,14 +96,14 @@ class _InfoScreenState extends State<InfoScreen>
           const SizedBox(height: AppDimensions.spaceMedium),
           Row(
             children: [
-              const Expanded(
+              Expanded(
                 child: Text(
                   'Over Radio Apollo',
                   style: AppTextStyles.screenTitle,
                 ),
               ),
               IconButton(
-                icon: const Icon(
+                icon: Icon(
                   Icons.settings_outlined,
                   color: AppColors.textPrimary,
                 ),
@@ -136,13 +136,13 @@ class _InfoScreenState extends State<InfoScreen>
 
         // ── Contact info ──────────────────────────────────────────────────
         const SizedBox(height: AppDimensions.space30),
-        const Text('Contacteer ons', style: AppTextStyles.screenTitleSmall),
+        Text('Contacteer ons', style: AppTextStyles.screenTitleSmall),
         const SizedBox(height: AppDimensions.spaceLarge - 1),
         const ContactSection(),
 
         // ── Sponsors ──────────────────────────────────────────────────────
         const SizedBox(height: AppDimensions.space30),
-        const Text('Sponsors', style: AppTextStyles.screenTitleSmall),
+        Text('Sponsors', style: AppTextStyles.screenTitleSmall),
         const SizedBox(height: AppDimensions.spaceLarge - 1),
         _buildSponsorsSection(),
 
@@ -189,13 +189,13 @@ class _InfoScreenState extends State<InfoScreen>
           );
         }
         if (snapshot.hasError) {
-          return const Text(
+          return Text(
             'Fout bij het laden van sponsors.',
             style: AppTextStyles.noDataText,
           );
         }
         if (!snapshot.hasData || snapshot.data!.isEmpty) {
-          return const Text(
+          return Text(
             'Geen sponsors gevonden.',
             style: AppTextStyles.noDataText,
           );

@@ -332,7 +332,7 @@ class _ChatMessageListState extends State<ChatMessageList>
                   ? 'Geen internetverbinding.\nControleer je netwerk en probeer opnieuw.'
                   : 'Berichten konden niet worden geladen.\nProbeer het later opnieuw.',
               textAlign: TextAlign.center,
-              style: const TextStyle(
+              style: TextStyle(
                 color: AppColors.textSecondary,
                 fontSize: 13,
               ),
@@ -346,7 +346,7 @@ class _ChatMessageListState extends State<ChatMessageList>
   // ── Empty state ───────────────────────────────────────────────────────────
 
   Widget _buildEmptyState() {
-    return const Center(
+    return Center(
       child: Text(
         'Nog geen berichten.\nWees de eerste!',
         textAlign: TextAlign.center,

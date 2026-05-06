@@ -133,7 +133,7 @@ class _MessageBubbleState extends State<MessageBubble> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       if (isAdmin)
-                        const Padding(
+                        Padding(
                           padding: EdgeInsets.only(right: 8, top: 2),
                           child: Icon(
                             Icons.radio,

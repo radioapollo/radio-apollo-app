@@ -20,6 +20,13 @@
    - within 1 week   → red    (AppColors.live)
    - within 2 weeks  → blue   (AppColors.primaryLight)
    - further out     → no accent
+
+   Theming
+   ───────
+   Card surface and the placeholder for missing thumbnails now go
+   through AppDecorations.eventSurfaceCard / AppColors.bottomNavBg-like
+   themed slots, so the white card you see in light mode becomes a
+   dark raised surface in dark mode.
 */
 
 import 'package:flutter/material.dart';
@@ -74,13 +81,7 @@ class EventCard extends StatelessWidget {
   }) {
     return Container(
       clipBehavior: Clip.antiAlias,
-      decoration: BoxDecoration(
-        color: AppColors.white,
-        borderRadius: BorderRadius.circular(AppDimensions.radiusMedium),
-        border: Border.all(
-          color: AppColors.divider,
-          width: AppDimensions.borderThin,
-        ),
+      decoration: AppDecorations.eventSurfaceCard(
         boxShadow: isUpcoming && accent != null
             ? [
                 BoxShadow(
@@ -128,7 +129,6 @@ class EventCard extends StatelessWidget {
     required bool isUpcoming,
     required Color? accent,
   }) {
-
     const double size = 44;
 
     if (event.hasImage) {
@@ -158,7 +158,6 @@ class EventCard extends StatelessWidget {
       clipBehavior: Clip.antiAlias,
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(AppDimensions.radiusSmall),
-
         boxShadow: isUrgent
             ? [
                 BoxShadow(
@@ -172,9 +171,7 @@ class EventCard extends StatelessWidget {
       child: CachedNetworkImage(
         imageUrl: event.imageUrl!,
         fit: BoxFit.cover,
-
         placeholder: (_, _) => Container(color: AppColors.cardBlue),
-
         errorWidget: (_, _, _) => _buildDefaultIcon(
           size: size,
           isUrgent: isUrgent,
@@ -200,7 +197,6 @@ class EventCard extends StatelessWidget {
             ? accent.withValues(alpha: 0.12)
             : AppColors.cardBlue,
         borderRadius: BorderRadius.circular(AppDimensions.radiusSmall),
-
         boxShadow: isUrgent
             ? [
                 BoxShadow(

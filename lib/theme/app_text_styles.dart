@@ -1,6 +1,20 @@
 /* App Text Styles
 
    Central definition of all text styles used in the application.
+
+   Theming
+   ───────
+   Styles whose color comes from a themed slot (textPrimary,
+   textBody, textSecondary, textMeta) can no longer be `const` —
+   they're built from getters now. Styles whose color is
+   brand-fixed (white-on-dark for the navy player card, the
+   admin orange badge, the live label) stay `const`.
+
+   Practical effect on call-sites: previously `const Text(..., style:
+   AppTextStyles.screenTitle)` worked. Now the style itself isn't
+   const, so the surrounding `const` widget literal must drop the
+   const keyword. The analyzer pinpoints every site automatically;
+   the fix is mechanical (delete `const`).
 */
 
 import 'package:flutter/material.dart';
@@ -10,45 +24,51 @@ import 'app_dimensions.dart';
 class AppTextStyles {
   AppTextStyles._();
 
-  static const TextStyle screenTitle = TextStyle(
+  // ── Themed (page-bg-dependent) styles — non-const ─────────────────────────
+
+  static TextStyle get screenTitle => TextStyle(
     color: AppColors.textPrimary,
     fontSize: 26,
     fontWeight: FontWeight.w800,
   );
 
-  static const TextStyle screenTitleSmall = TextStyle(
+  static TextStyle get screenTitleSmall => TextStyle(
     color: AppColors.textPrimary,
     fontSize: 24,
     fontWeight: FontWeight.w700,
   );
 
-  static const TextStyle chatTitle = TextStyle(
+  static TextStyle get chatTitle => TextStyle(
     color: AppColors.textPrimary,
     fontSize: 22,
     fontWeight: FontWeight.w700,
   );
 
-  static const TextStyle adminBadge = TextStyle(
-    color: AppColors.adminBadge,
-    fontSize: 12,
-    fontWeight: FontWeight.bold,
-  );
-
-  static const TextStyle cardTitle = TextStyle(
+  static TextStyle get cardTitle => TextStyle(
     color: AppColors.textBody,
     fontSize: 16,
     fontWeight: FontWeight.w700,
   );
 
-  static const TextStyle cardSubtitle = TextStyle(
+  static TextStyle get cardSubtitle => TextStyle(
     color: AppColors.textSecondary,
     height: 1.3,
     fontSize: 13,
   );
 
-  static const TextStyle cardMeta = TextStyle(
+  static TextStyle get cardMeta => TextStyle(
     color: AppColors.textMeta,
     fontSize: 12,
+  );
+
+  static TextStyle get noDataText => TextStyle(color: AppColors.textSecondary);
+
+  // ── Brand-fixed styles — still const ──────────────────────────────────────
+
+  static const TextStyle adminBadge = TextStyle(
+    color: AppColors.adminBadge,
+    fontSize: 12,
+    fontWeight: FontWeight.bold,
   );
 
   static const TextStyle darkCardTitle = TextStyle(
@@ -73,6 +93,8 @@ class AppTextStyles {
     height: 1.4,
   );
 
+  // Apollo home cards specify their own colour via copyWith at the call
+  // site, so these stay const.
   static const TextStyle apolloCardTitle = TextStyle(
     fontSize: 18,
     fontWeight: FontWeight.w800,
@@ -125,8 +147,6 @@ class AppTextStyles {
   static const TextStyle inputHint = TextStyle(
     color: AppColors.textOnDarkMuted,
   );
-
-  static const TextStyle noDataText = TextStyle(color: AppColors.textSecondary);
 
   static const TextStyle nuBezigLabel = TextStyle(
     color: AppColors.textOnDark,

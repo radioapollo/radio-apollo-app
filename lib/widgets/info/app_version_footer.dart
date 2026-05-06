@@ -41,7 +41,7 @@ class _AppVersionFooterState extends State<AppVersionFooter> {
   Widget build(BuildContext context) {
     return Column(
       children: [
-        const Center(
+        Center(
           child: Text(
             'App ontwikkeld door Raf Vermeylen',
             style: TextStyle(
@@ -56,7 +56,7 @@ class _AppVersionFooterState extends State<AppVersionFooter> {
 
           child: Text(
             _version != null ? 'Versie $_version' : ' ',
-            style: const TextStyle(color: AppColors.creditText, fontSize: 11),
+            style: TextStyle(color: AppColors.creditText, fontSize: 11),
           ),
         ),
       ],

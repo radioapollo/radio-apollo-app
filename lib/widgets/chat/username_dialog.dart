@@ -129,7 +129,7 @@ class _UsernameDialogState extends State<UsernameDialog> {
             hasExistingUsername
                 ? 'Accepteer onze gebruiksvoorwaarden om te kunnen blijven chatten.'
                 : 'Deze naam is zichtbaar voor andere chatters.',
-            style: const TextStyle(
+            style: TextStyle(
               color: AppColors.textSecondary,
               fontSize: 13,
             ),
@@ -180,13 +180,13 @@ class _UsernameDialogState extends State<UsernameDialog> {
                   padding: const EdgeInsets.only(top: 14),
                   child: Text.rich(
                     TextSpan(
-                      style: const TextStyle(
+                      style: TextStyle(
                         color: AppColors.textBody,
                         fontSize: 13,
                         height: 1.35,
                       ),
                       children: [
-                        const TextSpan(text: 'Ik ga akkoord met de '),
+                        TextSpan(text: 'Ik ga akkoord met de '),
                         TextSpan(
                           text: 'gebruiksvoorwaarden',
                           style: const TextStyle(
@@ -216,7 +216,7 @@ class _UsernameDialogState extends State<UsernameDialog> {
       actions: [
         TextButton(
           onPressed: _loading ? null : () => Navigator.of(context).pop(null),
-          child: const Text(
+          child: Text(
             'Later',
             style: TextStyle(color: AppColors.textSecondary),
           ),

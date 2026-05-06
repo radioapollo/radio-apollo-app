@@ -1,19 +1,14 @@
-/* Main Entry Point
+/* Main entry point
 
-   Initialises Firebase, Crashlytics, App Check, the audio service, the
-   current-program service, and Cast context, then launches the app.
+   App startup orchestrator: Firebase init, AppCheck activation,
+   notifications, audio service, current-program service, sponsor
+   blocklist, and finally MaterialApp under ServiceProvider.
 
-   Wraps async startup in a top-level error zone so uncaught errors are
-   logged to Crashlytics rather than crashing the app silently.
-
-   Web compatibility
-   ─────────────────
-   `firebase_crashlytics` does not have a web implementation. Calling
-   into it on web throws an assertion at startup because the platform
-   plugin constants are missing. All Crashlytics calls therefore go
-   through `_recordError` / `_recordFlutterFatalError`, which no-op
-   when `kIsWeb` is true. The same guard wraps the one-time
-   `setCrashlyticsCollectionEnabled` call.
+   Web-safe Crashlytics
+   ────────────────────
+   Crashlytics doesn't ship for web, so every recordError /
+   recordFlutterFatalError call is gated on `!kIsWeb`. The same guard
+   wraps the one-time `setCrashlyticsCollectionEnabled` call.
 
    Sponsor blocklist wiring
    ────────────────────────
@@ -23,6 +18,15 @@
    forward each emission to `audioHandler.updateSponsorNames(...)`.
    Subscription is cancelled in `_ApolloAppState.dispose()` alongside
    the existing program subscription.
+
+   Theme controller
+   ────────────────
+   ThemeController.instance.init() is awaited before the first frame
+   so the persisted Light/Dark choice is applied immediately — no
+   white flash on cold start for users in dark mode. The controller
+   is then wired into the widget tree via AnimatedBuilder around
+   MaterialApp; toggling the mode rebuilds the entire app, which
+   re-reads every AppColors getter and swaps the watermark asset.
 */
 
 import 'dart:async';
@@ -42,6 +46,7 @@ import 'services/info_service.dart';
 import 'services/program/current_program_service.dart';
 import 'services/chat/user_service.dart';
 import 'services/chat/block_service.dart';
+import 'services/theme/theme_controller.dart';
 import 'utils/profanity/profanity_service.dart';
 import 'services/notifications/notification_service.dart';
 import 'widgets/service_provider.dart';
@@ -71,6 +76,10 @@ Future<void> main() async {
     DeviceOrientation.portraitUp,
     DeviceOrientation.portraitDown,
   ]);
+
+  // Load the persisted theme preference before the first frame so we
+  // don't flash light-mode UI for dark-mode users on cold start.
+  await ThemeController.instance.init();
 
   try {
     await Firebase.initializeApp(
@@ -335,15 +344,30 @@ class ApolloApp extends StatefulWidget {
 
 class _ApolloAppState extends State<ApolloApp> {
   @override
+  void initState() {
+    super.initState();
+    // Listen to the theme controller and call setState ourselves.
+    // This forces the entire State to rebuild — including everything
+    // below the MaterialApp — when the theme flips.
+    ThemeController.instance.addListener(_onThemeChanged);
+  }
+
+  @override
   void dispose() {
+    ThemeController.instance.removeListener(_onThemeChanged);
     widget.programSubscription.cancel();
     widget.sponsorSubscription.cancel();
     widget.currentProgramService.stop();
     super.dispose();
   }
 
+  void _onThemeChanged() {
+    if (mounted) setState(() {});
+  }
+
   @override
   Widget build(BuildContext context) {
+    final isDark = ThemeController.instance.isDark;
     return ServiceProvider(
       audioHandler: widget.audioHandler,
       currentProgramService: widget.currentProgramService,
@@ -354,7 +378,7 @@ class _ApolloAppState extends State<ApolloApp> {
           scaffoldBackgroundColor: AppColors.scaffoldBg,
           colorScheme: ColorScheme.fromSeed(
             seedColor: AppColors.primary,
-            brightness: Brightness.light,
+            brightness: isDark ? Brightness.dark : Brightness.light,
           ),
           useMaterial3: true,
         ),

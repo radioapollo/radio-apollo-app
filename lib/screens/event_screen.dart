@@ -48,7 +48,7 @@ class _EventScreenState extends State<EventScreen>
     super.build(context);
     return SizedBox.expand(
       child: Container(
-        decoration: const BoxDecoration(
+        decoration: BoxDecoration(
           image: AppDecorations.backgroundWatermark,
         ),
         child: SafeArea(
@@ -83,7 +83,7 @@ class _EventScreenState extends State<EventScreen>
             fit: BoxFit.contain,
           ),
           const SizedBox(height: AppDimensions.spaceMedium),
-          const Text('Evenementen', style: AppTextStyles.screenTitle),
+          Text('Evenementen', style: AppTextStyles.screenTitle),
           const SizedBox(height: AppDimensions.spaceLarge),
         ],
       ),
@@ -105,7 +105,7 @@ class _EventScreenState extends State<EventScreen>
           );
         }
         if (snapshot.hasError) {
-          return const Center(
+          return Center(
             child: Text(
               'Fout bij het laden van evenementen.',
               style: AppTextStyles.noDataText,
@@ -113,7 +113,7 @@ class _EventScreenState extends State<EventScreen>
           );
         }
         if (!snapshot.hasData || snapshot.data!.isEmpty) {
-          return const Center(
+          return Center(
             child: Text(
               'Geen evenementen gevonden.',
               style: AppTextStyles.noDataText,

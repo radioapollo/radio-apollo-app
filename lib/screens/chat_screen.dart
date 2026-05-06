@@ -279,7 +279,7 @@ class _ChatScreenState extends State<ChatScreen>
 
     return SizedBox.expand(
       child: Container(
-        decoration: const BoxDecoration(
+        decoration: BoxDecoration(
           image: AppDecorations.backgroundWatermark,
         ),
         child: SafeArea(

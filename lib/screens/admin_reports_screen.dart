@@ -26,7 +26,7 @@ class AdminReportsScreen extends StatelessWidget {
       backgroundColor: AppColors.primary,
       body: SizedBox.expand(
         child: Container(
-          decoration: const BoxDecoration(
+          decoration: BoxDecoration(
             image: AppDecorations.backgroundWatermark,
           ),
           child: SafeArea(
@@ -51,7 +51,7 @@ class AdminReportsScreen extends StatelessWidget {
                             padding: const EdgeInsets.all(24),
                             child: Text(
                               'Kon meldingen niet laden:\n${snap.error}',
-                              style: const TextStyle(
+                              style: TextStyle(
                                 color: AppColors.textBody,
                               ),
                               textAlign: TextAlign.center,
@@ -61,7 +61,7 @@ class AdminReportsScreen extends StatelessWidget {
                       }
                       final reports = snap.data ?? const <Report>[];
                       if (reports.isEmpty) {
-                        return const Center(
+                        return Center(
                           child: Padding(
                             padding: EdgeInsets.all(24),
                             child: Text(
@@ -76,7 +76,7 @@ class AdminReportsScreen extends StatelessWidget {
                         );
                       }
                       return ListView.separated(
-                        padding: const EdgeInsets.fromLTRB(
+                        padding: EdgeInsets.fromLTRB(
                           AppDimensions.paddingLarge,
                           0,
                           AppDimensions.paddingLarge,
@@ -110,7 +110,7 @@ class AdminReportsScreen extends StatelessWidget {
       child: Row(
         children: [
           IconButton(
-            icon: const Icon(Icons.arrow_back, color: AppColors.textBody),
+            icon: Icon(Icons.arrow_back, color: AppColors.textBody),
             padding: EdgeInsets.zero,
             constraints: const BoxConstraints(),
             onPressed: () => Navigator.of(context).pop(),

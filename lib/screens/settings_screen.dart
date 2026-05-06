@@ -1,8 +1,9 @@
 /* Settings Screen
 
-   User-facing settings for the app. Currently contains only the
-   notification preferences, but is structured to grow — add a new
-   section in _buildContent() and that's it.
+   User-facing settings for the app. Currently contains:
+   - Notification preferences (top)
+   - Chat preferences
+   - Weergave (Light/Dark theme) — bottom
 
    Notification UX
    ───────────────
@@ -28,6 +29,14 @@
    lifecycle so when they return, we re-read the permission status
    and rebuild the banner accordingly.
 
+   Theme section
+   ─────────────
+   The Weergave section delegates entirely to ThemeToggleTile, which
+   listens to ThemeController via its own AnimatedBuilder. The rest
+   of the app rebuilds automatically through the AnimatedBuilder
+   wrapping MaterialApp in main.dart, so no extra setState() is
+   needed here.
+
    Reachable from the gear icon on the Info screen header.
 */
 
@@ -40,6 +49,7 @@ import '../constants/constants.dart';
 import '../utils/url_launcher_utils.dart';
 import '../widgets/settings/notification_permission_banner.dart';
 import '../widgets/settings/notification_toggle_tile.dart';
+import '../widgets/settings/theme_toggle_tile.dart';
 import 'blocked_users_screen.dart';
 
 class SettingsScreen extends StatefulWidget {
@@ -73,7 +83,6 @@ class _SettingsScreenState extends State<SettingsScreen>
 
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
-
     if (state == AppLifecycleState.resumed) {
       _refreshAuthStatus();
     }
@@ -118,7 +127,6 @@ class _SettingsScreenState extends State<SettingsScreen>
   }
 
   Future<void> _onToggle(NotificationCategory category, bool value) async {
-
     setState(() => _enabled[category] = value);
 
     if (value && !_service.isAuthorized) {
@@ -128,7 +136,6 @@ class _SettingsScreenState extends State<SettingsScreen>
       setState(() => _bannerState = _service.bannerState);
 
       if (!granted) {
-
         setState(() => _enabled[category] = false);
         _showSnackBar(
           'Meldingen zijn geweigerd. Je kan ze later inschakelen via '
@@ -155,7 +162,7 @@ class _SettingsScreenState extends State<SettingsScreen>
       backgroundColor: AppColors.scaffoldBg,
       body: SizedBox.expand(
         child: Container(
-          decoration: const BoxDecoration(
+          decoration: BoxDecoration(
             image: AppDecorations.backgroundWatermark,
           ),
           child: SafeArea(
@@ -188,7 +195,7 @@ class _SettingsScreenState extends State<SettingsScreen>
           Row(
             children: [
               IconButton(
-                icon: const Icon(
+                icon: Icon(
                   Icons.arrow_back,
                   color: AppColors.textPrimary,
                 ),
@@ -205,7 +212,7 @@ class _SettingsScreenState extends State<SettingsScreen>
             ],
           ),
           const SizedBox(height: AppDimensions.spaceMedium),
-          const Text('Instellingen', style: AppTextStyles.screenTitle),
+          Text('Instellingen', style: AppTextStyles.screenTitle),
           const SizedBox(height: AppDimensions.spaceLarge),
         ],
       ),
@@ -229,7 +236,7 @@ class _SettingsScreenState extends State<SettingsScreen>
         AppDimensions.paddingXLarge,
       ),
       children: [
-        const Text('Meldingen', style: AppTextStyles.screenTitleSmall),
+        Text('Meldingen', style: AppTextStyles.screenTitleSmall),
         const SizedBox(height: AppDimensions.spaceLarge),
 
         NotificationPermissionBanner(
@@ -248,27 +255,27 @@ class _SettingsScreenState extends State<SettingsScreen>
 
         // ── Chat section ─────────────────────────────────────────────────
         const SizedBox(height: AppDimensions.spaceXLarge),
-        const Text('Chat', style: AppTextStyles.screenTitleSmall),
+        Text('Chat', style: AppTextStyles.screenTitleSmall),
         const SizedBox(height: AppDimensions.spaceLarge),
 
         ListTile(
           contentPadding: EdgeInsets.zero,
-          leading: const Icon(
+          leading: Icon(
             Icons.block,
             color: AppColors.textPrimary,
           ),
-          title: const Text(
+          title: Text(
             'Geblokkeerde gebruikers',
             style: TextStyle(
               color: AppColors.textPrimary,
               fontWeight: FontWeight.w600,
             ),
           ),
-          subtitle: const Text(
+          subtitle: Text(
             'Bekijk en deblokkeer gebruikers die je hebt geblokkeerd.',
             style: TextStyle(color: AppColors.textSecondary, fontSize: 13),
           ),
-          trailing: const Icon(
+          trailing: Icon(
             Icons.chevron_right,
             color: AppColors.chevronIcon,
           ),
@@ -283,27 +290,42 @@ class _SettingsScreenState extends State<SettingsScreen>
 
         ListTile(
           contentPadding: EdgeInsets.zero,
-          leading: const Icon(
+          leading: Icon(
             Icons.description_outlined,
             color: AppColors.textPrimary,
           ),
-          title: const Text(
+          title: Text(
             'Gebruiksvoorwaarden',
             style: TextStyle(
               color: AppColors.textPrimary,
               fontWeight: FontWeight.w600,
             ),
           ),
-          subtitle: const Text(
+          subtitle: Text(
             'Lees de regels voor de chatfunctie.',
             style: TextStyle(color: AppColors.textSecondary, fontSize: 13),
           ),
-          trailing: const Icon(
+          trailing: Icon(
             Icons.open_in_new,
             color: AppColors.chevronIcon,
             size: 18,
           ),
           onTap: () => UrlLauncherUtils.openUrl(AppConstants.termsOfUseUrl),
+        ),
+
+        // ── Weergave section (bottom) ─────────────────────────────────────
+        // The toggle tile is self-contained: it listens to ThemeController
+        // via its own AnimatedBuilder, and tapping a pill calls
+        // ThemeController.setMode(...) which then rebuilds the entire
+        // MaterialApp through the AnimatedBuilder in main.dart.
+        const SizedBox(height: AppDimensions.spaceXLarge),
+        Text('Weergave', style: AppTextStyles.screenTitleSmall),
+        const SizedBox(height: AppDimensions.spaceLarge),
+        const ThemeToggleTile(),
+        Text(
+          'Kies tussen een lichte of donkere achtergrond. De keuze blijft '
+          'bewaard, ook nadat je de app sluit.',
+          style: TextStyle(color: AppColors.textSecondary, fontSize: 13),
         ),
       ],
     );

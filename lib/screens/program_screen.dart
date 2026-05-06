@@ -127,7 +127,7 @@ class _ProgramScreenState extends State<ProgramScreen>
 
     return SizedBox.expand(
       child: Container(
-        decoration: const BoxDecoration(
+        decoration: BoxDecoration(
           image: AppDecorations.backgroundWatermark,
         ),
         child: SafeArea(
@@ -151,7 +151,7 @@ class _ProgramScreenState extends State<ProgramScreen>
                       fit: BoxFit.contain,
                     ),
                     const SizedBox(height: AppDimensions.spaceMedium),
-                    const Text("Programma's", style: AppTextStyles.screenTitle),
+                    Text("Programma's", style: AppTextStyles.screenTitle),
                     const SizedBox(height: AppDimensions.spaceLarge),
                     DaySelector(
                       days: _days,
@@ -191,7 +191,7 @@ class _ProgramScreenState extends State<ProgramScreen>
                       }
 
                       if (snapshot.hasError) {
-                        return const Center(
+                        return Center(
                           child: Padding(
                             padding: EdgeInsets.all(
                               AppDimensions.paddingXLarge,
@@ -205,7 +205,7 @@ class _ProgramScreenState extends State<ProgramScreen>
                       }
 
                       if (!snapshot.hasData || snapshot.data!.isEmpty) {
-                        return const Center(
+                        return Center(
                           child: Padding(
                             padding: EdgeInsets.all(
                               AppDimensions.paddingXLarge,

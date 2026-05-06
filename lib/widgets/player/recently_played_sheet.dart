@@ -98,7 +98,7 @@ class RecentlyPlayedSheet extends StatelessWidget {
         AppDimensions.paddingXLarge,
         AppDimensions.spaceMedium,
       ),
-      child: const Text(
+      child: Text(
         'Recent gespeeld',
         style: AppTextStyles.screenTitleSmall,
       ),
@@ -108,7 +108,7 @@ class RecentlyPlayedSheet extends StatelessWidget {
   // ── States ────────────────────────────────────────────────────────────────
 
   Widget _buildEmptyState() {
-    return const Center(
+    return Center(
       child: Padding(
         padding: EdgeInsets.symmetric(
           horizontal: AppDimensions.paddingXLarge,

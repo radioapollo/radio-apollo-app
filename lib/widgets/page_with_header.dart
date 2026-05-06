@@ -5,7 +5,7 @@
 
    It includes:
    - the Radio Apollo logo header
-   - a background watermark image
+   - a background watermark image (themed: light or dark variant)
    - consistent padding and scrolling behaviour
 */
 
@@ -22,7 +22,9 @@ class PageWithHeader extends StatelessWidget {
   Widget build(BuildContext context) {
     return SizedBox.expand(
       child: Container(
-        decoration: const BoxDecoration(
+        // Non-const: AppDecorations.backgroundWatermark is a getter that
+        // resolves to the active palette's watermark asset.
+        decoration: BoxDecoration(
           image: AppDecorations.backgroundWatermark,
         ),
         child: SafeArea(

@@ -26,7 +26,7 @@ class BlockedUsersScreen extends StatelessWidget {
       backgroundColor: AppColors.scaffoldBg,
       body: SizedBox.expand(
         child: Container(
-          decoration: const BoxDecoration(
+          decoration: BoxDecoration(
             image: AppDecorations.backgroundWatermark,
           ),
           child: SafeArea(
@@ -41,7 +41,7 @@ class BlockedUsersScreen extends StatelessWidget {
                       final blocked =
                           BlockService.instance.blocked.toList()..sort();
                       if (blocked.isEmpty) {
-                        return const Center(
+                        return Center(
                           child: Padding(
                             padding: EdgeInsets.all(24),
                             child: Text(
@@ -92,7 +92,7 @@ class BlockedUsersScreen extends StatelessWidget {
           Row(
             children: [
               IconButton(
-                icon: const Icon(
+                icon: Icon(
                   Icons.arrow_back,
                   color: AppColors.textPrimary,
                 ),
@@ -103,7 +103,7 @@ class BlockedUsersScreen extends StatelessWidget {
             ],
           ),
           const SizedBox(height: AppDimensions.spaceMedium),
-          const Text(
+          Text(
             'Geblokkeerde gebruikers',
             style: AppTextStyles.screenTitle,
           ),
@@ -132,7 +132,7 @@ class _BlockedRow extends StatelessWidget {
       ),
       child: Row(
         children: [
-          const Icon(
+          Icon(
             Icons.person_off_outlined,
             color: AppColors.textSecondary,
             size: 20,
@@ -141,7 +141,7 @@ class _BlockedRow extends StatelessWidget {
           Expanded(
             child: Text(
               username,
-              style: const TextStyle(
+              style: TextStyle(
                 color: AppColors.textPrimary,
                 fontSize: 15,
                 fontWeight: FontWeight.w600,

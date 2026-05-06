@@ -45,7 +45,7 @@ class ChatTitle extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text(
+                Text(
                   'Chat met de Studio',
                   style: AppTextStyles.chatTitle,
                 ),
@@ -61,7 +61,7 @@ class ChatTitle extends StatelessWidget {
                     ),
                     child: Text(
                       'Ingelogd als: $username',
-                      style: const TextStyle(
+                      style: TextStyle(
                         color: AppColors.textSecondary,
                         fontSize: 12,
                       ),
@@ -78,12 +78,12 @@ class ChatTitle extends StatelessWidget {
           if (isAdmin)
             TextButton.icon(
               onPressed: onLogout,
-              icon: const Icon(
+              icon: Icon(
                 Icons.logout,
                 size: 18,
                 color: AppColors.textSecondary,
               ),
-              label: const Text(
+              label: Text(
                 'Uitloggen',
                 style: TextStyle(color: AppColors.textSecondary, fontSize: 13),
               ),
@@ -129,7 +129,7 @@ class _ReportsButton extends StatelessWidget {
           clipBehavior: Clip.none,
           children: [
             IconButton(
-              icon: const Icon(
+              icon: Icon(
                 Icons.flag_outlined,
                 color: AppColors.textPrimary,
               ),
@@ -155,7 +155,7 @@ class _ReportsButton extends StatelessWidget {
                   ),
                   child: Text(
                     count > 99 ? '99+' : '$count',
-                    style: const TextStyle(
+                    style: TextStyle(
                       color: AppColors.textPrimary,
                       fontSize: 10,
                       fontWeight: FontWeight.w700,

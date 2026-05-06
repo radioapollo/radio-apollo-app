@@ -143,7 +143,7 @@ class ChatInputField extends StatelessWidget {
       ),
       child: Row(
         children: [
-          const Icon(
+          Icon(
             Icons.reply,
             size: 16,
             color: AppColors.textSecondary,
@@ -164,7 +164,7 @@ class ChatInputField extends StatelessWidget {
                 ),
                 Text(
                   preview,
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 12,
                     color: AppColors.textSecondary,
                   ),
@@ -178,7 +178,7 @@ class ChatInputField extends StatelessWidget {
             visualDensity: VisualDensity.compact,
             padding: EdgeInsets.zero,
             constraints: const BoxConstraints(),
-            icon: const Icon(
+            icon: Icon(
               Icons.close,
               size: 18,
               color: AppColors.textSecondary,

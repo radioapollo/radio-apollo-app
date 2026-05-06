@@ -190,7 +190,7 @@ class _ApolloNavState extends State<ApolloNav> {
       child: BottomNavigationBar(
         currentIndex: _index,
         onTap: _switchTab,
-        backgroundColor: AppColors.white,
+        backgroundColor: AppColors.bottomNavBg,
         elevation: 0,
         selectedItemColor: AppColors.primaryMid,
         unselectedItemColor: AppColors.navUnselected,

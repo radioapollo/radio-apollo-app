@@ -135,7 +135,7 @@ class CastButton extends StatelessWidget {
                       ),
                       child: Text(
                         connectedNow ? 'Casten' : 'Cast naar apparaat',
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontSize: 18,
                           fontWeight: FontWeight.w700,
                           color: AppColors.textBody,
@@ -145,7 +145,7 @@ class CastButton extends StatelessWidget {
                     const SizedBox(height: AppDimensions.spaceMedium),
 
                     if (devices.isEmpty && !connectedNow)
-                      const Padding(
+                      Padding(
                         padding: EdgeInsets.all(AppDimensions.paddingXLarge),
                         child: Text(
                           'Geen Chromecast-apparaten gevonden.\n'
@@ -216,7 +216,7 @@ class CastButton extends StatelessWidget {
       subtitle: (device.modelName != null && device.modelName!.isNotEmpty)
           ? Text(
               device.modelName!,
-              style: const TextStyle(
+              style: TextStyle(
                 color: AppColors.textSecondary,
                 fontSize: 12,
               ),
@@ -294,7 +294,7 @@ class _VolumeSliderState extends State<_VolumeSlider> {
       ),
       child: Row(
         children: [
-          const Icon(
+          Icon(
             Icons.volume_down,
             color: AppColors.textSecondary,
             size: 22,
@@ -317,7 +317,7 @@ class _VolumeSliderState extends State<_VolumeSlider> {
               },
             ),
           ),
-          const Icon(Icons.volume_up, color: AppColors.textSecondary, size: 22),
+          Icon(Icons.volume_up, color: AppColors.textSecondary, size: 22),
         ],
       ),
     );

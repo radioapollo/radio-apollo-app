@@ -9,6 +9,22 @@
 
    Supports both vertical and horizontal layouts, and is
    used on the home screen to navigate to different sections.
+
+   Theming
+   ───────
+   The card's background `color` is brand-fixed at the call site
+   (cardYellow, cardBlue, cardGreen, primaryLight). The text on top
+   therefore needs a colour that reads against those specific fills,
+   not against the surrounding scaffold. So we don't pull from the
+   themed AppColors.textBody — that flips to white in dark mode and
+   would make text on the pastel cards unreadable.
+
+   Two stable colours are used:
+   - darkText: false → near-black (`Colors.black87`), used on pastel fills
+   - darkText: true  → white      (`AppColors.textOnDark`), used on the
+                                    primaryLight card
+
+   Both stay constant across themes.
 */
 
 import 'package:flutter/material.dart';
@@ -40,7 +56,9 @@ class ApolloCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final textColor = darkText ? AppColors.textOnDark : AppColors.textBody;
+    // Theme-independent: pastel fills always carry near-black text;
+    // the primaryLight fill always carries white text.
+    final textColor = darkText ? AppColors.textOnDark : Colors.black87;
 
     return GestureDetector(
       onTap: onTap,
