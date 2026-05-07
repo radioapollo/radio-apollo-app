@@ -199,7 +199,7 @@ class ChatService {
         'username': username,
         'text': text,
         'claimToken': claimToken,
-        if (replyPayload != null) 'replyTo': replyPayload,
+        'replyTo': ?replyPayload,
       });
 
       if (response.statusCode == 429) {
@@ -243,7 +243,7 @@ class ChatService {
       final response = await AppCheckHttp.post('adminSendMessage', {
         'token': token,
         'text': text,
-        if (replyPayload != null) 'replyTo': replyPayload,
+        'replyTo': ?replyPayload,
       });
 
       if (response.statusCode != 200) {
