@@ -1,9 +1,9 @@
 /* Settings Screen
 
    User-facing settings for the app. Currently contains:
-   - Notification preferences (top)
+   - Weergave (Light/Dark theme) — top
+   - Notification preferences
    - Chat preferences
-   - Weergave (Light/Dark theme) — bottom
 
    Notification UX
    ───────────────
@@ -50,6 +50,8 @@ import '../utils/url_launcher_utils.dart';
 import '../widgets/settings/notification_permission_banner.dart';
 import '../widgets/settings/notification_toggle_tile.dart';
 import '../widgets/settings/theme_toggle_tile.dart';
+import '../widgets/themed_watermark_background.dart';
+import '../widgets/themed_logo.dart';
 import 'blocked_users_screen.dart';
 
 class SettingsScreen extends StatefulWidget {
@@ -160,19 +162,14 @@ class _SettingsScreenState extends State<SettingsScreen>
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppColors.scaffoldBg,
-      body: SizedBox.expand(
-        child: Container(
-          decoration: BoxDecoration(
-            image: AppDecorations.backgroundWatermark,
-          ),
-          child: SafeArea(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                _buildHeader(),
-                Expanded(child: _buildContent()),
-              ],
-            ),
+      body: ThemedWatermarkBackground(
+        child: SafeArea(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              _buildHeader(),
+              Expanded(child: _buildContent()),
+            ],
           ),
         ),
       ),
@@ -195,20 +192,13 @@ class _SettingsScreenState extends State<SettingsScreen>
           Row(
             children: [
               IconButton(
-                icon: Icon(
-                  Icons.arrow_back,
-                  color: AppColors.textPrimary,
-                ),
+                icon: Icon(Icons.arrow_back, color: AppColors.textPrimary),
                 padding: EdgeInsets.zero,
                 constraints: const BoxConstraints(),
                 onPressed: () => Navigator.of(context).pop(),
               ),
               const SizedBox(width: AppDimensions.spaceMedium),
-              Image.asset(
-                AppAssets.logo,
-                height: AppDimensions.logoHeight,
-                fit: BoxFit.contain,
-              ),
+              const ThemedLogo(height: AppDimensions.logoHeight),
             ],
           ),
           const SizedBox(height: AppDimensions.spaceMedium),
@@ -236,6 +226,17 @@ class _SettingsScreenState extends State<SettingsScreen>
         AppDimensions.paddingXLarge,
       ),
       children: [
+        // ── Weergave section (top) ────────────────────────────────────────
+        // The toggle tile is self-contained: it listens to ThemeController
+        // via its own AnimatedBuilder, and tapping a pill calls
+        // ThemeController.setMode(...) which then rebuilds the entire
+        // MaterialApp through the AnimatedBuilder in main.dart.
+        Text('Weergave', style: AppTextStyles.screenTitleSmall),
+        const SizedBox(height: AppDimensions.spaceLarge),
+        const ThemeToggleTile(),
+
+        // ── Meldingen section ─────────────────────────────────────────────
+        const SizedBox(height: AppDimensions.spaceXLarge),
         Text('Meldingen', style: AppTextStyles.screenTitleSmall),
         const SizedBox(height: AppDimensions.spaceLarge),
 
@@ -253,17 +254,14 @@ class _SettingsScreenState extends State<SettingsScreen>
           );
         }),
 
-        // ── Chat section ─────────────────────────────────────────────────
+        // ── Chat section ──────────────────────────────────────────────────
         const SizedBox(height: AppDimensions.spaceXLarge),
         Text('Chat', style: AppTextStyles.screenTitleSmall),
         const SizedBox(height: AppDimensions.spaceLarge),
 
         ListTile(
           contentPadding: EdgeInsets.zero,
-          leading: Icon(
-            Icons.block,
-            color: AppColors.textPrimary,
-          ),
+          leading: Icon(Icons.block, color: AppColors.textPrimary),
           title: Text(
             'Geblokkeerde gebruikers',
             style: TextStyle(
@@ -275,15 +273,10 @@ class _SettingsScreenState extends State<SettingsScreen>
             'Bekijk en deblokkeer gebruikers die je hebt geblokkeerd.',
             style: TextStyle(color: AppColors.textSecondary, fontSize: 13),
           ),
-          trailing: Icon(
-            Icons.chevron_right,
-            color: AppColors.chevronIcon,
-          ),
+          trailing: Icon(Icons.chevron_right, color: AppColors.chevronIcon),
           onTap: () {
             Navigator.of(context).push(
-              MaterialPageRoute(
-                builder: (_) => const BlockedUsersScreen(),
-              ),
+              MaterialPageRoute(builder: (_) => const BlockedUsersScreen()),
             );
           },
         ),
@@ -311,21 +304,6 @@ class _SettingsScreenState extends State<SettingsScreen>
             size: 18,
           ),
           onTap: () => UrlLauncherUtils.openUrl(AppConstants.termsOfUseUrl),
-        ),
-
-        // ── Weergave section (bottom) ─────────────────────────────────────
-        // The toggle tile is self-contained: it listens to ThemeController
-        // via its own AnimatedBuilder, and tapping a pill calls
-        // ThemeController.setMode(...) which then rebuilds the entire
-        // MaterialApp through the AnimatedBuilder in main.dart.
-        const SizedBox(height: AppDimensions.spaceXLarge),
-        Text('Weergave', style: AppTextStyles.screenTitleSmall),
-        const SizedBox(height: AppDimensions.spaceLarge),
-        const ThemeToggleTile(),
-        Text(
-          'Kies tussen een lichte of donkere achtergrond. De keuze blijft '
-          'bewaard, ook nadat je de app sluit.',
-          style: TextStyle(color: AppColors.textSecondary, fontSize: 13),
         ),
       ],
     );

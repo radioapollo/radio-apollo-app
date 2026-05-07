@@ -59,9 +59,7 @@ class _InfoScreenState extends State<InfoScreen>
     super.build(context);
     return SizedBox.expand(
       child: Container(
-        decoration: BoxDecoration(
-          image: AppDecorations.backgroundWatermark,
-        ),
+        decoration: BoxDecoration(image: AppDecorations.backgroundWatermark),
         child: SafeArea(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -160,7 +158,6 @@ class _InfoScreenState extends State<InfoScreen>
       stream: _aboutTextStream,
       initialData: _infoService.latestAboutText,
       builder: (context, snapshot) {
-
         if (snapshot.connectionState == ConnectionState.waiting &&
             !snapshot.hasData) {
           return const Center(

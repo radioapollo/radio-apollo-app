@@ -85,8 +85,9 @@ class AppColors {
   // ThemeController flips the mode and triggers a rebuild, every getter
   // returns the new value.
 
-  static _Palette get _p =>
-      ThemeController.instance.isDark ? _DarkPalette.instance : _LightPalette.instance;
+  static _Palette get _p => ThemeController.instance.isDark
+      ? _DarkPalette.instance
+      : _LightPalette.instance;
 
   // Surfaces
   static Color get scaffoldBg => _p.scaffoldBg;

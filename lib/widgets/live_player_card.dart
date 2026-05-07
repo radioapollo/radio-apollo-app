@@ -97,7 +97,6 @@ class LivePlayerCard extends StatelessWidget {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-
                       Row(
                         children: [
                           Container(
@@ -149,7 +148,6 @@ class LivePlayerCard extends StatelessWidget {
 
                       Row(
                         children: [
-
                           GestureDetector(
                             onTap: onPlayPause,
                             child: Icon(
@@ -160,10 +158,11 @@ class LivePlayerCard extends StatelessWidget {
                               size: AppDimensions.iconPlayPause,
                             ),
                           ),
-                          
+
                           const SizedBox(width: AppDimensions.spaceMedium),
                           GestureDetector(
-                            onTap: () => RecentlyPlayedSheet.show(context, audioHandler),
+                            onTap: () =>
+                                RecentlyPlayedSheet.show(context, audioHandler),
                             child: const Icon(
                               Icons.queue_music,
                               color: AppColors.textOnDark,
@@ -177,7 +176,6 @@ class LivePlayerCard extends StatelessWidget {
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-
                                 Text(
                                   hasProgram ? program.title! : 'RADIO APOLLO',
                                   style: AppTextStyles.stationName,

@@ -46,7 +46,6 @@ class UserService {
     try {
       doc = await _db.collection('usernames').doc(saved.toLowerCase()).get();
     } catch (_) {
-
       _username = saved;
       return;
     }
@@ -64,14 +63,12 @@ class UserService {
       _claimToken = newToken;
       await prefs.setString(_tokenKey, newToken);
     } catch (_) {
-
       if (!doc.exists) {
         await prefs.remove(_key);
         await prefs.remove(_tokenKey);
         _username = null;
         _claimToken = null;
       } else {
-
         _username = saved;
       }
     }
@@ -100,7 +97,6 @@ class UserService {
     }, requireAppCheck: true);
 
     if (response.statusCode == 200) {
-
       try {
         final body = jsonDecode(response.body);
         if (body is Map && body['claimToken'] is String) {

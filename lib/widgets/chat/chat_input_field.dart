@@ -143,11 +143,7 @@ class ChatInputField extends StatelessWidget {
       ),
       child: Row(
         children: [
-          Icon(
-            Icons.reply,
-            size: 16,
-            color: AppColors.textSecondary,
-          ),
+          Icon(Icons.reply, size: 16, color: AppColors.textSecondary),
           const SizedBox(width: 8),
           Expanded(
             child: Column(
@@ -178,11 +174,7 @@ class ChatInputField extends StatelessWidget {
             visualDensity: VisualDensity.compact,
             padding: EdgeInsets.zero,
             constraints: const BoxConstraints(),
-            icon: Icon(
-              Icons.close,
-              size: 18,
-              color: AppColors.textSecondary,
-            ),
+            icon: Icon(Icons.close, size: 18, color: AppColors.textSecondary),
             onPressed: onCancelReply,
             tooltip: 'Annuleer antwoord',
           ),

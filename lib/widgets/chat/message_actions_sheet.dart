@@ -49,9 +49,7 @@ class MessageActionsSheet {
                   color: AppColors.offlineIcon,
                 ),
                 title: const Text('Verwijder bericht'),
-                subtitle: const Text(
-                  'Het bericht verdwijnt voor iedereen.',
-                ),
+                subtitle: const Text('Het bericht verdwijnt voor iedereen.'),
                 onTap: () async {
                   Navigator.pop(sheetContext);
                   await _confirmDeleteMessage(context, message);
@@ -149,9 +147,7 @@ class MessageActionsSheet {
             const SizedBox(height: 12),
             TextField(
               controller: reasonController,
-              decoration: const InputDecoration(
-                labelText: 'Reden (optioneel)',
-              ),
+              decoration: const InputDecoration(labelText: 'Reden (optioneel)'),
               maxLength: 200,
             ),
           ],
@@ -188,10 +184,7 @@ class MessageActionsSheet {
 
   static void _snack(BuildContext context, String message) {
     ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(message),
-        duration: const Duration(seconds: 4),
-      ),
+      SnackBar(content: Text(message), duration: const Duration(seconds: 4)),
     );
   }
 }

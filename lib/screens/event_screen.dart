@@ -48,9 +48,7 @@ class _EventScreenState extends State<EventScreen>
     super.build(context);
     return SizedBox.expand(
       child: Container(
-        decoration: BoxDecoration(
-          image: AppDecorations.backgroundWatermark,
-        ),
+        decoration: BoxDecoration(image: AppDecorations.backgroundWatermark),
         child: SafeArea(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -97,7 +95,6 @@ class _EventScreenState extends State<EventScreen>
       stream: _eventsStream,
       initialData: _eventService.latestEvents,
       builder: (context, snapshot) {
-
         if (snapshot.connectionState == ConnectionState.waiting &&
             !snapshot.hasData) {
           return const Center(

@@ -57,7 +57,6 @@ class _DaySelectorState extends State<DaySelector> {
   // ── Auto-scroll to selected day ───────────────────────────────────────────
 
   void _scrollToSelected() {
-
     _scrollDebounce?.cancel();
 
     _scrollDebounce = Timer(const Duration(milliseconds: 50), () {
@@ -102,7 +101,6 @@ class _DaySelectorState extends State<DaySelector> {
             child: GestureDetector(
               onTap: () => widget.onDaySelected(index),
               child: Container(
-
                 padding: const EdgeInsets.symmetric(
                   horizontal: 16,
                   vertical: 0,

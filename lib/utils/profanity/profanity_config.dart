@@ -17,7 +17,6 @@ class ProfanityConfig {
   // ── SEVERE WORDS ─────────────────────────────────────────────────────────
 
   static const List<String> severeWordsDutch = [
-
     'kut-marokkaan',
     'kutmarokkaan',
     'kutmongool',
@@ -106,7 +105,6 @@ class ProfanityConfig {
   ];
 
   static const List<String> severeWordsEnglish = [
-
     'nigger',
     'nigga',
     'chink',
@@ -140,7 +138,6 @@ class ProfanityConfig {
   // ── MILD WORDS ───────────────────────────────────────────────────────────
 
   static const List<String> mildWordsDutch = [
-
     'kut',
     'kutstreek',
     'kuttenkop',

@@ -47,7 +47,6 @@ class EventService {
             );
           })
           // ── Remove events whose date has already passed ─────────────
-
           .where((e) {
             final d = AppDateUtils.parseDutchDate(e.date);
             if (d == null) return true;

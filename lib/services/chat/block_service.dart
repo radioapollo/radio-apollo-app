@@ -68,7 +68,6 @@ class BlockService extends ChangeNotifier {
             .toSet();
       }
     } catch (_) {
-
       await prefs.remove(_key);
     }
   }

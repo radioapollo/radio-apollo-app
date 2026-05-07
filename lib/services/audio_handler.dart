@@ -396,8 +396,7 @@ class RadioAudioHandler extends BaseAudioHandler {
   void _pushRecentSong(String rawTitle) {
     final song = RecentSong.parse(rawTitle);
 
-    if (_recentSongs.isNotEmpty &&
-        _recentSongs.first.display == song.display) {
+    if (_recentSongs.isNotEmpty && _recentSongs.first.display == song.display) {
       return;
     }
 

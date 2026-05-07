@@ -26,9 +26,7 @@ class BlockedUsersScreen extends StatelessWidget {
       backgroundColor: AppColors.scaffoldBg,
       body: SizedBox.expand(
         child: Container(
-          decoration: BoxDecoration(
-            image: AppDecorations.backgroundWatermark,
-          ),
+          decoration: BoxDecoration(image: AppDecorations.backgroundWatermark),
           child: SafeArea(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -38,8 +36,8 @@ class BlockedUsersScreen extends StatelessWidget {
                   child: AnimatedBuilder(
                     animation: BlockService.instance,
                     builder: (context, _) {
-                      final blocked =
-                          BlockService.instance.blocked.toList()..sort();
+                      final blocked = BlockService.instance.blocked.toList()
+                        ..sort();
                       if (blocked.isEmpty) {
                         return Center(
                           child: Padding(
@@ -92,10 +90,7 @@ class BlockedUsersScreen extends StatelessWidget {
           Row(
             children: [
               IconButton(
-                icon: Icon(
-                  Icons.arrow_back,
-                  color: AppColors.textPrimary,
-                ),
+                icon: Icon(Icons.arrow_back, color: AppColors.textPrimary),
                 padding: EdgeInsets.zero,
                 constraints: const BoxConstraints(),
                 onPressed: () => Navigator.of(context).pop(),
@@ -103,10 +98,7 @@ class BlockedUsersScreen extends StatelessWidget {
             ],
           ),
           const SizedBox(height: AppDimensions.spaceMedium),
-          Text(
-            'Geblokkeerde gebruikers',
-            style: AppTextStyles.screenTitle,
-          ),
+          Text('Geblokkeerde gebruikers', style: AppTextStyles.screenTitle),
           const SizedBox(height: AppDimensions.spaceLarge),
         ],
       ),
@@ -168,9 +160,7 @@ class _BlockedRow extends StatelessWidget {
       context: context,
       builder: (ctx) => AlertDialog(
         title: Text('$username deblokkeren?'),
-        content: Text(
-          'Je ziet weer alle berichten van $username in de chat.',
-        ),
+        content: Text('Je ziet weer alle berichten van $username in de chat.'),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx, false),

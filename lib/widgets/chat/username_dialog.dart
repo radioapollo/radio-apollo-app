@@ -80,8 +80,10 @@ class _UsernameDialogState extends State<UsernameDialog> {
       return;
     }
     if (!_termsAccepted) {
-      setState(() => _error =
-          'Je moet de gebruiksvoorwaarden accepteren om te kunnen chatten.');
+      setState(
+        () => _error =
+            'Je moet de gebruiksvoorwaarden accepteren om te kunnen chatten.',
+      );
       return;
     }
 
@@ -129,10 +131,7 @@ class _UsernameDialogState extends State<UsernameDialog> {
             hasExistingUsername
                 ? 'Accepteer onze gebruiksvoorwaarden om te kunnen blijven chatten.'
                 : 'Deze naam is zichtbaar voor andere chatters.',
-            style: TextStyle(
-              color: AppColors.textSecondary,
-              fontSize: 13,
-            ),
+            style: TextStyle(color: AppColors.textSecondary, fontSize: 13),
           ),
           const SizedBox(height: 16),
           TextField(
@@ -171,9 +170,9 @@ class _UsernameDialogState extends State<UsernameDialog> {
                 onChanged: _loading
                     ? null
                     : (v) => setState(() {
-                          _termsAccepted = v ?? false;
-                          if (_error != null) _error = null;
-                        }),
+                        _termsAccepted = v ?? false;
+                        if (_error != null) _error = null;
+                      }),
               ),
               Expanded(
                 child: Padding(
@@ -196,8 +195,8 @@ class _UsernameDialogState extends State<UsernameDialog> {
                           ),
                           recognizer: TapGestureRecognizer()
                             ..onTap = () => UrlLauncherUtils.openUrl(
-                                  AppConstants.termsOfUseUrl,
-                                ),
+                              AppConstants.termsOfUseUrl,
+                            ),
                         ),
                         const TextSpan(
                           text:

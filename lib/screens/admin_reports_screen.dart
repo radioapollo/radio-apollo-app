@@ -16,6 +16,7 @@ import 'package:flutter/material.dart';
 import '../models/report.dart';
 import '../services/chat/admin_moderation_service.dart';
 import '../theme/app_theme.dart';
+import '../widgets/themed_watermark_background.dart';
 
 class AdminReportsScreen extends StatelessWidget {
   const AdminReportsScreen({super.key});
@@ -24,75 +25,68 @@ class AdminReportsScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppColors.primary,
-      body: SizedBox.expand(
-        child: Container(
-          decoration: BoxDecoration(
-            image: AppDecorations.backgroundWatermark,
-          ),
-          child: SafeArea(
-            child: Column(
-              children: [
-                _buildHeader(context),
-                Expanded(
-                  child: StreamBuilder<List<Report>>(
-                    stream: AdminModerationService.instance
-                        .pendingReportsStream(),
-                    builder: (context, snap) {
-                      if (snap.connectionState == ConnectionState.waiting) {
-                        return const Center(
-                          child: CircularProgressIndicator(
-                            color: AppColors.loadingIndicator,
-                          ),
-                        );
-                      }
-                      if (snap.hasError) {
-                        return Center(
-                          child: Padding(
-                            padding: const EdgeInsets.all(24),
-                            child: Text(
-                              'Kon meldingen niet laden:\n${snap.error}',
-                              style: TextStyle(
-                                color: AppColors.textBody,
-                              ),
-                              textAlign: TextAlign.center,
-                            ),
-                          ),
-                        );
-                      }
-                      final reports = snap.data ?? const <Report>[];
-                      if (reports.isEmpty) {
-                        return Center(
-                          child: Padding(
-                            padding: EdgeInsets.all(24),
-                            child: Text(
-                              'Geen openstaande meldingen.',
-                              style: TextStyle(
-                                color: AppColors.textBody,
-                                fontSize: 16,
-                                fontWeight: FontWeight.w600,
-                              ),
-                            ),
-                          ),
-                        );
-                      }
-                      return ListView.separated(
-                        padding: EdgeInsets.fromLTRB(
-                          AppDimensions.paddingLarge,
-                          0,
-                          AppDimensions.paddingLarge,
-                          AppDimensions.paddingLarge,
+      body: ThemedWatermarkBackground(
+        child: SafeArea(
+          child: Column(
+            children: [
+              _buildHeader(context),
+              Expanded(
+                child: StreamBuilder<List<Report>>(
+                  stream: AdminModerationService.instance
+                      .pendingReportsStream(),
+                  builder: (context, snap) {
+                    if (snap.connectionState == ConnectionState.waiting) {
+                      return const Center(
+                        child: CircularProgressIndicator(
+                          color: AppColors.loadingIndicator,
                         ),
-                        itemCount: reports.length,
-                        separatorBuilder: (context, index) =>
-                            const SizedBox(height: AppDimensions.spaceMedium),
-                        itemBuilder: (context, i) =>
-                            _ReportCard(report: reports[i]),
                       );
-                    },
-                  ),
+                    }
+                    if (snap.hasError) {
+                      return Center(
+                        child: Padding(
+                          padding: const EdgeInsets.all(24),
+                          child: Text(
+                            'Kon meldingen niet laden:\n${snap.error}',
+                            style: TextStyle(color: AppColors.textBody),
+                            textAlign: TextAlign.center,
+                          ),
+                        ),
+                      );
+                    }
+                    final reports = snap.data ?? const <Report>[];
+                    if (reports.isEmpty) {
+                      return Center(
+                        child: Padding(
+                          padding: EdgeInsets.all(24),
+                          child: Text(
+                            'Geen openstaande meldingen.',
+                            style: TextStyle(
+                              color: AppColors.textBody,
+                              fontSize: 16,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ),
+                      );
+                    }
+                    return ListView.separated(
+                      padding: EdgeInsets.fromLTRB(
+                        AppDimensions.paddingLarge,
+                        0,
+                        AppDimensions.paddingLarge,
+                        AppDimensions.paddingLarge,
+                      ),
+                      itemCount: reports.length,
+                      separatorBuilder: (context, index) =>
+                          const SizedBox(height: AppDimensions.spaceMedium),
+                      itemBuilder: (context, i) =>
+                          _ReportCard(report: reports[i]),
+                    );
+                  },
                 ),
-              ],
-            ),
+              ),
+            ],
           ),
         ),
       ),
@@ -156,7 +150,6 @@ class _ReportCardState extends State<_ReportCard> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-
           Row(
             children: [
               Expanded(
@@ -202,10 +195,7 @@ class _ReportCardState extends State<_ReportCard> {
             ),
             child: Text(
               r.reportedText.isEmpty ? '(leeg bericht)' : r.reportedText,
-              style: const TextStyle(
-                color: AppColors.textOnDark,
-                fontSize: 14,
-              ),
+              style: const TextStyle(color: AppColors.textOnDark, fontSize: 14),
             ),
           ),
           const SizedBox(height: AppDimensions.spaceSmall),
@@ -265,10 +255,7 @@ class _ReportCardState extends State<_ReportCard> {
       icon: Icon(icon, size: 16, color: AppColors.textOnDark),
       label: Text(
         label,
-        style: const TextStyle(
-          fontSize: 12,
-          color: AppColors.textOnDark,
-        ),
+        style: const TextStyle(fontSize: 12, color: AppColors.textOnDark),
       ),
       onPressed: onTap,
       style: ElevatedButton.styleFrom(
@@ -385,10 +372,7 @@ class _ReportCardState extends State<_ReportCard> {
   void _snack(String message) {
     if (!mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(message),
-        duration: const Duration(seconds: 3),
-      ),
+      SnackBar(content: Text(message), duration: const Duration(seconds: 3)),
     );
   }
 

@@ -27,6 +27,13 @@
    is then wired into the widget tree via AnimatedBuilder around
    MaterialApp; toggling the mode rebuilds the entire app, which
    re-reads every AppColors getter and swaps the watermark asset.
+
+   Watermark continuity
+   ────────────────────
+   Both watermark variants are kept mounted at all times by
+   ThemedWatermarkBackground (see widgets/themed_watermark_background.dart).
+   That widget stacks both images and toggles their opacity, so flipping
+   the theme doesn't show a frame of bare scaffold while a JPG decodes.
 */
 
 import 'dart:async';
@@ -94,8 +101,9 @@ Future<void> main() async {
   }
 
   if (!kIsWeb) {
-    await FirebaseCrashlytics.instance
-        .setCrashlyticsCollectionEnabled(!kDebugMode);
+    await FirebaseCrashlytics.instance.setCrashlyticsCollectionEnabled(
+      !kDebugMode,
+    );
   }
 
   _installErrorHandlers();
@@ -191,9 +199,7 @@ Future<void> main() async {
 
   // Forward every sponsor-list change to the audio handler.
   final sponsorSub = InfoService.instance.sponsorsStream.listen((sponsors) {
-    audioHandler.updateSponsorNames(
-      sponsors.map((s) => s.title).toList(),
-    );
+    audioHandler.updateSponsorNames(sponsors.map((s) => s.title).toList());
   });
 
   runApp(
@@ -215,12 +221,7 @@ void _recordError(
   bool fatal = false,
 }) {
   if (kIsWeb) return;
-  FirebaseCrashlytics.instance.recordError(
-    e,
-    st,
-    reason: reason,
-    fatal: fatal,
-  );
+  FirebaseCrashlytics.instance.recordError(e, st, reason: reason, fatal: fatal);
 }
 
 void _recordFlutterFatalError(FlutterErrorDetails details) {
@@ -344,46 +345,43 @@ class ApolloApp extends StatefulWidget {
 
 class _ApolloAppState extends State<ApolloApp> {
   @override
-  void initState() {
-    super.initState();
-    // Listen to the theme controller and call setState ourselves.
-    // This forces the entire State to rebuild — including everything
-    // below the MaterialApp — when the theme flips.
-    ThemeController.instance.addListener(_onThemeChanged);
-  }
-
-  @override
   void dispose() {
-    ThemeController.instance.removeListener(_onThemeChanged);
     widget.programSubscription.cancel();
     widget.sponsorSubscription.cancel();
     widget.currentProgramService.stop();
     super.dispose();
   }
 
-  void _onThemeChanged() {
-    if (mounted) setState(() {});
-  }
-
   @override
   Widget build(BuildContext context) {
-    final isDark = ThemeController.instance.isDark;
-    return ServiceProvider(
-      audioHandler: widget.audioHandler,
-      currentProgramService: widget.currentProgramService,
-      child: MaterialApp(
-        title: 'Radio Apollo',
-        theme: ThemeData(
-          fontFamily: 'Sans',
-          scaffoldBackgroundColor: AppColors.scaffoldBg,
-          colorScheme: ColorScheme.fromSeed(
-            seedColor: AppColors.primary,
-            brightness: isDark ? Brightness.dark : Brightness.light,
+    return AnimatedBuilder(
+      animation: ThemeController.instance,
+      builder: (context, _) {
+        final isDark = ThemeController.instance.isDark;
+        return ServiceProvider(
+          audioHandler: widget.audioHandler,
+          currentProgramService: widget.currentProgramService,
+          child: MaterialApp(
+            title: 'Radio Apollo',
+            theme: ThemeData(
+              fontFamily: 'Sans',
+              scaffoldBackgroundColor: AppColors.scaffoldBg,
+              colorScheme: ColorScheme.fromSeed(
+                seedColor: AppColors.primary,
+                brightness: isDark ? Brightness.dark : Brightness.light,
+              ),
+              useMaterial3: true,
+            ),
+            builder: (context, child) {
+              // KeyedSubtree forces the entire screen subtree to rebuild
+              // when the theme flips, so every screen re-reads AppColors
+              // immediately — no need to navigate away to see the change.
+              return KeyedSubtree(key: ValueKey(isDark), child: child!);
+            },
+            home: const ApolloNav(),
           ),
-          useMaterial3: true,
-        ),
-        home: const ApolloNav(),
-      ),
+        );
+      },
     );
   }
 }

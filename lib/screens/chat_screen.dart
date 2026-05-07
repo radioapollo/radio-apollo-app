@@ -263,9 +263,9 @@ class _ChatScreenState extends State<ChatScreen>
   }
 
   void _openReports() {
-    Navigator.of(context).push(
-      MaterialPageRoute(builder: (_) => const AdminReportsScreen()),
-    );
+    Navigator.of(
+      context,
+    ).push(MaterialPageRoute(builder: (_) => const AdminReportsScreen()));
   }
 
   // ── Build ─────────────────────────────────────────────────────────────────
@@ -279,9 +279,7 @@ class _ChatScreenState extends State<ChatScreen>
 
     return SizedBox.expand(
       child: Container(
-        decoration: BoxDecoration(
-          image: AppDecorations.backgroundWatermark,
-        ),
+        decoration: BoxDecoration(image: AppDecorations.backgroundWatermark),
         child: SafeArea(
           child: Column(
             children: [

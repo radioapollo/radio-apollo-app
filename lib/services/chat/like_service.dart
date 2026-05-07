@@ -57,30 +57,32 @@ class LikeService {
 
     final ref = _db.collection(_collection).doc(messageId);
 
-    return _db.runTransaction<bool>((tx) async {
-      final snap = await tx.get(ref);
-      if (!snap.exists) {
-        throw Exception('Bericht bestaat niet meer.');
-      }
+    return _db
+        .runTransaction<bool>((tx) async {
+          final snap = await tx.get(ref);
+          if (!snap.exists) {
+            throw Exception('Bericht bestaat niet meer.');
+          }
 
-      final data = snap.data() ?? {};
-      final likedBy = (data['likedBy'] as Map<String, dynamic>?) ?? {};
-      final currentLikes = (data['likes'] as num?)?.toInt() ?? 0;
+          final data = snap.data() ?? {};
+          final likedBy = (data['likedBy'] as Map<String, dynamic>?) ?? {};
+          final currentLikes = (data['likes'] as num?)?.toInt() ?? 0;
 
-      final wasLiked = likedBy[username] == true;
-      final newLikes = wasLiked
-          ? (currentLikes - 1).clamp(0, 1 << 31)
-          : currentLikes + 1;
+          final wasLiked = likedBy[username] == true;
+          final newLikes = wasLiked
+              ? (currentLikes - 1).clamp(0, 1 << 31)
+              : currentLikes + 1;
 
-      tx.update(ref, {
-        'likes': newLikes,
-        'likedBy.$username': wasLiked ? FieldValue.delete() : true,
-      });
+          tx.update(ref, {
+            'likes': newLikes,
+            'likedBy.$username': wasLiked ? FieldValue.delete() : true,
+          });
 
-      return !wasLiked;
-    }).catchError((e, st) {
-      debugPrint('[LikeService] toggle failed: $e\n$st');
-      throw e;
-    });
+          return !wasLiked;
+        })
+        .catchError((e, st) {
+          debugPrint('[LikeService] toggle failed: $e\n$st');
+          throw e;
+        });
   }
 }

@@ -29,7 +29,6 @@ class _AppVersionFooterState extends State<AppVersionFooter> {
   }
 
   Future<void> _loadVersion() async {
-
     final info = await PackageInfo.fromPlatform();
     if (!mounted) return;
     setState(() {
@@ -53,7 +52,6 @@ class _AppVersionFooterState extends State<AppVersionFooter> {
         ),
         const SizedBox(height: AppDimensions.spaceSmall),
         Center(
-
           child: Text(
             _version != null ? 'Versie $_version' : ' ',
             style: TextStyle(color: AppColors.creditText, fontSize: 11),

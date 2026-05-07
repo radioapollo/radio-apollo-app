@@ -79,7 +79,6 @@ class EventDetailSheet extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-
                   if (!event.hasImage) _buildDragHandle(accent),
                   _buildTitle(),
                   const SizedBox(height: AppDimensions.spaceLarge),
@@ -106,7 +105,6 @@ class EventDetailSheet extends StatelessWidget {
   // ── Banner image ──────────────────────────────────────────────────────────
 
   Widget _buildImageBanner() {
-
     return ClipRRect(
       borderRadius: const BorderRadius.vertical(
         top: Radius.circular(AppDimensions.radiusXLarge),

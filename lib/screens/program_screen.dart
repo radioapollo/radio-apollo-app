@@ -40,7 +40,6 @@ import '../theme/app_theme.dart';
 import '../constants/constants.dart';
 
 class ProgramScreen extends StatefulWidget {
-
   final bool isActive;
 
   const ProgramScreen({super.key, this.isActive = false});
@@ -127,14 +126,11 @@ class _ProgramScreenState extends State<ProgramScreen>
 
     return SizedBox.expand(
       child: Container(
-        decoration: BoxDecoration(
-          image: AppDecorations.backgroundWatermark,
-        ),
+        decoration: BoxDecoration(image: AppDecorations.backgroundWatermark),
         child: SafeArea(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-
               Padding(
                 padding: const EdgeInsets.fromLTRB(
                   AppDimensions.paddingXLarge,
@@ -175,12 +171,10 @@ class _ProgramScreenState extends State<ProgramScreen>
                     AppDimensions.paddingXLarge,
                   ),
                   child: StreamBuilder<List<Map<String, String>>>(
-
                     stream: _programService.getProgramsForDay(selectedDay),
 
                     initialData: _programService.latestForDay(selectedDay),
                     builder: (context, snapshot) {
-
                       if (snapshot.connectionState == ConnectionState.waiting &&
                           !snapshot.hasData) {
                         return const Center(

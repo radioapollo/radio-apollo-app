@@ -45,10 +45,7 @@ class ChatTitle extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
-                  'Chat met de Studio',
-                  style: AppTextStyles.chatTitle,
-                ),
+                Text('Chat met de Studio', style: AppTextStyles.chatTitle),
                 if (isAdmin)
                   const Padding(
                     padding: EdgeInsets.only(top: AppDimensions.spaceSmall),
@@ -72,7 +69,8 @@ class ChatTitle extends StatelessWidget {
           ),
 
           // ── Reports button (admin only, with badge) ───────────────────────
-          if (isAdmin && onOpenReports != null) _ReportsButton(onTap: onOpenReports!),
+          if (isAdmin && onOpenReports != null)
+            _ReportsButton(onTap: onOpenReports!),
 
           // ── Logout button (admin only) ────────────────────────────────────
           if (isAdmin)
@@ -129,10 +127,7 @@ class _ReportsButton extends StatelessWidget {
           clipBehavior: Clip.none,
           children: [
             IconButton(
-              icon: Icon(
-                Icons.flag_outlined,
-                color: AppColors.textPrimary,
-              ),
+              icon: Icon(Icons.flag_outlined, color: AppColors.textPrimary),
               onPressed: onTap,
               tooltip: 'Meldingen',
             ),

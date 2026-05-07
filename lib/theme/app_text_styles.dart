@@ -50,16 +50,11 @@ class AppTextStyles {
     fontWeight: FontWeight.w700,
   );
 
-  static TextStyle get cardSubtitle => TextStyle(
-    color: AppColors.textSecondary,
-    height: 1.3,
-    fontSize: 13,
-  );
+  static TextStyle get cardSubtitle =>
+      TextStyle(color: AppColors.textSecondary, height: 1.3, fontSize: 13);
 
-  static TextStyle get cardMeta => TextStyle(
-    color: AppColors.textMeta,
-    fontSize: 12,
-  );
+  static TextStyle get cardMeta =>
+      TextStyle(color: AppColors.textMeta, fontSize: 12);
 
   static TextStyle get noDataText => TextStyle(color: AppColors.textSecondary);
 

@@ -89,7 +89,6 @@ class _ApolloNavState extends State<ApolloNav> {
       );
       _updateConnectivity(results);
     } catch (_) {
-
       if (mounted) setState(() => _isOffline = true);
     }
   }

@@ -98,10 +98,7 @@ class RecentlyPlayedSheet extends StatelessWidget {
         AppDimensions.paddingXLarge,
         AppDimensions.spaceMedium,
       ),
-      child: Text(
-        'Recent gespeeld',
-        style: AppTextStyles.screenTitleSmall,
-      ),
+      child: Text('Recent gespeeld', style: AppTextStyles.screenTitleSmall),
     );
   }
 
@@ -110,9 +107,7 @@ class RecentlyPlayedSheet extends StatelessWidget {
   Widget _buildEmptyState() {
     return Center(
       child: Padding(
-        padding: EdgeInsets.symmetric(
-          horizontal: AppDimensions.paddingXLarge,
-        ),
+        padding: EdgeInsets.symmetric(horizontal: AppDimensions.paddingXLarge),
         child: Text(
           'Nog geen nummers geregistreerd. Start het afspelen om de '
           'lijst te vullen.',
@@ -123,10 +118,7 @@ class RecentlyPlayedSheet extends StatelessWidget {
     );
   }
 
-  Widget _buildList(
-    List<RecentSong> songs,
-    ScrollController scrollController,
-  ) {
+  Widget _buildList(List<RecentSong> songs, ScrollController scrollController) {
     return ListView.separated(
       controller: scrollController,
       padding: const EdgeInsets.fromLTRB(
@@ -136,9 +128,8 @@ class RecentlyPlayedSheet extends StatelessWidget {
         AppDimensions.paddingXLarge,
       ),
       itemCount: songs.length,
-      separatorBuilder: (_, _) => const SizedBox(
-        height: AppDimensions.spaceSmall,
-      ),
+      separatorBuilder: (_, _) =>
+          const SizedBox(height: AppDimensions.spaceSmall),
       itemBuilder: (context, index) {
         return _RecentSongTile(song: songs[index], isFirst: index == 0);
       },

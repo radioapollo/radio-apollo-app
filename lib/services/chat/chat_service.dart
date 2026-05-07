@@ -211,9 +211,7 @@ class ChatService {
         );
       }
       if (response.statusCode == 400) {
-        throw ProfanityException(
-          _extractError(response, 'Bericht geweigerd.'),
-        );
+        throw ProfanityException(_extractError(response, 'Bericht geweigerd.'));
       }
       if (response.statusCode != 200) {
         throw Exception('Bericht kon niet worden verzonden. Probeer opnieuw.');

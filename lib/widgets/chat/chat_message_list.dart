@@ -332,10 +332,7 @@ class _ChatMessageListState extends State<ChatMessageList>
                   ? 'Geen internetverbinding.\nControleer je netwerk en probeer opnieuw.'
                   : 'Berichten konden niet worden geladen.\nProbeer het later opnieuw.',
               textAlign: TextAlign.center,
-              style: TextStyle(
-                color: AppColors.textSecondary,
-                fontSize: 13,
-              ),
+              style: TextStyle(color: AppColors.textSecondary, fontSize: 13),
             ),
           ],
         ),

@@ -44,7 +44,6 @@ import 'package:flutter_chrome_cast/session.dart';
 import '../theme/app_theme.dart';
 
 class CastButton extends StatelessWidget {
-
   final double size;
 
   final Color color;
@@ -110,7 +109,6 @@ class CastButton extends StatelessWidget {
         ),
       ),
       builder: (sheetCtx) {
-
         return StreamBuilder<GoogleCastSession?>(
           stream: GoogleCastSessionManager.instance.currentSessionStream,
           initialData: GoogleCastSessionManager.instance.currentSession,
@@ -216,10 +214,7 @@ class CastButton extends StatelessWidget {
       subtitle: (device.modelName != null && device.modelName!.isNotEmpty)
           ? Text(
               device.modelName!,
-              style: TextStyle(
-                color: AppColors.textSecondary,
-                fontSize: 12,
-              ),
+              style: TextStyle(color: AppColors.textSecondary, fontSize: 12),
             )
           : null,
       onTap: isCurrent
@@ -230,7 +225,6 @@ class CastButton extends StatelessWidget {
                 await GoogleCastSessionManager.instance.startSessionWithDevice(
                   device,
                 );
-
               } catch (e) {
                 debugPrint('[CastButton] Start session failed: $e');
               }
@@ -294,11 +288,7 @@ class _VolumeSliderState extends State<_VolumeSlider> {
       ),
       child: Row(
         children: [
-          Icon(
-            Icons.volume_down,
-            color: AppColors.textSecondary,
-            size: 22,
-          ),
+          Icon(Icons.volume_down, color: AppColors.textSecondary, size: 22),
           Expanded(
             child: Slider(
               value: _localValue,
