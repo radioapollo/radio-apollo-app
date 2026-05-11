@@ -69,7 +69,7 @@ class DefaultFirebaseOptions {
     databaseURL:
         'https://radio-apollo-90693-default-rtdb.europe-west1.firebasedatabase.app',
     storageBucket: 'radio-apollo-90693.firebasestorage.app',
-    iosBundleId: 'com.example.flutterApplication1',
+    iosBundleId: 'be.radioapollo.app',
   );
 
   static const FirebaseOptions macos = FirebaseOptions(
@@ -80,7 +80,7 @@ class DefaultFirebaseOptions {
     databaseURL:
         'https://radio-apollo-90693-default-rtdb.europe-west1.firebasedatabase.app',
     storageBucket: 'radio-apollo-90693.firebasestorage.app',
-    iosBundleId: 'com.example.flutterApplication1',
+    iosBundleId: 'be.radioapollo.app',
   );
 
   static const FirebaseOptions windows = FirebaseOptions(
