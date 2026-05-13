@@ -84,11 +84,10 @@ class DefaultFirebaseOptions {
   );
 
   static const FirebaseOptions windows = FirebaseOptions(
-    apiKey: 'AIzaSyBmJ4n2iQzNsRqMl62tu_DgSYTPX6ZiT6E',
-    appId: '1:1086114344104:web:5c51bad142dfaf9b0e269d',
+    apiKey: 'AIzaSyAFeyQIT0FlZDnLPz2ItIEIhpAZZmKR968',
+    appId: '1:1086114344104:ios:ac35dd4997b1245e0e269d',
     messagingSenderId: '1086114344104',
     projectId: 'radio-apollo-90693',
-    authDomain: 'radio-apollo-90693.firebaseapp.com',
     databaseURL:
         'https://radio-apollo-90693-default-rtdb.europe-west1.firebasedatabase.app',
     storageBucket: 'radio-apollo-90693.firebasestorage.app',

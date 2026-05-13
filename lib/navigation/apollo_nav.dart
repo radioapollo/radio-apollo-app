@@ -1,29 +1,16 @@
-/* Apollo Nav — Bottom Navigation
+/* Apollo Nav — Responsive Navigation Shell
 
    The root navigation shell of the application.
 
-   It handles:
-   - holding the five top-level tabs (Home, Programma's, Info,
-     Evenementen, Chat) inside a PageView
-   - watching connectivity and showing an offline banner when there
-     is no network
+   On MOBILE (< 600 dp wide): the original BottomNavigationBar.
+   On DESKTOP (≥ 600 dp wide): a NavigationRail on the left side,
+     which is how desktop/windowed Flutter apps are expected to look.
+     This makes every tab reachable with a mouse without needing to
+     swipe, and avoids the bottom bar being stranded at the bottom of
+     a tall window.
 
-   Cast handling note:
-   The Cast session lifecycle (loading the stream onto the device,
-   silencing the local player, mirroring Cast media status into the
-   notification, etc.) is owned by `RadioAudioHandler` itself. ApolloNav
-   used to listen to `currentSessionStream` here, but that caused two
-   listeners to fight over playback state and produced the
-   double-audio + flickering-notification + "pause keeps playing on
-   Chromecast" bugs. There is now a single source of truth in
-   `audio_handler.dart`.
-
-   The connectivity check on startup is wrapped in a short timeout
-   so the app does not block indefinitely when the device is offline.
-
-   The PageView uses a custom `_StricterPageScrollPhysics` so a slight
-   diagonal gesture while scrolling a list vertically (e.g. the program
-   list) does not accidentally flick to the next tab.
+   Everything else — connectivity banner, PageView, tab switching,
+   notification routing — is unchanged.
 */
 
 import 'dart:async';
@@ -38,6 +25,9 @@ import '../services/chat/chat_service.dart';
 import '../services/chat/auth_service.dart';
 import '../services/notifications/notification_router.dart';
 import '../theme/app_theme.dart';
+
+/// Width threshold above which the side rail is used instead of bottom nav.
+const double _kDesktopBreakpoint = 600.0;
 
 class ApolloNav extends StatefulWidget {
   const ApolloNav({super.key});
@@ -122,32 +112,114 @@ class _ApolloNavState extends State<ApolloNav> {
 
   @override
   Widget build(BuildContext context) {
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final isDesktop = constraints.maxWidth >= _kDesktopBreakpoint;
+        return isDesktop ? _buildDesktopShell() : _buildMobileShell();
+      },
+    );
+  }
+
+  // ── Mobile: bottom navigation bar ────────────────────────────────────────
+
+  Widget _buildMobileShell() {
+    return Scaffold(
+      body: Column(
+        children: [
+          if (_isOffline) _buildOfflineBanner(),
+          Expanded(child: _buildPageView()),
+        ],
+      ),
+      bottomNavigationBar: _buildBottomNav(),
+    );
+  }
+
+  // ── Desktop: side navigation rail ────────────────────────────────────────
+
+  Widget _buildDesktopShell() {
     return Scaffold(
       body: Column(
         children: [
           if (_isOffline) _buildOfflineBanner(),
           Expanded(
-            child: PageView(
-              controller: _pageController,
-
-              physics: const _StricterPageScrollPhysics(),
-              onPageChanged: (index) => setState(() => _index = index),
+            child: Row(
               children: [
-                HomeScreen(onNavigate: _switchTab),
-                ProgramScreen(isActive: _index == 1),
-                InfoScreen(),
-                const EventScreen(),
-                ChatScreen(
-                  chatService: _chatService,
-                  authService: _authService,
-                  isActive: _index == 4,
-                ),
+                _buildNavRail(),
+                const VerticalDivider(thickness: 1, width: 1),
+                Expanded(child: _buildPageView()),
               ],
             ),
           ),
         ],
       ),
-      bottomNavigationBar: _buildBottomNav(),
+    );
+  }
+
+  Widget _buildNavRail() {
+    return NavigationRail(
+      selectedIndex: _index,
+      onDestinationSelected: _switchTab,
+      labelType: NavigationRailLabelType.all,
+      backgroundColor: AppColors.bottomNavBg,
+      selectedIconTheme: IconThemeData(color: AppColors.primaryMid),
+      unselectedIconTheme: IconThemeData(color: AppColors.navUnselected),
+      selectedLabelTextStyle: TextStyle(
+        color: AppColors.primaryMid,
+        fontWeight: FontWeight.w600,
+        fontSize: 12,
+      ),
+      unselectedLabelTextStyle: TextStyle(
+        color: AppColors.navUnselected,
+        fontSize: 12,
+      ),
+      destinations: const [
+        NavigationRailDestination(
+          icon: Icon(Icons.home_outlined),
+          selectedIcon: Icon(Icons.home),
+          label: Text('Home'),
+        ),
+        NavigationRailDestination(
+          icon: Icon(Icons.calendar_month_outlined),
+          selectedIcon: Icon(Icons.calendar_month),
+          label: Text("Programma's"),
+        ),
+        NavigationRailDestination(
+          icon: Icon(Icons.info_outlined),
+          selectedIcon: Icon(Icons.info),
+          label: Text('Info'),
+        ),
+        NavigationRailDestination(
+          icon: Icon(Icons.event_outlined),
+          selectedIcon: Icon(Icons.event),
+          label: Text('Evenementen'),
+        ),
+        NavigationRailDestination(
+          icon: Icon(Icons.chat_outlined),
+          selectedIcon: Icon(Icons.chat),
+          label: Text('Chat'),
+        ),
+      ],
+    );
+  }
+
+  // ── Shared page view ──────────────────────────────────────────────────────
+
+  Widget _buildPageView() {
+    return PageView(
+      controller: _pageController,
+      physics: const _StricterPageScrollPhysics(),
+      onPageChanged: (index) => setState(() => _index = index),
+      children: [
+        HomeScreen(onNavigate: _switchTab),
+        ProgramScreen(isActive: _index == 1),
+        InfoScreen(),
+        const EventScreen(),
+        ChatScreen(
+          chatService: _chatService,
+          authService: _authService,
+          isActive: _index == 4,
+        ),
+      ],
     );
   }
 
@@ -181,7 +253,7 @@ class _ApolloNavState extends State<ApolloNav> {
     ),
   );
 
-  // ── Bottom nav ────────────────────────────────────────────────────────────
+  // ── Bottom nav (mobile only) ──────────────────────────────────────────────
 
   Widget _buildBottomNav() {
     return Container(
@@ -212,7 +284,7 @@ class _ApolloNavState extends State<ApolloNav> {
   }
 }
 
-// ─── Page scroll physics ────────────────────────────────────────────────────
+// ── Page scroll physics ──────────────────────────────────────────────────────
 
 class _StricterPageScrollPhysics extends PageScrollPhysics {
   const _StricterPageScrollPhysics({super.parent});

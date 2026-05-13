@@ -2,44 +2,19 @@
 
    User-facing settings for the app. Currently contains:
    - Weergave (Light/Dark theme) — top
-   - Notification preferences
+   - Notification preferences  ← hidden on desktop (FCM not supported)
    - Chat preferences
 
-   Notification UX
-   ───────────────
-   We model OS-level permission as one of three banner states (see
-   PermissionBannerState in notification_service.dart):
-
-   - none          : permission is granted. No banner, just toggles.
-   - notYetAsked   : we've never gotten permission. Banner offers a
-                     button that triggers the OS prompt directly.
-   - denied        : permission was refused or turned off in system
-                     settings. Banner button opens system settings,
-                     since the OS prompt won't reappear.
-
-   On top of the banner, toggling a switch ON when permission isn't
-   granted *also* triggers the prompt. That way the user has two
-   paths to grant permission: the banner if they read top-down, or
-   the switch if they jump straight to the category they want.
-
-   AppLifecycleState observer
-   ──────────────────────────
-   The user might pop into Android Settings and flip notifications
-   on (or off) while the screen is showing. We listen to the app
-   lifecycle so when they return, we re-read the permission status
-   and rebuild the banner accordingly.
-
-   Theme section
-   ─────────────
-   The Weergave section delegates entirely to ThemeToggleTile, which
-   listens to ThemeController via its own AnimatedBuilder. The rest
-   of the app rebuilds automatically through the AnimatedBuilder
-   wrapping MaterialApp in main.dart, so no extra setState() is
-   needed here.
-
-   Reachable from the gear icon on the Info screen header.
+   Desktop safety
+   ──────────────
+   The entire "Meldingen" section (permission banner + category toggles)
+   is wrapped in `if (!_isDesktop)` so it simply doesn't render on
+   Windows / Linux / macOS. FCM subscribe/unsubscribe would crash on
+   those platforms and notifications don't apply there anyway.
 */
 
+import 'dart:io';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 
 import '../services/notifications/notification_service.dart';
@@ -53,6 +28,11 @@ import '../widgets/settings/theme_toggle_tile.dart';
 import '../widgets/themed_watermark_background.dart';
 import '../widgets/themed_logo.dart';
 import 'blocked_users_screen.dart';
+
+/// True when running on a desktop OS (Windows, Linux, macOS) — not mobile,
+/// not web.
+bool get _isDesktop =>
+    !kIsWeb && (Platform.isWindows || Platform.isLinux || Platform.isMacOS);
 
 class SettingsScreen extends StatefulWidget {
   const SettingsScreen({super.key});
@@ -226,33 +206,33 @@ class _SettingsScreenState extends State<SettingsScreen>
         AppDimensions.paddingXLarge,
       ),
       children: [
-        // ── Weergave section (top) ────────────────────────────────────────
-        // The toggle tile is self-contained: it listens to ThemeController
-        // via its own AnimatedBuilder, and tapping a pill calls
-        // ThemeController.setMode(...) which then rebuilds the entire
-        // MaterialApp through the AnimatedBuilder in main.dart.
+        // ── Weergave section ──────────────────────────────────────────────
         Text('Weergave', style: AppTextStyles.screenTitleSmall),
         const SizedBox(height: AppDimensions.spaceLarge),
         const ThemeToggleTile(),
 
-        // ── Meldingen section ─────────────────────────────────────────────
-        const SizedBox(height: AppDimensions.spaceXLarge),
-        Text('Meldingen', style: AppTextStyles.screenTitleSmall),
-        const SizedBox(height: AppDimensions.spaceLarge),
+        // ── Meldingen section (mobile only) ───────────────────────────────
+        // FCM / local-notifications are not supported on desktop, so we
+        // hide this entire section there.
+        if (!_isDesktop) ...[
+          const SizedBox(height: AppDimensions.spaceXLarge),
+          Text('Meldingen', style: AppTextStyles.screenTitleSmall),
+          const SizedBox(height: AppDimensions.spaceLarge),
 
-        NotificationPermissionBanner(
-          state: _bannerState,
-          onRequestPermission: _requestPermission,
-        ),
+          NotificationPermissionBanner(
+            state: _bannerState,
+            onRequestPermission: _requestPermission,
+          ),
 
-        ...NotificationCategory.values.map((category) {
-          return NotificationToggleTile(
-            title: category.displayName,
-            description: category.description,
-            value: _enabled[category] ?? category.defaultEnabled,
-            onChanged: (v) => _onToggle(category, v),
-          );
-        }),
+          ...NotificationCategory.values.map((category) {
+            return NotificationToggleTile(
+              title: category.displayName,
+              description: category.description,
+              value: _enabled[category] ?? category.defaultEnabled,
+              onChanged: (v) => _onToggle(category, v),
+            );
+          }),
+        ],
 
         // ── Chat section ──────────────────────────────────────────────────
         const SizedBox(height: AppDimensions.spaceXLarge),

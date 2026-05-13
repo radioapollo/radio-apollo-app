@@ -2,36 +2,20 @@
 
    Main chat screen where users talk to the studio in real time.
 
-   This screen is an orchestrator — it manages the username flow,
-   admin state, text input, and reply state, then delegates all
-   rendering to dedicated child widgets:
+   Desktop behaviour
+   ─────────────────
+   On desktop the username/EULA prompt is skipped entirely. Staff
+   members use the admin login (long-press the logo) instead of
+   claiming a regular username. The chat input is already shown
+   when isAdmin is true, so no username is needed on desktop.
 
-   - ChatHeader        → logo + long-press admin login
-   - ChatTitle         → title, username badge, logout / pick-name button
-   - ChatMessageList   → StreamBuilder with loading/error/empty states
-   - ChatInputField    → text field + send button + reply banner
-   - UsernamePrompt    → tappable bar shown when no username is set
-
-   Features:
-   - Optional username prompt on first visit (can be skipped)
-   - Users without a username can read chat but not send messages
-   - "Kies een naam" button in the title bar to set a username later
-   - Messages streamed live from Firestore (last 48 hours only)
-   - 160 character limit with a countdown near the limit
-   - Own messages on the right (blue), others on the left
-   - Admin messages in orange with a radio icon
-   - Per-message action row (like / reply / flag) under each bubble
-   - Reply state managed at this level: tapping reply on a bubble
-     stores the target in `_replyingTo`, which the input field shows
-     as a banner. Sending forwards the target to ChatService.
-   - Long-press the logo to open the admin login
-   - Long-press a message: admin only, opens moderation actions
-   - Keyboard stays open between messages so the user can keep typing
-   - Existing users without EULA acceptance are prompted on chat open
-     and again as a safety net if they try to send before accepting
+   This avoids calling claimUsername → AppCheckHttp → getToken()
+   on a platform that has no App Check provider.
 */
 
 import 'dart:async';
+import 'dart:io';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import '../services/chat/chat_service.dart';
 import '../services/chat/auth_service.dart';
@@ -43,9 +27,14 @@ import '../widgets/chat/chat_input_field.dart';
 import '../widgets/chat/chat_message_list.dart';
 import '../widgets/chat/username_prompt.dart';
 import '../widgets/chat/username_dialog.dart';
+import '../widgets/chat/admin_login_dialog.dart';
 import '../theme/app_theme.dart';
 import '../models/message.dart';
 import 'admin_reports_screen.dart';
+
+/// True when running on a desktop OS — no App Check provider available.
+bool get _isDesktop =>
+    !kIsWeb && (Platform.isWindows || Platform.isLinux || Platform.isMacOS);
 
 class ChatScreen extends StatefulWidget {
   final ChatService chatService;
@@ -129,6 +118,27 @@ class _ChatScreenState extends State<ChatScreen>
   }
 
   Future<void> _ensureUsername() async {
+    // On desktop: try silent auto-login first (uses saved password from
+    // a previous session). Only show the login dialog if that fails.
+    if (_isDesktop) {
+      if (!_authService.isAdmin) {
+        final autoOk = await _authService.tryAutoLogin();
+        if (autoOk) {
+          if (mounted) setState(() {});
+          return;
+        }
+        // No saved password or it expired — show the dialog once.
+        if (mounted) {
+          await AdminLoginDialog.show(
+            context,
+            authService: _authService,
+            onSuccess: _onAdminLogin,
+          );
+        }
+      }
+      return;
+    }
+
     await UserService.instance.init();
     final needsUsername = !UserService.instance.hasUsername;
     final needsEula = !EulaService.instance.hasAccepted;
@@ -139,6 +149,9 @@ class _ChatScreenState extends State<ChatScreen>
   }
 
   Future<void> _promptUsername() async {
+    // No username flow on desktop.
+    if (_isDesktop) return;
+
     final name = await UsernameDialog.show(context);
     if (name != null && mounted) {
       setState(() {});
@@ -178,88 +191,63 @@ class _ChatScreenState extends State<ChatScreen>
     }
 
     final text = _controller.text;
-    final replyTarget = _replyingTo;
+    final replyingTo = _replyingTo;
 
-    setState(() => _sending = true);
+    setState(() {
+      _sending = true;
+      _replyingTo = null;
+    });
+    _controller.clear();
+    _textFieldFocus.requestFocus();
+
     try {
-      final ok = await _chatService.sendMessage(text, replyingTo: replyTarget);
-      if (!mounted) return;
-      if (ok) {
-        _controller.clear();
-        setState(() {
-          _replyingTo = null;
-          _charsLeft = ChatService.maxMessageLength;
-        });
-        _startCooldownTicker();
-      }
-    } on CooldownException catch (e) {
-      _flashCooldownHint(initial: e.secondsRemaining);
-    } on ProfanityException catch (e) {
-      _showSnack(e.message);
+      await _chatService.sendMessage(text, replyingTo: replyingTo);
+      if (!_authService.isAdmin) _startCooldown();
     } catch (e) {
-      _showSnack(e.toString().replaceFirst('Exception: ', ''));
+      if (mounted) {
+        setState(() => _replyingTo = replyingTo);
+        _controller.text = text;
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(e.toString().replaceFirst('Exception: ', '')),
+            duration: const Duration(seconds: 3),
+          ),
+        );
+      }
     } finally {
       if (mounted) setState(() => _sending = false);
     }
   }
 
-  // ── Cooldown ──────────────────────────────────────────────────────────────
-
-  void _startCooldownTicker() {
-    _cooldownTicker?.cancel();
+  void _startCooldown() {
     setState(() => _cooldownRemaining = ChatService.cooldownSeconds);
-
-    _cooldownTicker = Timer.periodic(const Duration(seconds: 1), (timer) {
-      if (!mounted) return timer.cancel();
-      final remaining = _chatService.cooldownRemaining();
-      if (remaining <= 0) {
-        timer.cancel();
-        setState(() => _cooldownRemaining = 0);
-      } else {
-        setState(() => _cooldownRemaining = remaining);
-      }
+    _cooldownTicker?.cancel();
+    _cooldownTicker = Timer.periodic(const Duration(seconds: 1), (t) {
+      if (!mounted) { t.cancel(); return; }
+      setState(() {
+        _cooldownRemaining--;
+        if (_cooldownRemaining <= 0) t.cancel();
+      });
     });
   }
 
-  void _flashCooldownHint({int? initial}) {
-    if (initial != null) {
-      setState(() => _cooldownRemaining = initial);
-      _startCooldownTicker();
-    }
+  void _flashCooldownHint() {
     setState(() => _showCooldownHint = true);
     _hintDismissTimer?.cancel();
     _hintDismissTimer = Timer(const Duration(seconds: 2), () {
-      if (!mounted) return;
-      setState(() => _showCooldownHint = false);
+      if (mounted) setState(() => _showCooldownHint = false);
     });
   }
 
-  // ── Snackbar / admin login / reports ──────────────────────────────────────
+  // ── Admin ─────────────────────────────────────────────────────────────────
 
-  void _showSnack(String message) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(message),
-        duration: const Duration(seconds: 4),
-        margin: const EdgeInsets.all(AppDimensions.paddingLarge),
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(AppDimensions.radiusMedium),
-        ),
-      ),
-    );
+  Future<void> _onAdminLogin() async {
+    if (mounted) setState(() {});
   }
 
-  void _onAdminLogin() {
-    setState(() {
-      _messagesStream = _chatService.messagesStream;
-    });
-  }
-
-  void _onLogout() {
+  Future<void> _onLogout() async {
     _authService.logout();
-    setState(() {
-      _messagesStream = _chatService.messagesStream;
-    });
+    if (mounted) setState(() {});
   }
 
   void _openReports() {
@@ -302,8 +290,9 @@ class _ChatScreenState extends State<ChatScreen>
                 onReply: _onReplyTo,
               ),
 
-              // ── Input area: real input or "pick a name" prompt ──────────
-              if (hasUsername || isAdmin)
+              // On desktop: show the input immediately (admin login gives
+              // access). On mobile: require a username or admin session.
+              if (hasUsername || isAdmin || _isDesktop)
                 ChatInputField(
                   controller: _controller,
                   focusNode: _textFieldFocus,

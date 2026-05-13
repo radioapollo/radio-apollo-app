@@ -4,36 +4,26 @@
    notifications, audio service, current-program service, sponsor
    blocklist, and finally MaterialApp under ServiceProvider.
 
+   Desktop safety
+   ──────────────
+   Three mobile-only APIs now sit behind `_isMobile` guards so the app
+   boots on Windows / Linux / macOS without crashing:
+
+   1. FlutterLocalNotificationsPlugin + ensureNotificationChannels
+      → mobile (Android / iOS) only.
+   2. SystemChrome.setPreferredOrientations
+      → mobile only; throws MissingPluginException on desktop.
+   3. FirebaseAppCheck.activate with Android/Apple providers
+      → no desktop providers exist; skip on Windows & Linux.
+   4. _initCast (Chromecast SDK)
+      → Android / iOS only; already gated on !kIsWeb but the inner
+        Platform.isIOS check still throws on desktop — now returns
+        early unless actually on a mobile OS.
+
    Web-safe Crashlytics
    ────────────────────
    Crashlytics doesn't ship for web, so every recordError /
-   recordFlutterFatalError call is gated on `!kIsWeb`. The same guard
-   wraps the one-time `setCrashlyticsCollectionEnabled` call.
-
-   Sponsor blocklist wiring
-   ────────────────────────
-   The audio handler filters commercials out of the recently-played
-   list by matching the artist position against known sponsor names.
-   We subscribe to InfoService.sponsorsStream once here at startup and
-   forward each emission to `audioHandler.updateSponsorNames(...)`.
-   Subscription is cancelled in `_ApolloAppState.dispose()` alongside
-   the existing program subscription.
-
-   Theme controller
-   ────────────────
-   ThemeController.instance.init() is awaited before the first frame
-   so the persisted Light/Dark choice is applied immediately — no
-   white flash on cold start for users in dark mode. The controller
-   is then wired into the widget tree via AnimatedBuilder around
-   MaterialApp; toggling the mode rebuilds the entire app, which
-   re-reads every AppColors getter and swaps the watermark asset.
-
-   Watermark continuity
-   ────────────────────
-   Both watermark variants are kept mounted at all times by
-   ThemedWatermarkBackground (see widgets/themed_watermark_background.dart).
-   That widget stacks both images and toggles their opacity, so flipping
-   the theme doesn't show a frame of bare scaffold while a JPG decodes.
+   recordFlutterFatalError call is gated on `!kIsWeb`.
 */
 
 import 'dart:async';
@@ -63,44 +53,87 @@ import 'theme/app_theme.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'services/chat/eula_service.dart';
 
+/// True when running on Android or iOS (not web, not desktop).
+bool get _isMobile =>
+    !kIsWeb && (Platform.isAndroid || Platform.isIOS);
+
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  final tempPlugin = FlutterLocalNotificationsPlugin();
-  await tempPlugin.initialize(
-    const InitializationSettings(
-      android: AndroidInitializationSettings('@mipmap/ic_launcher'),
-      iOS: DarwinInitializationSettings(
-        requestAlertPermission: false,
-        requestBadgePermission: false,
-        requestSoundPermission: false,
-      ),
-    ),
-  );
-  await ensureNotificationChannels(tempPlugin);
+  // ── DESKTOP CRASH LOGGER ────────────────────────────────────────────
+  // Write any startup error to a file so we can read it after a crash.
+  if (!_isMobile && !kIsWeb) {
+    runZonedGuarded(
+      _mainBody,
+      (error, stack) {
+        try {
+          final logPath = '${Directory.systemTemp.path}\\radio_apollo_crash.txt';
+          File(logPath).writeAsStringSync(
+            'CRASH at ${DateTime.now()}\n\n$error\n\n$stack\n',
+            mode: FileMode.append,
+          );
+          debugPrint('[CRASH] Logged to $logPath');
+          debugPrint('[CRASH] $error\n$stack');
+        } catch (_) {}
+        runApp(
+          _ErrorApp(message: 'Startup error: $error'),
+        );
+      },
+    );
+    return;
+  }
 
-  await SystemChrome.setPreferredOrientations([
-    DeviceOrientation.portraitUp,
-    DeviceOrientation.portraitDown,
-  ]);
+  await _mainBody();
+}
+
+Future<void> _mainBody() async {
+  // Mobile-only: create Android notification channels up front so that
+  // the background isolate handler can reference them by ID.
+  if (_isMobile) {
+    final tempPlugin = FlutterLocalNotificationsPlugin();
+    await tempPlugin.initialize(
+      const InitializationSettings(
+        android: AndroidInitializationSettings('@mipmap/ic_launcher'),
+        iOS: DarwinInitializationSettings(
+          requestAlertPermission: false,
+          requestBadgePermission: false,
+          requestSoundPermission: false,
+        ),
+      ),
+    );
+    await ensureNotificationChannels(tempPlugin);
+  }
+
+  // Mobile-only: lock to portrait. Throws MissingPluginException on desktop.
+  if (_isMobile) {
+    await SystemChrome.setPreferredOrientations([
+      DeviceOrientation.portraitUp,
+      DeviceOrientation.portraitDown,
+    ]);
+  }
 
   // Load the persisted theme preference before the first frame so we
   // don't flash light-mode UI for dark-mode users on cold start.
   await ThemeController.instance.init();
 
+  bool firebaseReady = false;
   try {
     await Firebase.initializeApp(
       options: DefaultFirebaseOptions.currentPlatform,
-    );
+    ).timeout(const Duration(seconds: 15));
+    firebaseReady = true;
   } catch (e) {
-    debugPrint('[main] Firebase init failed: $e');
-    runApp(
-      const _ErrorApp(message: 'Kan Firebase niet laden. Herstart de app.'),
-    );
-    return;
+    debugPrint('[main] Firebase init failed or timed out: $e');
+    if (_isMobile) {
+      runApp(
+        const _ErrorApp(message: 'Kan Firebase niet laden. Herstart de app.'),
+      );
+      return;
+    }
+    // On desktop: continue without Firebase rather than blocking the app.
   }
 
-  if (!kIsWeb) {
+  if (_isMobile) {
     await FirebaseCrashlytics.instance.setCrashlyticsCollectionEnabled(
       !kDebugMode,
     );
@@ -108,7 +141,10 @@ Future<void> main() async {
 
   _installErrorHandlers();
 
-  FirebaseMessaging.onBackgroundMessage(firebaseMessagingBackgroundHandler);
+  // Background message handler only applies to mobile / web.
+  if (_isMobile || kIsWeb) {
+    FirebaseMessaging.onBackgroundMessage(firebaseMessagingBackgroundHandler);
+  }
 
   await _activateAppCheck();
 
@@ -119,61 +155,86 @@ Future<void> main() async {
     _recordError(e, st, reason: 'NotificationService.init');
   }
 
-  // ── Firebase ──────────────────────────────────────────────────────────────
-
   if (!kIsWeb) await _initCast();
 
   await _initUser();
 
   try {
-    await ProfanityService.instance.init();
+    await ProfanityService.instance.init().timeout(
+      const Duration(seconds: 10),
+      onTimeout: () {
+        debugPrint('[main] ProfanityService init timed out');
+      },
+    );
   } catch (e, st) {
     debugPrint('[main] ProfanityService init failed: $e');
     _recordError(e, st, reason: 'ProfanityService.init');
   }
 
   try {
-    await BlockService.instance.init();
+    await BlockService.instance.init().timeout(
+      const Duration(seconds: 10),
+      onTimeout: () {
+        debugPrint('[main] BlockService init timed out');
+      },
+    );
   } catch (e, st) {
     debugPrint('[main] BlockService init failed: $e');
     _recordError(e, st, reason: 'BlockService.init');
   }
 
   try {
-    await EulaService.instance.init();
+    await EulaService.instance.init().timeout(
+      const Duration(seconds: 10),
+      onTimeout: () {
+        debugPrint('[main] EulaService init timed out');
+      },
+    );
   } catch (e, st) {
     debugPrint('[main] EulaService init failed: $e');
     _recordError(e, st, reason: 'EulaService.init');
   }
 
   // ── Audio service (must succeed for the app to run) ───────────────────────
+  // On desktop, audio_service has no implementation and would throw
+  // MissingPluginException, so create the handler directly.
 
   late final RadioAudioHandler audioHandler;
-  try {
-    audioHandler = await AudioService.init(
-      builder: () => RadioAudioHandler(),
-      config: const AudioServiceConfig(
-        androidNotificationChannelId: AppConstants.notificationChannelId,
-        androidNotificationChannelName: AppConstants.notificationChannelName,
-        androidNotificationOngoing: true,
-      ),
-    );
-  } catch (e, st) {
-    debugPrint('[main] AudioService init failed: $e');
-    _recordError(e, st, reason: 'AudioService.init (fatal)', fatal: true);
-    runApp(
-      const _ErrorApp(
-        message: 'Audiodienst kon niet starten. Herstart de app.',
-      ),
-    );
-    return;
+  if (_isMobile || kIsWeb) {
+    try {
+      audioHandler = await AudioService.init(
+        builder: () => RadioAudioHandler(),
+        config: const AudioServiceConfig(
+          androidNotificationChannelId: AppConstants.notificationChannelId,
+          androidNotificationChannelName: AppConstants.notificationChannelName,
+          androidNotificationOngoing: true,
+        ),
+      );
+    } catch (e, st) {
+      debugPrint('[main] AudioService init failed: $e');
+      _recordError(e, st, reason: 'AudioService.init (fatal)', fatal: true);
+      runApp(
+        const _ErrorApp(
+          message: 'Audiodienst kon niet starten. Herstart de app.',
+        ),
+      );
+      return;
+    }
+  } else {
+    // Desktop: skip AudioService background-service plumbing.
+    audioHandler = RadioAudioHandler();
   }
 
   // ── Current program service ───────────────────────────────────────────────
 
   final currentProgramService = CurrentProgramService();
   try {
-    await currentProgramService.start();
+    await currentProgramService.start().timeout(
+      const Duration(seconds: 10),
+      onTimeout: () {
+        debugPrint('[main] CurrentProgramService start timed out');
+      },
+    );
   } catch (e, st) {
     debugPrint('[main] CurrentProgramService start failed: $e');
     _recordError(e, st, reason: 'CurrentProgramService.start');
@@ -188,8 +249,6 @@ Future<void> main() async {
 
   // ── Sponsor blocklist for commercial filtering ────────────────────────────
 
-  // Seed the audio handler with whatever sponsors InfoService already
-  // has cached (typically empty on cold start, populated on warm start).
   final cachedSponsors = InfoService.instance.latestSponsors;
   if (cachedSponsors != null) {
     audioHandler.updateSponsorNames(
@@ -197,7 +256,6 @@ Future<void> main() async {
     );
   }
 
-  // Forward every sponsor-list change to the audio handler.
   final sponsorSub = InfoService.instance.sponsorsStream.listen((sponsors) {
     audioHandler.updateSponsorNames(sponsors.map((s) => s.title).toList());
   });
@@ -220,12 +278,12 @@ void _recordError(
   String? reason,
   bool fatal = false,
 }) {
-  if (kIsWeb) return;
+  if (!_isMobile) return;
   FirebaseCrashlytics.instance.recordError(e, st, reason: reason, fatal: fatal);
 }
 
 void _recordFlutterFatalError(FlutterErrorDetails details) {
-  if (kIsWeb) return;
+  if (!_isMobile) return;
   FirebaseCrashlytics.instance.recordFlutterFatalError(details);
 }
 
@@ -245,6 +303,10 @@ void _installErrorHandlers() {
 }
 
 Future<void> _activateAppCheck() async {
+  // AppCheck only has providers for Android, iOS, macOS, and Web.
+  // Windows and Linux have none — skip to avoid a runtime crash.
+  if (!kIsWeb && (Platform.isWindows || Platform.isLinux)) return;
+
   try {
     await FirebaseAppCheck.instance.activate(
       providerAndroid: kDebugMode
@@ -261,6 +323,9 @@ Future<void> _activateAppCheck() async {
 }
 
 Future<void> _initCast() async {
+  // Chromecast SDK only supports Android and iOS.
+  if (!_isMobile) return;
+
   try {
     const appId = GoogleCastDiscoveryCriteria.kDefaultApplicationId;
     GoogleCastOptions? castOptions;
@@ -290,7 +355,12 @@ Future<void> _initCast() async {
 
 Future<void> _initUser() async {
   try {
-    await UserService.instance.init();
+    await UserService.instance.init().timeout(
+      const Duration(seconds: 10),
+      onTimeout: () {
+        debugPrint('[main] UserService init timed out');
+      },
+    );
   } catch (e, st) {
     debugPrint('[main] UserService init failed: $e');
     _recordError(e, st, reason: 'UserService.init');
@@ -373,9 +443,6 @@ class _ApolloAppState extends State<ApolloApp> {
               useMaterial3: true,
             ),
             builder: (context, child) {
-              // KeyedSubtree forces the entire screen subtree to rebuild
-              // when the theme flips, so every screen re-reads AppColors
-              // immediately — no need to navigate away to see the change.
               return KeyedSubtree(key: ValueKey(isDark), child: child!);
             },
             home: const ApolloNav(),
