@@ -4,6 +4,44 @@
    notifications, audio service, current-program service, sponsor
    blocklist, and finally MaterialApp under ServiceProvider.
 
+   ─── Fast first frame ──────────────────────────────────────────────────────
+   The splash stays on screen until Flutter renders its first frame. Any
+   work `await`-ed in main() therefore extends the splash. On cold start
+   from a push-notification tap — especially over LTE, where FCM/Firebase
+   handshakes are slow — sequentially awaiting AppCheck activation, FCM
+   topic reconciliation, the username re-claim, and a Firestore round-trip
+   for "now playing" used to keep the user staring at the logo for several
+   seconds before the app appeared. To users it looked like a hang.
+
+   The fix is to keep main() lean: only the things the first frame
+   genuinely depends on are awaited up front. Everything else is kicked
+   off in the background and lets the UI render immediately.
+
+   Critical (awaited before runApp):
+     - WidgetsFlutterBinding
+     - ThemeController.init() (avoids dark-mode flash)
+     - Firebase.initializeApp() (everything else needs it)
+     - UserService.init() (fast — SharedPreferences only; the slow
+       re-claim is kicked off in the background by the service itself,
+       so awaiting init() here costs maybe a millisecond but guarantees
+       the chat screen knows the user's name on the first frame)
+     - EulaService.init() / BlockService.init() (SharedPreferences only)
+     - AudioService.init() (the foreground service host — the app's
+       cold-start error screen depends on this succeeding)
+
+   Deferred (kicked off after runApp via _initInBackground):
+     - AppCheck activation
+     - NotificationService.init() (subscriptions, cold-start tap)
+     - Cast SDK init
+     - ProfanityService.init()
+     - CurrentProgramService.start() (first-fetch + 1-min poll)
+
+   The home screen already shows cached "now playing" data via
+   SharedPreferences, so the deferred CurrentProgramService.start()
+   is invisible to the user. NotificationRouter is a ValueNotifier so
+   a notification tap that arrives during init is picked up by
+   ApolloNav as soon as both sides are ready, no ordering required.
+
    Web-safe Crashlytics
    ────────────────────
    Crashlytics doesn't ship for web, so every recordError /
@@ -56,6 +94,7 @@ import 'services/chat/block_service.dart';
 import 'services/theme/theme_controller.dart';
 import 'utils/profanity/profanity_service.dart';
 import 'services/notifications/notification_service.dart';
+import 'services/notifications/notification_router.dart';
 import 'widgets/service_provider.dart';
 import 'firebase_options.dart';
 import 'constants/constants.dart';
@@ -66,19 +105,6 @@ import 'services/chat/eula_service.dart';
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  final tempPlugin = FlutterLocalNotificationsPlugin();
-  await tempPlugin.initialize(
-    const InitializationSettings(
-      android: AndroidInitializationSettings('@mipmap/ic_launcher'),
-      iOS: DarwinInitializationSettings(
-        requestAlertPermission: false,
-        requestBadgePermission: false,
-        requestSoundPermission: false,
-      ),
-    ),
-  );
-  await ensureNotificationChannels(tempPlugin);
-
   await SystemChrome.setPreferredOrientations([
     DeviceOrientation.portraitUp,
     DeviceOrientation.portraitDown,
@@ -88,6 +114,7 @@ Future<void> main() async {
   // don't flash light-mode UI for dark-mode users on cold start.
   await ThemeController.instance.init();
 
+  // ── Critical: Firebase ────────────────────────────────────────────────────
   try {
     await Firebase.initializeApp(
       options: DefaultFirebaseOptions.currentPlatform,
@@ -100,6 +127,31 @@ Future<void> main() async {
     return;
   }
 
+  // The background FCM handler must be registered before any message can
+  // arrive, so do it on the same isolate as Firebase init.
+  FirebaseMessaging.onBackgroundMessage(firebaseMessagingBackgroundHandler);
+
+  // Cold-start tap routing. If the user launched the app by tapping a
+  // notification, FCM has buffered that message and getInitialMessage()
+  // returns it. We resolve it into a target tab now and push it into
+  // NotificationRouter, so ApolloNav's initState() can use it as the
+  // PageView's initialPage. Without this, the user briefly lands on
+  // Home and is then animated to Chat — which is correct but jarring.
+  //
+  // getInitialMessage() is a single platform-channel call; it doesn't
+  // make a network request, so it's fast enough to keep on the
+  // critical path. The wider NotificationService.init() (subscription
+  // reconciliation, permission probe) stays in _initInBackground.
+  try {
+    final initialMessage = await FirebaseMessaging.instance.getInitialMessage();
+    if (initialMessage != null) {
+      final category = initialMessage.data['category'] as String?;
+      NotificationRouter.instance.setRequestedTabForCategory(category);
+    }
+  } catch (e) {
+    debugPrint('[main] getInitialMessage failed: $e');
+  }
+
   if (!kIsWeb) {
     await FirebaseCrashlytics.instance.setCrashlyticsCollectionEnabled(
       !kDebugMode,
@@ -108,28 +160,24 @@ Future<void> main() async {
 
   _installErrorHandlers();
 
-  FirebaseMessaging.onBackgroundMessage(firebaseMessagingBackgroundHandler);
-
-  await _activateAppCheck();
-
-  try {
-    await NotificationService.instance.init();
-  } catch (e, st) {
-    debugPrint('[main] NotificationService init failed: $e');
-    _recordError(e, st, reason: 'NotificationService.init');
-  }
-
-  // ── Firebase ──────────────────────────────────────────────────────────────
-
-  if (!kIsWeb) await _initCast();
-
+  // ── Fast local-only inits ────────────────────────────────────────────────
+  //
+  // These are all SharedPreferences-backed and complete in single-digit
+  // milliseconds. They MUST run before runApp() because the first frame
+  // reads from them — UserService.hasUsername drives the chat screen's
+  // "Kies een naam" prompt, EulaService.hasAccepted gates message
+  // sending, BlockService.isBlocked filters the message list.
+  //
+  // UserService.init() does its slow Firestore + Cloud Function
+  // verification in the background — see user_service.dart. So awaiting
+  // it here costs a SharedPreferences read, not a network round-trip.
   await _initUser();
 
   try {
-    await ProfanityService.instance.init();
+    await EulaService.instance.init();
   } catch (e, st) {
-    debugPrint('[main] ProfanityService init failed: $e');
-    _recordError(e, st, reason: 'ProfanityService.init');
+    debugPrint('[main] EulaService init failed: $e');
+    _recordError(e, st, reason: 'EulaService.init');
   }
 
   try {
@@ -139,15 +187,7 @@ Future<void> main() async {
     _recordError(e, st, reason: 'BlockService.init');
   }
 
-  try {
-    await EulaService.instance.init();
-  } catch (e, st) {
-    debugPrint('[main] EulaService init failed: $e');
-    _recordError(e, st, reason: 'EulaService.init');
-  }
-
-  // ── Audio service (must succeed for the app to run) ───────────────────────
-
+  // ── Critical: AudioService (the foreground service host) ─────────────────
   late final RadioAudioHandler audioHandler;
   try {
     audioHandler = await AudioService.init(
@@ -169,24 +209,50 @@ Future<void> main() async {
     return;
   }
 
-  // ── Current program service ───────────────────────────────────────────────
+  // ── Run the app immediately ──────────────────────────────────────────────
+  //
+  // Everything below this point runs in the background while the first
+  // frame is already on screen. The home screen shows cached "now
+  // playing" data, the chat screen waits patiently for the username
+  // re-claim, and NotificationRouter's ValueNotifier means a cold-start
+  // tap that arrives while we're still initialising is picked up by
+  // ApolloNav as soon as it attaches its listener.
 
   final currentProgramService = CurrentProgramService();
+
+  // Seed the home screen's player card with the last-known program from
+  // SharedPreferences. Without this, the first frame would show the
+  // generic "Radio Apollo" / "Luister live" placeholder instead of the
+  // actual program name. This is local-only, so it's cheap on the
+  // critical path. The live Firestore fetch is still deferred into
+  // _initInBackground via currentProgramService.start().
   try {
-    await currentProgramService.start();
+    await currentProgramService.loadCachedProgram();
   } catch (e, st) {
-    debugPrint('[main] CurrentProgramService start failed: $e');
-    _recordError(e, st, reason: 'CurrentProgramService.start');
+    debugPrint('[main] loadCachedProgram failed: $e');
+    _recordError(e, st, reason: 'CurrentProgramService.loadCachedProgram');
   }
 
-  final programSub = currentProgramService.currentProgram.listen((program) {
+  late StreamSubscription programSub;
+  late StreamSubscription sponsorSub;
+
+  programSub = currentProgramService.currentProgram.listen((program) {
     audioHandler.setCurrentProgram(
       program.title ?? '',
       imageUrl: program.imageUrl,
     );
   });
 
-  // ── Sponsor blocklist for commercial filtering ────────────────────────────
+  // Seed the audio handler with whatever was just loaded from cache,
+  // since the listener above only fires on FUTURE emissions and the
+  // cached emission already happened inside loadCachedProgram().
+  final seededProgram = currentProgramService.lastProgram;
+  if (seededProgram.hasData) {
+    audioHandler.setCurrentProgram(
+      seededProgram.title ?? '',
+      imageUrl: seededProgram.imageUrl,
+    );
+  }
 
   // Seed the audio handler with whatever sponsors InfoService already
   // has cached (typically empty on cold start, populated on warm start).
@@ -198,7 +264,7 @@ Future<void> main() async {
   }
 
   // Forward every sponsor-list change to the audio handler.
-  final sponsorSub = InfoService.instance.sponsorsStream.listen((sponsors) {
+  sponsorSub = InfoService.instance.sponsorsStream.listen((sponsors) {
     audioHandler.updateSponsorNames(sponsors.map((s) => s.title).toList());
   });
 
@@ -210,6 +276,65 @@ Future<void> main() async {
       sponsorSubscription: sponsorSub,
     ),
   );
+
+  // Fire-and-forget background init. Each step is independently
+  // protected so a slow or failing one doesn't block the others.
+  unawaited(_initInBackground(currentProgramService));
+}
+
+// ── Background init ─────────────────────────────────────────────────────────
+
+Future<void> _initInBackground(CurrentProgramService currentProgramService) async {
+  // Local notification channels must exist before any notification can
+  // render. The background message handler also calls ensureChannels,
+  // but doing it once here on the main isolate keeps cold-start
+  // foreground messages reliable too.
+  try {
+    final tempPlugin = FlutterLocalNotificationsPlugin();
+    await tempPlugin.initialize(
+      const InitializationSettings(
+        android: AndroidInitializationSettings('@mipmap/ic_launcher'),
+        iOS: DarwinInitializationSettings(
+          requestAlertPermission: false,
+          requestBadgePermission: false,
+          requestSoundPermission: false,
+        ),
+      ),
+    );
+    await ensureNotificationChannels(tempPlugin);
+  } catch (e, st) {
+    debugPrint('[main] Local notifications init failed: $e');
+    _recordError(e, st, reason: 'LocalNotifications.init');
+  }
+
+  await _activateAppCheck();
+
+  // NotificationService.init() handles the cold-start tap. It pushes
+  // the result into NotificationRouter, which ApolloNav listens to
+  // — so the routing happens as soon as both sides are ready, no
+  // ordering required.
+  try {
+    await NotificationService.instance.init();
+  } catch (e, st) {
+    debugPrint('[main] NotificationService init failed: $e');
+    _recordError(e, st, reason: 'NotificationService.init');
+  }
+
+  if (!kIsWeb) await _initCast();
+
+  try {
+    await ProfanityService.instance.init();
+  } catch (e, st) {
+    debugPrint('[main] ProfanityService init failed: $e');
+    _recordError(e, st, reason: 'ProfanityService.init');
+  }
+
+  try {
+    await currentProgramService.start();
+  } catch (e, st) {
+    debugPrint('[main] CurrentProgramService start failed: $e');
+    _recordError(e, st, reason: 'CurrentProgramService.start');
+  }
 }
 
 // ── Crashlytics helpers (web-safe) ──────────────────────────────────────────

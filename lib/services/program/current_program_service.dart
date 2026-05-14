@@ -8,6 +8,20 @@
    displays the correct program name and artwork.
 
    Consumers listen to [currentProgram] for updates.
+
+   ─── Split init for fast cold start ────────────────────────────────────────
+   `start()` previously did three things sequentially: load the cached
+   program from SharedPreferences, fetch the live program from
+   Firestore, and start the 1-minute refresh timer. The Firestore
+   fetch is a network round-trip; on a slow connection it would block
+   the splash for seconds if main() awaited it.
+
+   The service now exposes `loadCachedProgram()` separately: a tiny
+   SharedPreferences-only call that emits the cached program. main()
+   awaits this before runApp() so the LivePlayerCard renders with the
+   right program name on the very first frame, then kicks off the
+   full `start()` in the background. `start()` itself skips the
+   redundant cache load when `loadCachedProgram()` has already run.
 */
 
 import 'dart:async';
@@ -47,6 +61,7 @@ class CurrentProgramService {
 
   Timer? _timer;
   final _controller = StreamController<CurrentProgram>.broadcast();
+  bool _cacheLoaded = false;
 
   Stream<CurrentProgram> get currentProgram => _controller.stream;
 
@@ -55,8 +70,21 @@ class CurrentProgramService {
 
   // ── Lifecycle ─────────────────────────────────────────────────────────────
 
-  Future<void> start() async {
+  /// Load the cached program from SharedPreferences and emit it. Fast,
+  /// local-only. Safe to call before `start()` to seed the UI with
+  /// last-known data on cold start without waiting for Firestore.
+  /// Idempotent.
+  Future<void> loadCachedProgram() async {
+    if (_cacheLoaded) return;
+    _cacheLoaded = true;
     await _loadCachedProgram();
+  }
+
+  Future<void> start() async {
+    if (!_cacheLoaded) {
+      _cacheLoaded = true;
+      await _loadCachedProgram();
+    }
     await _fetchCurrentProgram();
     _timer = Timer.periodic(
       const Duration(minutes: 1),

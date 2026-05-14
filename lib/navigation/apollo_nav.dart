@@ -24,6 +24,29 @@
    The PageView uses a custom `_StricterPageScrollPhysics` so a slight
    diagonal gesture while scrolling a list vertically (e.g. the program
    list) does not accidentally flick to the next tab.
+
+   ─── Cold-start notification routing ───────────────────────────────────────
+   When the user taps a push notification while the app is terminated,
+   FCM's `getInitialMessage()` returns the message during async startup,
+   NotificationService pushes the target tab into NotificationRouter,
+   and the route then needs to reach this widget.
+
+   Two race conditions used to break that route:
+
+     1. The `_onNotificationRoute` listener fired before the PageView
+        had attached any clients to `_pageController`. Calling
+        `animateToPage` on a detached controller throws an assertion
+        in debug and silently no-ops in release, leaving the user on
+        the Home tab while the bottom-nav highlight pointed at Chat.
+
+     2. The initial routing call happened synchronously inside
+        `initState()`. The first frame had not been built yet, so
+        `setState` is fine but `animateToPage` is not.
+
+   Fix: when the listener fires, capture the target tab in `_index`
+   so the very first build uses it as the PageView's `initialPage`,
+   and only animate if the controller already has clients. Subsequent
+   notification taps land on an already-built nav and animate normally.
 */
 
 import 'dart:async';
@@ -60,6 +83,17 @@ class _ApolloNavState extends State<ApolloNav> {
   void initState() {
     super.initState();
     _chatService = ChatService(authService: _authService);
+
+    // If a notification tap arrived during async startup (cold start
+    // via FCM), the router already knows where to land. Use that as
+    // the initial page so the PageView builds straight onto the
+    // requested tab — no animateToPage required on a controller that
+    // has no clients yet.
+    final pendingTab = NotificationRouter.instance.requestedTab.value;
+    if (pendingTab != null) {
+      _index = pendingTab;
+      NotificationRouter.instance.consume();
+    }
     _pageController = PageController(initialPage: _index);
 
     _initConnectivity();
@@ -67,7 +101,6 @@ class _ApolloNavState extends State<ApolloNav> {
       _updateConnectivity,
     );
     NotificationRouter.instance.requestedTab.addListener(_onNotificationRoute);
-    _onNotificationRoute();
   }
 
   @override
@@ -104,16 +137,23 @@ class _ApolloNavState extends State<ApolloNav> {
 
   void _switchTab(int newIndex) {
     setState(() => _index = newIndex);
-    _pageController.animateToPage(
-      newIndex,
-      duration: const Duration(milliseconds: 300),
-      curve: Curves.easeInOut,
-    );
+    // Only animate when the PageView has actually been built and
+    // attached its viewport to the controller. On cold start the
+    // first switch can fire before that happens; the initial page
+    // is already correct from initState in that case.
+    if (_pageController.hasClients) {
+      _pageController.animateToPage(
+        newIndex,
+        duration: const Duration(milliseconds: 300),
+        curve: Curves.easeInOut,
+      );
+    }
   }
 
   void _onNotificationRoute() {
     final tab = NotificationRouter.instance.requestedTab.value;
     if (tab == null) return;
+    if (!mounted) return;
     _switchTab(tab);
     NotificationRouter.instance.consume();
   }

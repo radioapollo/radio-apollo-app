@@ -7,10 +7,37 @@
    names. On startup, if a saved username exists locally but not yet in
    Firestore, init() silently re-claims it. If the name is already taken,
    the local copy is cleared and the user is prompted to pick a new one.
+
+   ─── Fast init vs background re-claim ──────────────────────────────────────
+   `init()` is on the critical cold-start path — the chat screen renders
+   immediately after `runApp()` and reads `hasUsername` synchronously. If
+   that returns `false` because init hasn't finished yet, the user sees
+   the "Kies een naam om mee te chatten" prompt even though they already
+   have a name saved. That looks like data loss.
+
+   To prevent it, `init()` is split into two phases:
+
+     1. Fast: read SharedPreferences (local, ~1ms). Set `_username` and
+        `_claimToken` immediately so `hasUsername` returns true. No
+        network. This must complete before `runApp()`.
+
+     2. Slow: verify the username doc in Firestore, and re-claim via
+        the Cloud Function if the doc is missing or the token is
+        unrecognised. Network round-trips that should never block the
+        first frame.
+
+   The slow phase runs as a fire-and-forget Future kicked off at the
+   end of the fast phase. If the re-claim fails because the name was
+   stolen by someone else, `_username` and `_claimToken` get cleared
+   and the chat screen will re-render the "pick a name" prompt — but
+   that's the right outcome in that case, and it's rare enough that
+   the brief flash of the username doesn't mislead the user.
 */
 
+import 'dart:async';
 import 'dart:convert';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 import 'app_check_http.dart';
@@ -25,6 +52,7 @@ class UserService {
 
   String? _username;
   String? _claimToken;
+  bool _initialised = false;
 
   // ── Getters ───────────────────────────────────────────────────────────────
 
@@ -34,43 +62,68 @@ class UserService {
 
   // ── Lifecycle ─────────────────────────────────────────────────────────────
 
+  /// Fast, local-only init. Reads the saved username and token from
+  /// SharedPreferences so the UI can render the right state on the
+  /// first frame. Schedules the slow Firestore + Cloud Function
+  /// verification to run in the background; callers do NOT need to
+  /// await it.
+  ///
+  /// Idempotent: calling init() more than once is a no-op (the chat
+  /// screen calls it defensively from `_ensureUsername`, but main()
+  /// has already run it on the critical path).
   Future<void> init() async {
+    if (_initialised) return;
+    _initialised = true;
+
     final prefs = await SharedPreferences.getInstance();
     final saved = prefs.getString(_key);
     final savedToken = prefs.getString(_tokenKey);
     if (saved == null || saved.isEmpty) return;
 
+    _username = saved;
     _claimToken = savedToken;
 
+    // Kick off the verification/re-claim in the background. We don't
+    // await it: the UI already has what it needs.
+    unawaited(_verifyAndReclaimIfNeeded(saved, savedToken));
+  }
+
+  Future<void> _verifyAndReclaimIfNeeded(
+    String saved,
+    String? savedToken,
+  ) async {
     DocumentSnapshot<Map<String, dynamic>>? doc;
     try {
       doc = await _db.collection('usernames').doc(saved.toLowerCase()).get();
-    } catch (_) {
-      _username = saved;
+    } catch (e) {
+      // Network failure during verification — keep the optimistic
+      // local state and try again next launch.
+      debugPrint('[UserService] Verification fetch failed: $e');
       return;
     }
 
-    final needsReclaim = !doc.exists || _claimToken == null;
-
-    if (!needsReclaim) {
-      _username = saved;
-      return;
-    }
+    final needsReclaim = !doc.exists || savedToken == null;
+    if (!needsReclaim) return;
 
     try {
       final newToken = await _claimViaCloudFunction(saved);
-      _username = saved;
       _claimToken = newToken;
+      final prefs = await SharedPreferences.getInstance();
       await prefs.setString(_tokenKey, newToken);
-    } catch (_) {
+    } catch (e) {
+      debugPrint('[UserService] Re-claim failed: $e');
+      // If the username doc still doesn't exist (i.e. someone took the
+      // name on another device), clear the local state so the user is
+      // prompted to pick a new one next time they try to chat.
       if (!doc.exists) {
+        final prefs = await SharedPreferences.getInstance();
         await prefs.remove(_key);
         await prefs.remove(_tokenKey);
         _username = null;
         _claimToken = null;
-      } else {
-        _username = saved;
       }
+      // Otherwise (doc exists but re-claim failed for network/server
+      // reasons), keep the local state and try again next launch.
     }
   }
 
