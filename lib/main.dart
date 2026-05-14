@@ -287,6 +287,25 @@ Future<void> main() async {
 Future<void> _initInBackground(
   CurrentProgramService currentProgramService,
 ) async {
+  // Warm up the Info screen's about-text stream as early as possible.
+  // Sponsors are already warmed up in main() because the audio handler
+  // subscribes to them for commercial-name filtering, but the about text
+  // had no such consumer. The first time the user opened Info, the
+  // stream subscription only kicked off then, and they had to wait for
+  // the Firestore round-trip while staring at a spinner. By subscribing
+  // here we kick off the fetch in the background; by the time the user
+  // navigates to Info, _latestAboutText is populated and the
+  // StreamBuilder's initialData renders the card instantly.
+  //
+  // We discard emissions because nothing else here needs them — the
+  // Info screen reads via the cached broadcast stream + initialData.
+  InfoService.instance.aboutTextStream.listen(
+    (_) {},
+    onError: (e) {
+      debugPrint('[main] aboutTextStream warm-up error: $e');
+    },
+  );
+
   // Local notification channels must exist before any notification can
   // render. The background message handler also calls ensureChannels,
   // but doing it once here on the main isolate keeps cold-start
