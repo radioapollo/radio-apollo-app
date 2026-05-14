@@ -284,7 +284,9 @@ Future<void> main() async {
 
 // ── Background init ─────────────────────────────────────────────────────────
 
-Future<void> _initInBackground(CurrentProgramService currentProgramService) async {
+Future<void> _initInBackground(
+  CurrentProgramService currentProgramService,
+) async {
   // Local notification channels must exist before any notification can
   // render. The background message handler also calls ensureChannels,
   // but doing it once here on the main isolate keeps cold-start

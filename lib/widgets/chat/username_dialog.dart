@@ -22,6 +22,18 @@
    it. The acceptance checkbox starts unticked unless they've already
    accepted the current version, in which case the dialog is
    essentially a no-op confirmation step.
+
+   ─── Scrollable content (narrow-screen / open-keyboard layout) ─────────────
+   The dialog's content (intro text + TextField + EULA checkbox + 3-line
+   wrapping terms text) is tall enough that on smaller phones — especially
+   with the on-screen keyboard open — it would overflow the dialog box.
+   AlertDialog doesn't scroll its content by default, so the "Later" /
+   "Opslaan" buttons would render OVER the last line of the EULA text
+   ("...verwijderd worden.") instead of below it.
+
+   Using `AlertDialog`'s `scrollable: true` makes the body scroll when it
+   doesn't fit, so the buttons always sit cleanly below the content even
+   when the keyboard is up.
 */
 
 import 'package:flutter/gestures.dart';
@@ -114,6 +126,10 @@ class _UsernameDialogState extends State<UsernameDialog> {
     final hasExistingUsername = UserService.instance.hasUsername;
 
     return AlertDialog(
+      // scrollable: content scrolls when it doesn't fit (small phones +
+      // open keyboard), so the action buttons never sit on top of the
+      // EULA text.
+      scrollable: true,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(AppDimensions.radiusXLarge),
       ),
@@ -163,7 +179,7 @@ class _UsernameDialogState extends State<UsernameDialog> {
 
           // ── EULA checkbox ────────────────────────────────────────────────
           Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
+            crossAxisAlignment: CrossAxisAlignment.center,
             children: [
               Checkbox(
                 value: _termsAccepted,
@@ -175,36 +191,33 @@ class _UsernameDialogState extends State<UsernameDialog> {
                       }),
               ),
               Expanded(
-                child: Padding(
-                  padding: const EdgeInsets.only(top: 14),
-                  child: Text.rich(
-                    TextSpan(
-                      style: TextStyle(
-                        color: AppColors.textBody,
-                        fontSize: 13,
-                        height: 1.35,
-                      ),
-                      children: [
-                        TextSpan(text: 'Ik ga akkoord met de '),
-                        TextSpan(
-                          text: 'gebruiksvoorwaarden',
-                          style: const TextStyle(
-                            color: AppColors.primaryLight,
-                            fontWeight: FontWeight.w600,
-                            decoration: TextDecoration.underline,
-                          ),
-                          recognizer: TapGestureRecognizer()
-                            ..onTap = () => UrlLauncherUtils.openUrl(
-                              AppConstants.termsOfUseUrl,
-                            ),
-                        ),
-                        const TextSpan(
-                          text:
-                              ' en begrijp dat ongepaste of beledigende '
-                              'berichten verwijderd worden.',
-                        ),
-                      ],
+                child: Text.rich(
+                  TextSpan(
+                    style: TextStyle(
+                      color: AppColors.textBody,
+                      fontSize: 13,
+                      height: 1.35,
                     ),
+                    children: [
+                      TextSpan(text: 'Ik ga akkoord met de '),
+                      TextSpan(
+                        text: 'gebruiksvoorwaarden',
+                        style: const TextStyle(
+                          color: AppColors.primaryLight,
+                          fontWeight: FontWeight.w600,
+                          decoration: TextDecoration.underline,
+                        ),
+                        recognizer: TapGestureRecognizer()
+                          ..onTap = () => UrlLauncherUtils.openUrl(
+                            AppConstants.termsOfUseUrl,
+                          ),
+                      ),
+                      const TextSpan(
+                        text:
+                            ' en begrijp dat ongepaste of beledigende '
+                            'berichten verwijderd worden.',
+                      ),
+                    ],
                   ),
                 ),
               ),
