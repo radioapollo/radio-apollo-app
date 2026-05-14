@@ -11,23 +11,45 @@
    - resets to today when the user navigates back to this tab
 
    ─── No more flicker on tab swipe ──────────────────────────────────────────
-   `ProgramService.getProgramsForDay` now returns a cached broadcast
-   stream — the same stream instance for the same day across rebuilds.
-   StreamBuilder therefore keeps its last snapshot, so swiping into
-   Programma's (or diagonally into Info while the list is scrolling)
-   no longer flashes the spinner.
-
-   `initialData` is filled from the service's latest-value cache so
-   that even the very first rebuild after switching days has data on
-   screen straight away, as long as that day has been loaded once
-   before during the session.
+   `initialData` is filled from the service's latest-value cache so that
+   even the very first rebuild after switching days has data on screen
+   straight away, as long as that day has been loaded once before
+   during the session. The stream itself is built fresh on each
+   subscription (see ProgramService for the rationale — short version:
+   broadcast streams don't replay, so re-visiting a day after browsing
+   others used to show stale data from the wrong day). Firestore's
+   client-side cache keeps the extra subscriptions free of network
+   reads, and every new subscription emits the current snapshot
+   immediately, so the user sees correct data with no spinner flash.
 
    Live updates still work:
-     - Firestore changes push through the broadcast stream, updating
-       the list.
+     - Firestore changes push through the stream, updating the list.
      - A local Timer.periodic(1 minute) calls setState, which re-runs
        `isCurrentTimeInRange` so "NU BEZIG" moves to the next program
        at the right moment even if no DB change happened.
+
+   ─── Day-rollover defensiveness ────────────────────────────────────────────
+   The schedule must always reflect the calendar day at the moment the
+   user is looking at it, not the day on which the screen state was
+   initialised. Three guards work together:
+
+     1. On every rebuild, `_isToday()` cross-checks the *currently
+        selected* day-name against `DateTime.now().weekday`. The "NU
+        BEZIG" highlight only fires when those agree — so even if the
+        day list got built before midnight and the user wakes the app
+        after midnight, the highlight cannot land on the wrong day.
+
+     2. `_resetToToday()` always rebuilds `_days` from the live
+        weekday and then snaps `_selectedIndex` to today's actual
+        position in the freshly built list. It runs every time the
+        tab becomes active *and* every time the periodic timer
+        detects a stale day list.
+
+     3. The periodic timer checks for a date rollover on every tick.
+        If the cached `_days` no longer contains today at index 3, it
+        calls `_resetToToday()`. This catches the case where the app
+        is left open across midnight on the Programma tab itself
+        (so `didUpdateWidget` never fires).
 */
 
 import 'dart:async';
@@ -65,7 +87,13 @@ class _ProgramScreenState extends State<ProgramScreen>
     super.initState();
     _days = _programService.getShiftedDays(_selectedIndex);
     _timer = Timer.periodic(const Duration(minutes: 1), (_) {
-      if (_isToday()) {
+      if (!mounted) return;
+      // If midnight passed while this screen was alive, _days[3] no
+      // longer points to today. Rebuild from scratch instead of just
+      // refreshing the highlight.
+      if (_isDayListStale()) {
+        _resetToToday();
+      } else if (_isToday()) {
         setState(() {});
       }
     });
@@ -75,7 +103,9 @@ class _ProgramScreenState extends State<ProgramScreen>
   void didUpdateWidget(covariant ProgramScreen oldWidget) {
     super.didUpdateWidget(oldWidget);
 
-    if (widget.isActive && !oldWidget.isActive) {
+    // Every transition into "active" snaps back to today. Also re-snap
+    // if the day list went stale across midnight while we were inactive.
+    if (widget.isActive && (!oldWidget.isActive || _isDayListStale())) {
       _resetToToday();
     }
   }
@@ -95,10 +125,19 @@ class _ProgramScreenState extends State<ProgramScreen>
     });
   }
 
-  bool _isToday() {
-    final todayName = ProgramService.weekdays[DateTime.now().weekday - 1];
-    return _days[_selectedIndex] == todayName;
-  }
+  /// Today's Dutch weekday name, derived live from the system clock.
+  String get _todayName => ProgramService.weekdays[DateTime.now().weekday - 1];
+
+  /// True when the cached _days list no longer has today at the
+  /// center slot — i.e. midnight passed since it was built.
+  bool _isDayListStale() => _days[3] != _todayName;
+
+  /// True when the currently selected pill represents today.
+  ///
+  /// Cross-checks the selected pill label against the live system
+  /// weekday so the "NU BEZIG" highlight cannot fire on the wrong day
+  /// even if `_days` is briefly stale.
+  bool _isToday() => _days[_selectedIndex] == _todayName;
 
   void _scrollToCurrent(int currentIndex) {
     if (!_hasScrolledToCurrent) {

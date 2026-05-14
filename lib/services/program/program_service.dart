@@ -7,19 +7,29 @@
    - one-shot fetches for today's schedule
    - returning a shifted day list so today is centered in the selector
 
-   ─── Stream caching ────────────────────────────────────────────────────────
-   Firestore queries are lazy — calling `.snapshots()` on a fresh query
-   builds a brand new stream every time. If the UI did that on every
-   rebuild, the StreamBuilder would reset to `ConnectionState.waiting`
-   and flash a spinner during each rebuild (for example while the user
-   swipes between bottom-nav tabs).
+   ─── Why we no longer cache a broadcast stream ─────────────────────────────
+   An earlier version cached one `.asBroadcastStream()` per day. That
+   prevented spinner flashes on tab swipe, but introduced a far worse
+   bug: broadcast streams do NOT replay the last value to late
+   subscribers. When a user navigated away from a day and came back,
+   the StreamBuilder re-subscribed to the same warm broadcast stream,
+   got no replay, and ended up displaying stale data from the
+   previously-viewed day (or whichever `initialData` happened to be
+   handed in at that frame). The most visible symptom was the wrong
+   programs and a misplaced "NU BEZIG" highlight when revisiting a
+   day after browsing others.
 
-   Instead, we cache one broadcast stream per day. Multiple subscribers
-   — or the same subscriber re-subscribing after a rebuild — all share
-   the same underlying Firestore listener, so:
-     - no extra database reads on rebuild
-     - no loading flicker during tab swipes
-     - real Firestore changes still propagate to every subscriber
+   Firestore's `.snapshots()` stream already handles re-subscription
+   correctly — every new listener receives the current cached
+   snapshot immediately. So we now:
+     1. Build a fresh `.snapshots().map(...)` chain on each call.
+     2. Continue to write into `_latestValueByDay` from inside the
+        `.map()` closure so consumers can prime `StreamBuilder` with
+        `initialData` to avoid the spinner flash.
+
+   The Firestore SDK has its own local cache, so even though we build
+   a new query each time, repeated subscriptions don't trigger
+   additional network reads — the client returns the cached snapshot.
 */
 
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -27,8 +37,6 @@ import '../../utils/date_utils.dart';
 
 class ProgramService {
   final _db = FirebaseFirestore.instance;
-
-  final Map<String, Stream<List<Map<String, String>>>> _dayStreamCache = {};
 
   final Map<String, List<Map<String, String>>> _latestValueByDay = {};
 
@@ -67,26 +75,21 @@ class ProgramService {
   // ── Live stream ───────────────────────────────────────────────────────────
 
   Stream<List<Map<String, String>>> getProgramsForDay(String day) {
-    return _dayStreamCache.putIfAbsent(day, () {
-      return _db
-          .collection('programmatie')
-          .where('day', isEqualTo: day)
-          .snapshots()
-          .map((snapshot) {
-            final docs = snapshot.docs.toList();
-            docs.sort(
-              (a, b) => _s(
-                a.data(),
-                'startTime',
-              ).compareTo(_s(b.data(), 'startTime')),
-            );
-            final programs = docs.map((doc) => _mapDoc(doc.data())).toList();
+    return _db
+        .collection('programmatie')
+        .where('day', isEqualTo: day)
+        .snapshots()
+        .map((snapshot) {
+          final docs = snapshot.docs.toList();
+          docs.sort(
+            (a, b) =>
+                _s(a.data(), 'startTime').compareTo(_s(b.data(), 'startTime')),
+          );
+          final programs = docs.map((doc) => _mapDoc(doc.data())).toList();
 
-            _latestValueByDay[day] = programs;
-            return programs;
-          })
-          .asBroadcastStream();
-    });
+          _latestValueByDay[day] = programs;
+          return programs;
+        });
   }
 
   // ── One-shot fetch ────────────────────────────────────────────────────────
