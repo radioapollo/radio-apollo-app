@@ -5,6 +5,14 @@
 
    Each row is tappable and opens the appropriate external app
    (mail client, dialer, maps, browser) via UrlLauncherUtils.
+
+   ─── Tap feedback ──────────────────────────────────────────────────────────
+   Rows use InkWell rather than GestureDetector so they show a Material
+   ripple on tap. Without the ripple, the ~100ms gap between tap and
+   the OS app-chooser appearing felt like nothing happened, prompting
+   users to tap again. The second tap could race with the first
+   url_launcher call, making the section look broken. The ripple gives
+   the user an immediate confirmation that the tap registered.
 */
 
 import 'package:flutter/material.dart';
@@ -83,31 +91,35 @@ class _ContactRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Row(
-        children: [
-          Icon(
-            icon,
-            size: AppDimensions.iconLarge,
-            color: AppColors.iconOnDarkMuted,
-          ),
-          const SizedBox(width: AppDimensions.spaceLarge),
-          Expanded(
-            child: Text(
-              label,
-              style: AppTextStyles.darkCardSubtitle.copyWith(
-                decoration: TextDecoration.underline,
-                decorationColor: AppColors.textOnDarkMedium,
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(AppDimensions.radiusSmall),
+        child: Row(
+          children: [
+            Icon(
+              icon,
+              size: AppDimensions.iconLarge,
+              color: AppColors.iconOnDarkMuted,
+            ),
+            const SizedBox(width: AppDimensions.spaceLarge),
+            Expanded(
+              child: Text(
+                label,
+                style: AppTextStyles.darkCardSubtitle.copyWith(
+                  decoration: TextDecoration.underline,
+                  decorationColor: AppColors.textOnDarkMedium,
+                ),
               ),
             ),
-          ),
-          const Icon(
-            Icons.open_in_new,
-            size: 16,
-            color: AppColors.iconOnDarkMuted,
-          ),
-        ],
+            const Icon(
+              Icons.open_in_new,
+              size: 16,
+              color: AppColors.iconOnDarkMuted,
+            ),
+          ],
+        ),
       ),
     );
   }
