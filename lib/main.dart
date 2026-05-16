@@ -196,6 +196,12 @@ Future<void> main() async {
         androidNotificationChannelId: AppConstants.notificationChannelId,
         androidNotificationChannelName: AppConstants.notificationChannelName,
         androidNotificationOngoing: true,
+        // When stop() is called (including from onTaskRemoved on swipe
+        // from recents), audio_service releases the foreground service
+        // and removes the media notification. Without this, the
+        // foreground service stays alive after stop() and Android keeps
+        // the audio process running even though playback has stopped.
+        androidStopForegroundOnPause: true,
       ),
     );
   } catch (e, st) {
