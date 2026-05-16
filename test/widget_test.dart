@@ -1,43 +1,26 @@
 /* Unit tests for pure-logic helpers.
 
-   These tests exercise the date/time utilities (AppDateUtils), the
-   day-shifting logic (ProgramService.getShiftedDays), the Event model
-   getters, and the profanity filter (ProfanityFilter).
+   See lib/functions/test/.test.js for the server-side counterpart.
+   This file covers Flutter-side pure logic:
+     - AppDateUtils (date/time helpers)
+     - ProgramService weekday helpers and the day-shift invariant
+     - Event model getters
+     - ProfanityFilter
+     - Message.fromFirestoreData (defensive parsing)
+     - NotificationRouter (notification → tab routing)
+     - AppCheckHttp (HTTP layer with mocked client and token fetcher)
 
-   All functions tested here are pure Dart — no Firebase, no platform
-   channels — so they run quickly under plain `flutter test` with no
-   setup.
-
-   Bug-history note
-   ────────────────
-   Bug #1 in production was "Programmaschema shows wrong day". The
-   root cause turned out to be in stream caching (broadcast streams
-   don't replay), not in the day-shifting math — but the math is the
-   spec, and getting it wrong would also produce a wrong-day display.
-   The getShiftedDays test below pins the invariant: today must
-   always sit at the requested index, on every weekday of the year.
-
-   Why getShiftedDays is tested via re-implementation
-   ──────────────────────────────────────────────────
-   ProgramService instantiates FirebaseFirestore.instance in its
-   constructor, so we can't construct it in a unit test without
-   booting Firebase. The shift math itself doesn't touch Firestore —
-   it only uses DateTime.now() and AppDateUtils.shiftList — so we
-   exercise the same logic directly. If ProgramService is ever
-   refactored to make _db lazy or injectable, replace
-   shiftedDaysFor(...) below with a direct call to
-   ProgramService().getShiftedDays(...).
-
-   Security note
-   ─────────────
-   The ProfanityFilter tests verify CLIENT-SIDE behaviour. The actual
-   security boundary is the userSendMessage Cloud Function, which runs
-   its own profanity check on the server. See
-   lib/functions/test/profanity.test.js for the server-side coverage.
+   All tests run under plain `flutter test` with no Firebase or
+   platform-channel setup.
 */
 
 import 'package:flutter_test/flutter_test.dart';
+import 'package:http/http.dart' as http;
+import 'package:http/testing.dart';
 import 'package:radio_apollo/models/event.dart';
+import 'package:radio_apollo/models/message.dart';
+import 'package:radio_apollo/services/chat/app_check_http.dart';
+import 'package:radio_apollo/services/notifications/notification_router.dart';
 import 'package:radio_apollo/services/program/program_service.dart';
 import 'package:radio_apollo/utils/date_utils.dart';
 import 'package:radio_apollo/utils/profanity/profanity_filter.dart';
@@ -56,39 +39,41 @@ void main() {
     });
 
     test('positive shift rotates left', () {
-      expect(
-        AppDateUtils.shiftList(['a', 'b', 'c', 'd'], 1),
-        ['b', 'c', 'd', 'a'],
-      );
-      expect(
-        AppDateUtils.shiftList(['a', 'b', 'c', 'd'], 2),
-        ['c', 'd', 'a', 'b'],
-      );
+      expect(AppDateUtils.shiftList(['a', 'b', 'c', 'd'], 1), [
+        'b',
+        'c',
+        'd',
+        'a',
+      ]);
+      expect(AppDateUtils.shiftList(['a', 'b', 'c', 'd'], 2), [
+        'c',
+        'd',
+        'a',
+        'b',
+      ]);
     });
 
     test('negative shift rotates right', () {
-      expect(
-        AppDateUtils.shiftList(['a', 'b', 'c', 'd'], -1),
-        ['d', 'a', 'b', 'c'],
-      );
-      expect(
-        AppDateUtils.shiftList(['a', 'b', 'c', 'd'], -2),
-        ['c', 'd', 'a', 'b'],
-      );
+      expect(AppDateUtils.shiftList(['a', 'b', 'c', 'd'], -1), [
+        'd',
+        'a',
+        'b',
+        'c',
+      ]);
+      expect(AppDateUtils.shiftList(['a', 'b', 'c', 'd'], -2), [
+        'c',
+        'd',
+        'a',
+        'b',
+      ]);
     });
 
     test('shift equal to list length is identity', () {
-      expect(
-        AppDateUtils.shiftList(['a', 'b', 'c'], 3),
-        ['a', 'b', 'c'],
-      );
+      expect(AppDateUtils.shiftList(['a', 'b', 'c'], 3), ['a', 'b', 'c']);
     });
 
     test('shift larger than list length wraps around', () {
-      expect(
-        AppDateUtils.shiftList(['a', 'b', 'c'], 7),
-        ['b', 'c', 'a'],
-      );
+      expect(AppDateUtils.shiftList(['a', 'b', 'c'], 7), ['b', 'c', 'a']);
     });
 
     test('does not mutate the input list', () {
@@ -205,10 +190,7 @@ void main() {
 
   group('AppDateUtils.parseDutchDate', () {
     test('parses standard single-day Dutch dates', () {
-      expect(
-        AppDateUtils.parseDutchDate('3 mei 2026'),
-        DateTime(2026, 5, 3),
-      );
+      expect(AppDateUtils.parseDutchDate('3 mei 2026'), DateTime(2026, 5, 3));
       expect(
         AppDateUtils.parseDutchDate('15 januari 2025'),
         DateTime(2025, 1, 15),
@@ -220,14 +202,8 @@ void main() {
     });
 
     test('is case-insensitive on the month name', () {
-      expect(
-        AppDateUtils.parseDutchDate('3 MEI 2026'),
-        DateTime(2026, 5, 3),
-      );
-      expect(
-        AppDateUtils.parseDutchDate('3 Mei 2026'),
-        DateTime(2026, 5, 3),
-      );
+      expect(AppDateUtils.parseDutchDate('3 MEI 2026'), DateTime(2026, 5, 3));
+      expect(AppDateUtils.parseDutchDate('3 Mei 2026'), DateTime(2026, 5, 3));
     });
 
     test('parses multi-day "30/31 mei 2026" by taking the first day', () {
@@ -406,12 +382,13 @@ void main() {
   });
 
   group('Event date-window getters', () {
-    // Build an event date relative to today so the assertions hold
-    // regardless of when the test runs.
     Event eventInDays(int days) {
       final today = DateTime.now();
-      final target = DateTime(today.year, today.month, today.day)
-          .add(Duration(days: days));
+      final target = DateTime(
+        today.year,
+        today.month,
+        today.day,
+      ).add(Duration(days: days));
       const monthNames = [
         'januari',
         'februari',
@@ -488,11 +465,6 @@ void main() {
   // ════════════════════════════════════════════════════════════════════════
   // ProfanityFilter
   // ════════════════════════════════════════════════════════════════════════
-  //
-  // ProfanityService is uninitialised in tests, so activeSevereWords and
-  // activeMildWords fall back to the hardcoded ProfanityConfig lists.
-  // That's intentional and gives us a stable, well-known wordlist to
-  // test against.
 
   group('ProfanityFilter.check', () {
     test('clean text passes through untouched', () {
@@ -518,7 +490,6 @@ void main() {
     });
 
     test('severe slur blocks the message', () {
-      // "mongool" is in the hardcoded severe list.
       final result = ProfanityFilter.check('je bent een mongool');
       expect(result.isSevere, isTrue);
     });
@@ -529,7 +500,6 @@ void main() {
     });
 
     test('mild profanity is censored, not blocked', () {
-      // "shit" is in the hardcoded mild list.
       final result = ProfanityFilter.check('oh shit nog drie minuten');
       expect(result.isSevere, isFalse);
       expect(result.hasMildProfanity, isTrue);
@@ -537,12 +507,413 @@ void main() {
     });
 
     test('clean text containing a profane substring is not flagged', () {
-      // Word-boundary regression: "exploderen" must NOT match "klote",
-      // "shit", or any other entry as a substring.
       final result = ProfanityFilter.check('we gaan exploderen vanavond');
       expect(result.isSevere, isFalse);
       expect(result.hasMildProfanity, isFalse);
       expect(result.cleanedText, 'we gaan exploderen vanavond');
+    });
+  });
+
+  // ════════════════════════════════════════════════════════════════════════
+  // Message.fromFirestoreData
+  // ════════════════════════════════════════════════════════════════════════
+  //
+  // The chat list calls this once per doc. A single malformed message
+  // must not throw — it just gets shown with fallback values. That's
+  // why this pinning matters: a future schema drift on one doc can't
+  // crash the entire chat for everyone.
+
+  group('Message.fromFirestoreData — happy path', () {
+    test('parses a well-formed user message', () {
+      final msg = Message.fromFirestoreData(
+        docId: 'abc123',
+        data: {
+          'role': 'user',
+          'text': 'hello world',
+          'username': 'Frank',
+          'likes': 3,
+          'replyCount': 0,
+          'likedBy': {'Frank': true},
+        },
+        time: '14:30',
+        localUsername: 'Frank',
+        isAdminViewer: false,
+      );
+      expect(msg.id, 'abc123');
+      expect(msg.role, 'user');
+      expect(msg.text, 'hello world');
+      expect(msg.username, 'Frank');
+      expect(msg.time, '14:30');
+      expect(msg.likes, 3);
+      expect(msg.likedByMe, isTrue);
+      expect(msg.replyCount, 0);
+      expect(msg.isCurrentUser, isTrue);
+      expect(msg.replyTo, isNull);
+    });
+
+    test('parses an admin message and never marks it as isCurrentUser', () {
+      final msg = Message.fromFirestoreData(
+        docId: 'abc',
+        data: {'role': 'admin', 'text': 'studio reply', 'username': 'Studio'},
+        time: '14:30',
+        localUsername: 'Studio',
+        isAdminViewer: false,
+      );
+      expect(msg.role, 'admin');
+      expect(msg.isCurrentUser, isFalse);
+    });
+
+    test('isCurrentUser is false when viewed by an admin', () {
+      final msg = Message.fromFirestoreData(
+        docId: 'abc',
+        data: {'role': 'user', 'text': 'hi', 'username': 'Frank'},
+        time: '14:30',
+        localUsername: 'Frank',
+        isAdminViewer: true,
+      );
+      expect(msg.isCurrentUser, isFalse);
+    });
+
+    test('parses a replyTo snapshot', () {
+      final msg = Message.fromFirestoreData(
+        docId: 'abc',
+        data: {
+          'role': 'user',
+          'text': 'agreed',
+          'username': 'Frank',
+          'replyTo': {
+            'messageId': 'parent-id',
+            'username': 'Alice',
+            'textPreview': 'who else?',
+          },
+        },
+        time: '14:30',
+        localUsername: null,
+        isAdminViewer: false,
+      );
+      expect(msg.replyTo, isNotNull);
+      expect(msg.replyTo!.messageId, 'parent-id');
+      expect(msg.replyTo!.username, 'Alice');
+      expect(msg.replyTo!.textPreview, 'who else?');
+    });
+  });
+
+  group('Message.fromFirestoreData — defensive parsing', () {
+    test('missing text falls back to empty string', () {
+      final msg = Message.fromFirestoreData(
+        docId: 'abc',
+        data: {'role': 'user', 'username': 'Frank'},
+        time: '14:30',
+        localUsername: null,
+        isAdminViewer: false,
+      );
+      expect(msg.text, '');
+    });
+
+    test('missing role falls back to "user"', () {
+      final msg = Message.fromFirestoreData(
+        docId: 'abc',
+        data: {'text': 'hi', 'username': 'Frank'},
+        time: '14:30',
+        localUsername: null,
+        isAdminViewer: false,
+      );
+      expect(msg.role, 'user');
+    });
+
+    test('missing username falls back to "Onbekend"', () {
+      final msg = Message.fromFirestoreData(
+        docId: 'abc',
+        data: {'role': 'user', 'text': 'hi'},
+        time: '14:30',
+        localUsername: null,
+        isAdminViewer: false,
+      );
+      expect(msg.username, 'Onbekend');
+    });
+
+    test('missing likes/replyCount default to 0', () {
+      final msg = Message.fromFirestoreData(
+        docId: 'abc',
+        data: {'role': 'user', 'text': 'hi', 'username': 'Frank'},
+        time: '14:30',
+        localUsername: null,
+        isAdminViewer: false,
+      );
+      expect(msg.likes, 0);
+      expect(msg.replyCount, 0);
+    });
+
+    test('likes given as a double is coerced to int', () {
+      // Firestore can return numeric fields as either int or double.
+      final msg = Message.fromFirestoreData(
+        docId: 'abc',
+        data: {'role': 'user', 'text': 'hi', 'username': 'Frank', 'likes': 5.0},
+        time: '14:30',
+        localUsername: null,
+        isAdminViewer: false,
+      );
+      expect(msg.likes, 5);
+    });
+
+    test('replyTo that is not a map is ignored, not thrown', () {
+      final msg = Message.fromFirestoreData(
+        docId: 'abc',
+        data: {
+          'role': 'user',
+          'text': 'hi',
+          'username': 'Frank',
+          'replyTo': 'this should be a map',
+        },
+        time: '14:30',
+        localUsername: null,
+        isAdminViewer: false,
+      );
+      expect(msg.replyTo, isNull);
+    });
+
+    test('replyTo with missing username falls back gracefully', () {
+      final msg = Message.fromFirestoreData(
+        docId: 'abc',
+        data: {
+          'role': 'user',
+          'text': 'hi',
+          'username': 'Frank',
+          'replyTo': {'messageId': 'parent'},
+        },
+        time: '14:30',
+        localUsername: null,
+        isAdminViewer: false,
+      );
+      expect(msg.replyTo, isNotNull);
+      expect(msg.replyTo!.username, 'Onbekend');
+      expect(msg.replyTo!.textPreview, '');
+    });
+
+    test('likedBy entries other than `true` do not mark likedByMe', () {
+      // Defensive: the doc might have stale entries from a schema where
+      // the value was a timestamp. We only count the literal `true`.
+      final msg = Message.fromFirestoreData(
+        docId: 'abc',
+        data: {
+          'role': 'user',
+          'text': 'hi',
+          'username': 'Frank',
+          'likedBy': {'Frank': 'sometimes'},
+        },
+        time: '14:30',
+        localUsername: 'Frank',
+        isAdminViewer: false,
+      );
+      expect(msg.likedByMe, isFalse);
+    });
+  });
+
+  // ════════════════════════════════════════════════════════════════════════
+  // NotificationRouter
+  // ════════════════════════════════════════════════════════════════════════
+
+  group('NotificationRouter', () {
+    setUp(() {
+      // Router is a singleton, so reset between tests.
+      NotificationRouter.instance.consume();
+    });
+
+    test('starts with no requested tab', () {
+      expect(NotificationRouter.instance.requestedTab.value, isNull);
+    });
+
+    test('maps studio_messages → tab 4 (chat)', () {
+      NotificationRouter.instance.setRequestedTabForCategory(
+        'studio_messages',
+      );
+      expect(NotificationRouter.instance.requestedTab.value, 4);
+    });
+
+    test('maps chat_activity → tab 4 (chat)', () {
+      NotificationRouter.instance.setRequestedTabForCategory('chat_activity');
+      expect(NotificationRouter.instance.requestedTab.value, 4);
+    });
+
+    test('maps events → tab 3 (evenementen)', () {
+      NotificationRouter.instance.setRequestedTabForCategory('events');
+      expect(NotificationRouter.instance.requestedTab.value, 3);
+    });
+
+    test('does nothing for unknown categories', () {
+      // Set a known value first so we can detect "did the unknown
+      // category accidentally clobber state".
+      NotificationRouter.instance.setRequestedTabForCategory('events');
+      expect(NotificationRouter.instance.requestedTab.value, 3);
+
+      NotificationRouter.instance.setRequestedTabForCategory('mystery');
+      expect(NotificationRouter.instance.requestedTab.value, 3);
+    });
+
+    test('does nothing for null category', () {
+      NotificationRouter.instance.setRequestedTabForCategory(null);
+      expect(NotificationRouter.instance.requestedTab.value, isNull);
+    });
+
+    test('consume() clears the requested tab', () {
+      NotificationRouter.instance.setRequestedTabForCategory(
+        'studio_messages',
+      );
+      expect(NotificationRouter.instance.requestedTab.value, 4);
+      NotificationRouter.instance.consume();
+      expect(NotificationRouter.instance.requestedTab.value, isNull);
+    });
+
+    test('listeners fire when the value changes', () {
+      int? lastObserved;
+      void listener() {
+        lastObserved = NotificationRouter.instance.requestedTab.value;
+      }
+
+      NotificationRouter.instance.requestedTab.addListener(listener);
+      try {
+        NotificationRouter.instance.setRequestedTabForCategory(
+          'studio_messages',
+        );
+        expect(lastObserved, 4);
+
+        NotificationRouter.instance.consume();
+        expect(lastObserved, isNull);
+      } finally {
+        NotificationRouter.instance.requestedTab.removeListener(listener);
+      }
+    });
+  });
+
+  // ════════════════════════════════════════════════════════════════════════
+  // AppCheckHttp
+  // ════════════════════════════════════════════════════════════════════════
+
+  group('AppCheckHttp.post', () {
+    // Helper builders so the function-literal return type is inferred
+    // correctly against AppCheckTokenFetcher (which is
+    // Future<String?> Function(...)). Inline `async => 'value'` would
+    // infer Future<String>, which Dart refuses to assign to a slot
+    // typed Future<String?>.
+    AppCheckTokenFetcher stubToken(String? value) =>
+        ({required Duration timeout}) async => value;
+    AppCheckTokenFetcher stubTokenThrows() =>
+        ({required Duration timeout}) async {
+          throw Exception('appcheck broken');
+        };
+
+    tearDown(() {
+      AppCheckHttp.resetForTesting();
+    });
+
+    test('attaches X-Firebase-AppCheck header when token is available',
+        () async {
+      AppCheckHttp.tokenFetcher = stubToken('fake-token');
+
+      String? capturedAuthHeader;
+      AppCheckHttp.clientFactory = () => MockClient((req) async {
+        capturedAuthHeader = req.headers['X-Firebase-AppCheck'];
+        return http.Response('{"ok":true}', 200);
+      });
+
+      final response = await AppCheckHttp.post('userSendMessage', {'k': 'v'});
+      expect(response.statusCode, 200);
+      expect(capturedAuthHeader, 'fake-token');
+    });
+
+    test('omits X-Firebase-AppCheck header when token fetch returns null',
+        () async {
+      AppCheckHttp.tokenFetcher = stubToken(null);
+
+      Map<String, String>? capturedHeaders;
+      AppCheckHttp.clientFactory = () => MockClient((req) async {
+        capturedHeaders = req.headers;
+        return http.Response('{"ok":true}', 200);
+      });
+
+      await AppCheckHttp.post('userSendMessage', {});
+      expect(capturedHeaders!.containsKey('X-Firebase-AppCheck'), isFalse);
+    });
+
+    test('soft-fails when token fetcher throws and requireAppCheck is false',
+        () async {
+      // The non-strict path swallows token-fetch errors and proceeds
+      // without the header. The server decides what to do.
+      AppCheckHttp.tokenFetcher = stubTokenThrows();
+      AppCheckHttp.clientFactory = () => MockClient((req) async {
+        return http.Response('{"ok":true}', 200);
+      });
+
+      final response = await AppCheckHttp.post('userSendMessage', {});
+      expect(response.statusCode, 200);
+    });
+
+    test(
+      'throws a localised error when token fetcher fails and requireAppCheck is true',
+      () async {
+        AppCheckHttp.tokenFetcher = stubTokenThrows();
+        AppCheckHttp.clientFactory = () => MockClient((req) async {
+          // We expect to NEVER reach the network in this case.
+          fail('Should not have made a network call');
+        });
+
+        await expectLater(
+          AppCheckHttp.post('claimUsername', {}, requireAppCheck: true),
+          throwsA(
+            isA<Exception>().having(
+              (e) => e.toString(),
+              'message',
+              contains('beveiligingstoken'),
+            ),
+          ),
+        );
+      },
+    );
+
+    test('serialises the body as JSON', () async {
+      AppCheckHttp.tokenFetcher = stubToken(null);
+
+      String? capturedBody;
+      AppCheckHttp.clientFactory = () => MockClient((req) async {
+        capturedBody = req.body;
+        return http.Response('{"ok":true}', 200);
+      });
+
+      await AppCheckHttp.post('userSendMessage', {
+        'username': 'Frank',
+        'text': 'hi',
+      });
+      expect(capturedBody, '{"username":"Frank","text":"hi"}');
+    });
+
+    test('passes through non-2xx responses without throwing', () async {
+      // The caller handles 4xx by reading response.statusCode — the
+      // helper does not throw for application-level errors.
+      AppCheckHttp.tokenFetcher = stubToken(null);
+      AppCheckHttp.clientFactory = () => MockClient((req) async {
+        return http.Response('{"error":"too fast"}', 429);
+      });
+
+      final response = await AppCheckHttp.post('userSendMessage', {});
+      expect(response.statusCode, 429);
+    });
+
+    test('translates network errors to a friendly Dutch message', () async {
+      AppCheckHttp.tokenFetcher = stubToken(null);
+      AppCheckHttp.clientFactory = () => MockClient((req) async {
+        throw http.ClientException('connection refused');
+      });
+
+      await expectLater(
+        AppCheckHttp.post('userSendMessage', {}),
+        throwsA(
+          isA<Exception>().having(
+            (e) => e.toString(),
+            'message',
+            contains('netwerk'),
+          ),
+        ),
+      );
     });
   });
 }

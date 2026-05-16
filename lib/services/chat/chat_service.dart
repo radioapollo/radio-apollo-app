@@ -16,10 +16,9 @@
    - Optionally attaches a `replyTo` snapshot when sending so the
      server stores it on the new message and the parent's replyCount
      gets incremented (server-side logic in the Cloud Functions).
-   - Maps each Firestore doc into a Message including the new
-     `likes`, `likedByMe`, `replyCount`, and `replyTo` fields. Likes
-     are a counter + a `likedBy.{username}` map maintained by
-     LikeService.
+   - Maps each Firestore doc into a Message via
+     `Message.fromFirestoreData`. The factory is pure and unit-tested
+     in test/widget_test.dart.
    - Exposes remaining cooldown seconds for the UI
    - Forwards unexpected send failures to Crashlytics (CooldownException
      and ProfanityException are expected and not logged).
@@ -89,41 +88,12 @@ class ChatService {
           final data = doc.data();
           final ts = data['timestamp'] as Timestamp?;
           final dt = ts?.toDate() ?? DateTime.now();
-          final msgUsername = data['username'] as String? ?? 'Onbekend';
-          final role = data['role'] as String? ?? 'user';
-
-          final likes = (data['likes'] as num?)?.toInt() ?? 0;
-          final likedByMap =
-              (data['likedBy'] as Map<String, dynamic>?) ?? const {};
-          final likedByMe =
-              localUsername != null && likedByMap[localUsername] == true;
-          final replyCount = (data['replyCount'] as num?)?.toInt() ?? 0;
-
-          ReplyPreview? replyTo;
-          final rt = data['replyTo'];
-          if (rt is Map<String, dynamic>) {
-            replyTo = ReplyPreview(
-              messageId: rt['messageId'] as String?,
-              username: (rt['username'] as String?) ?? 'Onbekend',
-              textPreview: (rt['textPreview'] as String?) ?? '',
-            );
-          }
-
-          return Message(
-            id: doc.id,
-            role: role,
-            text: data['text'] as String? ?? '',
+          return Message.fromFirestoreData(
+            docId: doc.id,
+            data: data,
             time: AppDateUtils.formatTime(dt),
-            username: msgUsername,
-            isCurrentUser:
-                !isAdmin &&
-                localUsername != null &&
-                msgUsername == localUsername &&
-                role != 'admin',
-            likes: likes,
-            likedByMe: likedByMe,
-            replyCount: replyCount,
-            replyTo: replyTo,
+            localUsername: localUsername,
+            isAdminViewer: isAdmin,
           );
         })
         .toList();
