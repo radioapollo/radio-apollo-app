@@ -137,3 +137,8 @@ ios/build/
 
 # Local security testing scripts
 *.ps1
+
+# Testing files
+test/
+
+lib/functions/test
