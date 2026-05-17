@@ -14,25 +14,44 @@
 
       ↩ Antwoord aan Logru
 
-   No preview text — just whose message is being replied to. This
-   keeps bubbles compact even when many people reply to the same
-   message. The reply count next to the parent's 💬 icon does the
-   "how active is this thread" signaling.
+   No preview text — just whose message is being replied to.
 
    Action row (chat-actions feature)
    ─────────────────────────────────
-   Inside every non-own bubble we render up to three small icon
-   buttons under the message text:
+   Inside non-own bubbles we render up to three small icon buttons
+   under the message text:
 
    - 👍 like with running count
    - 💬 reply with reply count
-   - 🚩 flag (hidden on admin messages) → opens FlagMenu with
-        Block and Report options
+   - 🚩 flag → opens FlagMenu with Block and Report options
+
+   Visibility rules:
+   - Like + reply are visible to everyone (including admins) on
+     non-own, non-Studio messages.
+   - Like + reply are hidden on the user's own pre-admin messages
+     (you can't like yourself).
+   - Flag is hidden from Studio messages and from admin viewers
+     (admins moderate via long-press, not by flagging).
+
+   Identity for likes
+   ──────────────────
+   The like is attributed to whichever identity the viewer is in
+   RIGHT NOW:
+   - As a regular user → `likedBy.<username>` (LikeService.toggleLike)
+   - As an admin       → `likedBy.Studio`     (LikeService.toggleStudioLike)
+
+   The two are independent. Admin Raf can have liked a message as
+   Raf (filled heart when not in admin mode) and also need to
+   separately like it as Studio (outline heart in admin mode until
+   tapped). The total count reflects both. Logging out of admin
+   doesn't remove the Studio like; it persists until an admin
+   untaps it.
 
    Long-press behaviour
    ────────────────────
-   Long-press is reserved for ADMIN moderation actions (delete
-   message, ban user). For non-admin users it's a no-op.
+   Long-press opens MessageActionsSheet. For every user the sheet
+   shows a "Kopiëren" option that copies the message text. For
+   admins it additionally shows moderation actions.
 */
 
 import 'package:flutter/material.dart';
@@ -55,15 +74,23 @@ class MessageBubble extends StatefulWidget {
 }
 
 class _MessageBubbleState extends State<MessageBubble> {
-  late bool _likedByMe = widget.message.likedByMe;
+  // The visible like state depends on which identity the viewer is
+  // currently in. We compute it from the right field on the message
+  // and re-compute on rebuild so logging in/out of admin flips the
+  // heart correctly without needing a restart.
+  late bool _likedAsCurrentIdentity = _resolveLikedForViewer(widget.message);
   late int _likes = widget.message.likes;
   bool _likeBusy = false;
+
+  bool _resolveLikedForViewer(Message m) {
+    return AuthService.instance.isAdmin ? m.likedByStudio : m.likedByMe;
+  }
 
   @override
   void didUpdateWidget(covariant MessageBubble oldWidget) {
     super.didUpdateWidget(oldWidget);
     if (!_likeBusy) {
-      _likedByMe = widget.message.likedByMe;
+      _likedAsCurrentIdentity = _resolveLikedForViewer(widget.message);
       _likes = widget.message.likes;
     }
   }
@@ -71,17 +98,36 @@ class _MessageBubbleState extends State<MessageBubble> {
   bool get _hasUsername => UserService.instance.hasUsername;
   bool get _isAdminViewer => AuthService.instance.isAdmin;
 
+  /// True when this message was sent by the local user under their
+  /// regular (non-admin) username. Matters because `Message.isCurrentUser`
+  /// is hard-coded to false when the viewer is admin (to preserve the
+  /// other-people bubble layout), but we still need to know "is this MY
+  /// own message" to hide the like/reply row on it.
+  bool get _isLocalUserMessage {
+    final local = UserService.instance.username;
+    return local != null &&
+        widget.message.username == local &&
+        widget.message.role != 'admin';
+  }
+
   @override
   Widget build(BuildContext context) {
     final message = widget.message;
     final isCurrentUser = message.isCurrentUser;
-    final isAdmin = message.role == 'admin';
+    final isAdminMessage = message.role == 'admin';
     final isUser = isCurrentUser;
 
+    // Show the like/reply/flag row when:
+    //  - It's NOT the local user's own message (no self-likes)
+    //  - It's NOT the bubble currently rendered as "yours" (alignment-wise)
+    final showActionRow = !isCurrentUser && !_isLocalUserMessage;
+
     return GestureDetector(
-      onLongPress: _isAdminViewer
-          ? () => MessageActionsSheet.show(context, message)
-          : null,
+      // Long-press is the standard messaging-app gesture for "do
+      // something with this message" — Copy for everyone, plus
+      // moderation actions for admins. The sheet itself decides
+      // which entries to render based on the viewer's role.
+      onLongPress: () => MessageActionsSheet.show(context, message),
       child: Container(
         margin: EdgeInsets.only(
           top: AppDimensions.spaceSmall,
@@ -120,7 +166,7 @@ class _MessageBubbleState extends State<MessageBubble> {
                 AppDimensions.spaceXSmall,
               ),
               decoration: AppDecorations.chatBubble(
-                isAdmin: isAdmin,
+                isAdmin: isAdminMessage,
                 isUser: isUser,
               ),
               child: Column(
@@ -128,13 +174,13 @@ class _MessageBubbleState extends State<MessageBubble> {
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   if (message.replyTo != null)
-                    _buildReplyTag(message.replyTo!, isUser, isAdmin),
+                    _buildReplyTag(message.replyTo!, isUser, isAdminMessage),
                   Row(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      if (isAdmin)
+                      if (isAdminMessage)
                         Padding(
-                          padding: EdgeInsets.only(right: 8, top: 2),
+                          padding: const EdgeInsets.only(right: 8, top: 2),
                           child: Icon(
                             Icons.radio,
                             color: AppColors.textSecondary,
@@ -153,14 +199,13 @@ class _MessageBubbleState extends State<MessageBubble> {
                       ),
                     ],
                   ),
-                  // Hide the action row from:
-                  // - the sender themselves (no point liking your own message)
-                  // - admin viewers (admin uses long-press for moderation;
-                  //   likes/replies/flags are user-facing and shouldn't apply
-                  //   to the studio role)
-                  if (!isCurrentUser && !_isAdminViewer) ...[
+                  if (showActionRow) ...[
                     const SizedBox(height: AppDimensions.spaceXSmall),
-                    _buildActionRow(message, isAdmin: isAdmin, isUser: isUser),
+                    _buildActionRow(
+                      message,
+                      isAdminMessage: isAdminMessage,
+                      isUser: isUser,
+                    ),
                   ],
                 ],
               ),
@@ -172,15 +217,14 @@ class _MessageBubbleState extends State<MessageBubble> {
   }
 
   // ── Compact reply tag ────────────────────────────────────────────────────
-  //
-  // Single line of muted text at the top of replies. No preview content —
-  // only the username, with a curly arrow icon to convey "this is a reply
-  // to X". Total height adds maybe 16px instead of the 40+ a preview chip
-  // would.
 
   Widget _buildReplyTag(ReplyPreview reply, bool isUser, bool isAdmin) {
-    final onDark = isUser || isAdmin;
-    final color = onDark
+    // The reply tag is light text on the dark blue "your own" bubble,
+    // dark text everywhere else — including the orange Studio bubble,
+    // where the original light-white treatment washed out against the
+    // orange background. Only the blue user bubble keeps the on-dark
+    // colour because that's the only background that genuinely needs it.
+    final color = isUser
         ? AppColors.textOnDark.withValues(alpha: 0.7)
         : AppColors.textSecondary;
 
@@ -212,29 +256,44 @@ class _MessageBubbleState extends State<MessageBubble> {
 
   Widget _buildActionRow(
     Message message, {
-    required bool isAdmin,
+    required bool isAdminMessage,
     required bool isUser,
   }) {
-    final onDark = isUser || isAdmin;
+    // Light text/icons only on the dark-blue "your own" bubble. The
+    // orange Studio bubble is light enough that dark icons read
+    // better than the previous washed-out light treatment, so we
+    // treat it the same as a white user bubble.
+    final onDark = isUser;
+
+    // Hide the like button on Studio's own posts.
+    final showLike = !isAdminMessage;
+
+    // The flag (report/block) button is for users to flag other users.
+    // Hidden on Studio messages (admins aren't flagged this way) and
+    // hidden from admin viewers (admins moderate via long-press).
+    final showFlag = !isAdminMessage && !_isAdminViewer;
 
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: [
-        _ActionIcon(
-          icon: _likedByMe ? Icons.thumb_up : Icons.thumb_up_outlined,
-          count: _likes,
-          onDark: onDark,
-          tinted: _likedByMe,
-          onTap: _likeBusy ? null : _onTapLike,
-        ),
-        const SizedBox(width: 10),
+        if (showLike)
+          _ActionIcon(
+            icon: _likedAsCurrentIdentity
+                ? Icons.thumb_up
+                : Icons.thumb_up_outlined,
+            count: _likes,
+            onDark: onDark,
+            tinted: _likedAsCurrentIdentity,
+            onTap: _likeBusy ? null : _onTapLike,
+          ),
+        if (showLike) const SizedBox(width: 10),
         _ActionIcon(
           icon: Icons.chat_bubble_outline,
           count: message.replyCount,
           onDark: onDark,
           onTap: () => widget.onReply?.call(message),
         ),
-        if (!isAdmin) ...[
+        if (showFlag) ...[
           const SizedBox(width: 10),
           _ActionIcon(
             icon: Icons.flag_outlined,
@@ -252,7 +311,7 @@ class _MessageBubbleState extends State<MessageBubble> {
     final message = widget.message;
     if (message.id == null) return;
 
-    if (!_hasUsername) {
+    if (!_isAdminViewer && !_hasUsername) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text('Stel eerst een gebruikersnaam in om te liken.'),
@@ -261,21 +320,25 @@ class _MessageBubbleState extends State<MessageBubble> {
       return;
     }
 
-    final wasLiked = _likedByMe;
+    final wasLiked = _likedAsCurrentIdentity;
     final wasCount = _likes;
 
     setState(() {
-      _likedByMe = !wasLiked;
+      _likedAsCurrentIdentity = !wasLiked;
       _likes = wasLiked ? (wasCount - 1).clamp(0, 1 << 31) : wasCount + 1;
       _likeBusy = true;
     });
 
     try {
-      await LikeService.instance.toggleLike(message.id!);
+      if (_isAdminViewer) {
+        await LikeService.instance.toggleStudioLike(message.id!);
+      } else {
+        await LikeService.instance.toggleLike(message.id!);
+      }
     } catch (e) {
       if (!mounted) return;
       setState(() {
-        _likedByMe = wasLiked;
+        _likedAsCurrentIdentity = wasLiked;
         _likes = wasCount;
       });
       ScaffoldMessenger.of(context).showSnackBar(
@@ -306,6 +369,11 @@ class _ActionIcon extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // onDark is true only on the dark blue "your own" bubble — see
+    // _buildActionRow. On white user bubbles and orange Studio bubbles
+    // we want dark icons because the backgrounds are light enough that
+    // light icons washed out. So the else branch (dark grey icons) is
+    // the right colour for everything that isn't the blue bubble.
     final Color color;
     if (tinted) {
       color = onDark ? AppColors.textOnDark : AppColors.primaryLight;
@@ -325,15 +393,8 @@ class _ActionIcon extends StatelessWidget {
           children: [
             Icon(icon, size: 15, color: color),
             if (count != null && count! > 0) ...[
-              const SizedBox(width: 4),
-              Text(
-                '$count',
-                style: TextStyle(
-                  fontSize: 11,
-                  color: color,
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
+              const SizedBox(width: 3),
+              Text('$count', style: TextStyle(fontSize: 11, color: color)),
             ],
           ],
         ),

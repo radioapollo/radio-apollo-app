@@ -1,21 +1,26 @@
 /* Message Actions Sheet
 
-   Long-press a chat message to open the admin moderation menu.
+   Long-press a chat message to open the action menu.
 
-   Per-user actions (like / reply / report / block) used to live here
-   too, behind the same long-press. They've moved to visible icon
-   buttons under each message bubble — see MessageBubble. This sheet
-   is now ADMIN-ONLY: regular users never see it.
+   Actions visible to everyone:
+   - Kopiëren           → copies the message body to the system clipboard
 
-   Admin actions:
+   Admin-only actions (added when AuthService.instance.isAdmin):
    - Verwijder bericht  → calls AdminModerationService.deleteMessage
    - Verban [user]      → calls AdminModerationService.banUsername
 
-   For users (non-admin), MessageBubble does NOT register a long-press
-   handler at all, so this sheet is unreachable to them.
+   Own messages and admin messages skip the admin sub-menu, since
+   you can't moderate yourself or the studio role. Copy is still
+   available on every message regardless of who sent it.
+
+   For users (non-admin), MessageBubble registers a long-press handler
+   that opens this sheet with just the "Kopiëren" entry. The icon-
+   button row under each bubble (like / reply / flag) is unchanged —
+   long-press is purely an additional discovery path for copying text.
 */
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import '../../models/message.dart';
 import '../../services/chat/auth_service.dart';
 import '../../services/chat/admin_moderation_service.dart';
@@ -27,10 +32,7 @@ class MessageActionsSheet {
     final isOwn = message.isCurrentUser;
     final isAdminMessage = message.role == 'admin';
     final username = message.username;
-
-    if (!isAdmin) return;
-    if (isOwn) return;
-    if (isAdminMessage) return;
+    final canModerate = isAdmin && !isOwn && !isAdminMessage;
 
     await showModalBottomSheet<void>(
       context: context,
@@ -43,33 +45,51 @@ class MessageActionsSheet {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
+              // ── Kopiëren (everyone) ───────────────────────────────────────
               ListTile(
                 leading: const Icon(
-                  Icons.delete_outline,
-                  color: AppColors.offlineIcon,
+                  Icons.content_copy_outlined,
+                  color: AppColors.primaryLight,
                 ),
-                title: const Text('Verwijder bericht'),
-                subtitle: const Text('Het bericht verdwijnt voor iedereen.'),
+                title: const Text('Kopiëren'),
+                subtitle: const Text('Kopieer dit bericht naar het klembord.'),
                 onTap: () async {
                   Navigator.pop(sheetContext);
-                  await _confirmDeleteMessage(context, message);
+                  await _copyToClipboard(context, message.text);
                 },
               ),
-              if (username != null)
+
+              // ── Admin actions (only when canModerate) ─────────────────────
+              if (canModerate) ...[
                 ListTile(
                   leading: const Icon(
-                    Icons.gavel_outlined,
+                    Icons.delete_outline,
                     color: AppColors.offlineIcon,
                   ),
-                  title: Text('Verban $username'),
-                  subtitle: const Text(
-                    'Deze gebruikersnaam kan nooit meer chatten.',
-                  ),
+                  title: const Text('Verwijder bericht'),
+                  subtitle: const Text('Het bericht verdwijnt voor iedereen.'),
                   onTap: () async {
                     Navigator.pop(sheetContext);
-                    await _confirmBanUsername(context, username);
+                    await _confirmDeleteMessage(context, message);
                   },
                 ),
+                if (username != null)
+                  ListTile(
+                    leading: const Icon(
+                      Icons.gavel_outlined,
+                      color: AppColors.offlineIcon,
+                    ),
+                    title: Text('Verban $username'),
+                    subtitle: const Text(
+                      'Deze gebruikersnaam kan nooit meer chatten.',
+                    ),
+                    onTap: () async {
+                      Navigator.pop(sheetContext);
+                      await _confirmBanUsername(context, username);
+                    },
+                  ),
+              ],
+
               ListTile(
                 leading: const Icon(Icons.close),
                 title: const Text('Annuleren'),
@@ -79,6 +99,26 @@ class MessageActionsSheet {
           ),
         );
       },
+    );
+  }
+
+  // ── Copy ────────────────────────────────────────────────────────────────
+
+  static Future<void> _copyToClipboard(
+    BuildContext context,
+    String text,
+  ) async {
+    await Clipboard.setData(ClipboardData(text: text));
+    if (!context.mounted) return;
+    // Android 13+ shows its own "copied to clipboard" toast, so showing
+    // a SnackBar would be redundant on new devices. Older Androids and
+    // iOS don't, so we always show one — duplicate feedback is better
+    // than silent feedback.
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text('Bericht gekopieerd.'),
+        duration: Duration(seconds: 2),
+      ),
     );
   }
 
@@ -144,11 +184,14 @@ class MessageActionsSheet {
               'Deze gebruikersnaam kan nooit meer chatten en kan niet '
               'opnieuw geclaimd worden.',
             ),
-            const SizedBox(height: 12),
+            const SizedBox(height: AppDimensions.spaceMedium),
             TextField(
               controller: reasonController,
-              decoration: const InputDecoration(labelText: 'Reden (optioneel)'),
-              maxLength: 200,
+              decoration: const InputDecoration(
+                labelText: 'Reden (optioneel)',
+                border: OutlineInputBorder(),
+              ),
+              maxLines: 2,
             ),
           ],
         ),
@@ -159,7 +202,7 @@ class MessageActionsSheet {
           ),
           TextButton(
             onPressed: () => Navigator.pop(ctx, true),
-            child: const Text('Verbannen'),
+            child: const Text('Verban'),
           ),
         ],
       ),
@@ -167,10 +210,11 @@ class MessageActionsSheet {
     if (confirmed != true) return;
     if (!context.mounted) return;
 
+    final reason = reasonController.text.trim();
     try {
       await AdminModerationService.instance.banUsername(
         username,
-        reason: reasonController.text.trim(),
+        reason: reason.isEmpty ? null : reason,
       );
       if (!context.mounted) return;
       _snack(context, '$username is verbannen.');
@@ -180,11 +224,11 @@ class MessageActionsSheet {
     }
   }
 
-  // ── Helpers ──────────────────────────────────────────────────────────────
+  // ── Snackbar helper ─────────────────────────────────────────────────────
 
   static void _snack(BuildContext context, String message) {
     ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(message), duration: const Duration(seconds: 4)),
+      SnackBar(content: Text(message), duration: const Duration(seconds: 3)),
     );
   }
 }

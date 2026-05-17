@@ -12,7 +12,11 @@
 
    Engagement fields (added with chat actions feature):
    - likes           total like count
-   - likedByMe       whether the local user has liked this message
+   - likedByMe       whether the local user's regular username liked it
+   - likedByStudio   whether the studio (admin) identity liked it; separate
+                     from likedByMe so admins can like AS Studio in
+                     addition to having liked the message as their
+                     regular user before going admin
    - replyCount      number of replies pointing at this message
    - replyTo         small embedded snapshot of the message being replied
                      to, if any. We embed instead of resolving by id so a
@@ -59,6 +63,7 @@ class Message {
 
   final int likes;
   final bool likedByMe;
+  final bool likedByStudio;
   final int replyCount;
   final ReplyPreview? replyTo;
 
@@ -71,6 +76,7 @@ class Message {
     this.isCurrentUser = false,
     this.likes = 0,
     this.likedByMe = false,
+    this.likedByStudio = false,
     this.replyCount = 0,
     this.replyTo,
   });
@@ -79,14 +85,7 @@ class Message {
   ///
   /// Defensive against missing or malformed fields: a doc with no
   /// `text`, `role`, or `username` still parses (with fallback
-  /// strings) rather than throwing. This matters because Firestore
-  /// docs can drift from the expected shape over time, and a single
-  /// malformed message must not crash the entire chat list.
-  ///
-  /// `localUsername` and `isAdminViewer` are passed in (rather than
-  /// read from a global) so the factory stays pure and testable.
-  /// The caller is responsible for formatting [time] from the
-  /// timestamp field before calling.
+  /// strings) rather than throwing.
   factory Message.fromFirestoreData({
     required String docId,
     required Map<String, dynamic> data,
@@ -101,6 +100,7 @@ class Message {
     final likedByMap = (data['likedBy'] as Map<String, dynamic>?) ?? const {};
     final likedByMe =
         localUsername != null && likedByMap[localUsername] == true;
+    final likedByStudio = likedByMap['Studio'] == true;
     final replyCount = (data['replyCount'] as num?)?.toInt() ?? 0;
 
     final replyTo = ReplyPreview.fromMap(data['replyTo']);
@@ -118,6 +118,7 @@ class Message {
           role != 'admin',
       likes: likes,
       likedByMe: likedByMe,
+      likedByStudio: likedByStudio,
       replyCount: replyCount,
       replyTo: replyTo,
     );
