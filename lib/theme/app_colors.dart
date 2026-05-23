@@ -57,6 +57,14 @@ class AppColors {
   static const Color live = Colors.red;
   static const Color adminBadge = Colors.orangeAccent;
 
+  // Studio account — green, brand-fixed. studioBubble fills the green
+  // "Studio" chat bubble; studioBadge is the darker green used for the
+  // "STUDIO MODE" text indicator (needs more contrast against the page
+  // background than the bubble fill does). We use dark text on the
+  // studioBubble fill, same treatment as the orange admin bubble.
+  static const Color studioBubble = Color(0xFF66BB6A);
+  static const Color studioBadge = Color(0xFF2E7D32);
+
   // Text on dark surfaces — these stay constant because the dark cards
   // (live player, program cards, chat input) keep their navy fill in
   // both modes; the text on top is always white.

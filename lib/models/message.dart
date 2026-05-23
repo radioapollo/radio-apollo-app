@@ -4,19 +4,28 @@
 
    Core fields:
    - id              Firestore document id (used for replies/reports/likes)
-   - role            'user' or 'admin'
+   - role            'user' | 'admin' | 'studio'
    - text            the message body
    - time            formatted HH:mm string
    - username        sender display name
    - isCurrentUser   whether this device sent it
 
+   Roles:
+   - 'user'   : a regular chatter, white bubble, their claimed name
+   - 'admin'  : the moderator, orange bubble, posts as "Radio Apollo"
+   - 'studio' : the presenters' PC account, green bubble, posts as "Studio";
+                posts/replies like a user but has no moderation powers
+
    Engagement fields (added with chat actions feature):
    - likes           total like count
    - likedByMe       whether the local user's regular username liked it
-   - likedByStudio   whether the studio (admin) identity liked it; separate
-                     from likedByMe so admins can like AS Studio in
-                     addition to having liked the message as their
-                     regular user before going admin
+   - likedByAdmin    whether the admin identity liked it; keyed under the
+                     reserved map field `likedBy.__admin__` (not a real
+                     username) so it never collides with the green "Studio"
+                     account's display name or any user's name. Separate
+                     from likedByMe so an admin can like AS the admin in
+                     addition to having liked the message as their regular
+                     user before going admin.
    - replyCount      number of replies pointing at this message
    - replyTo         small embedded snapshot of the message being replied
                      to, if any. We embed instead of resolving by id so a
@@ -63,7 +72,7 @@ class Message {
 
   final int likes;
   final bool likedByMe;
-  final bool likedByStudio;
+  final bool likedByAdmin;
   final int replyCount;
   final ReplyPreview? replyTo;
 
@@ -76,7 +85,7 @@ class Message {
     this.isCurrentUser = false,
     this.likes = 0,
     this.likedByMe = false,
-    this.likedByStudio = false,
+    this.likedByAdmin = false,
     this.replyCount = 0,
     this.replyTo,
   });
@@ -100,7 +109,10 @@ class Message {
     final likedByMap = (data['likedBy'] as Map<String, dynamic>?) ?? const {};
     final likedByMe =
         localUsername != null && likedByMap[localUsername] == true;
-    final likedByStudio = likedByMap['Studio'] == true;
+    // Admin like lives under the reserved key __admin__ (see the
+    // adminToggleLike Cloud Function). Not a real username, so no
+    // collision with the "Studio" display name or any user.
+    final likedByAdmin = likedByMap['__admin__'] == true;
     final replyCount = (data['replyCount'] as num?)?.toInt() ?? 0;
 
     final replyTo = ReplyPreview.fromMap(data['replyTo']);
@@ -111,14 +123,18 @@ class Message {
       text: data['text'] as String? ?? '',
       time: time,
       username: username,
+      // Only a regular 'user' message sent under the local user's own
+      // claimed name renders as "mine" (blue, right-aligned). Privileged
+      // viewers (admin/studio) see everything as "other", and admin /
+      // studio role messages are never "mine".
       isCurrentUser:
           !isAdminViewer &&
           localUsername != null &&
           username == localUsername &&
-          role != 'admin',
+          role == 'user',
       likes: likes,
       likedByMe: likedByMe,
-      likedByStudio: likedByStudio,
+      likedByAdmin: likedByAdmin,
       replyCount: replyCount,
       replyTo: replyTo,
     );

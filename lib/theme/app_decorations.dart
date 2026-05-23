@@ -170,20 +170,33 @@ class AppDecorations {
 
   // Chat bubbles
   // ────────────
-  // Admin: orange (brand-fixed).
-  // User (your own messages): primary blue (brand-fixed).
-  // Other user: themed surface — white on light mode, dark raised
-  // surface on dark mode. The text inside is `AppColors.textBody`,
-  // which is also themed, so the contrast holds in both modes.
+  // admin  ('Radio Apollo') : orange  (brand-fixed)
+  // studio ('Studio')       : green   (brand-fixed)
+  // user, own messages      : primary blue (brand-fixed)
+  // user, other people      : themed surface — white on light mode, dark
+  //                           raised surface on dark mode. The text inside
+  //                           is AppColors.textBody, also themed, so the
+  //                           contrast holds in both modes.
+  //
+  // `role` is the message role ('admin' | 'studio' | 'user'); `isUser`
+  // means "this is the local user's own message" (right-aligned blue).
   static BoxDecoration chatBubble({
-    required bool isAdmin,
+    required String role,
     required bool isUser,
-  }) => BoxDecoration(
-    color: isAdmin
-        ? AppColors.adminBadge
-        : isUser
-        ? AppColors.primaryLight
-        : _surfaceFill,
-    borderRadius: BorderRadius.circular(AppDimensions.radiusMedium),
-  );
+  }) {
+    final Color fill;
+    if (role == 'admin') {
+      fill = AppColors.adminBadge;
+    } else if (role == 'studio') {
+      fill = AppColors.studioBubble;
+    } else if (isUser) {
+      fill = AppColors.primaryLight;
+    } else {
+      fill = _surfaceFill;
+    }
+    return BoxDecoration(
+      color: fill,
+      borderRadius: BorderRadius.circular(AppDimensions.radiusMedium),
+    );
+  }
 }

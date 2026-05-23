@@ -11,8 +11,10 @@
      best-effort App Check (server soft-fails so users on Xiaomi/HyperOS
      where Play Integrity is unreliable can still chat, subject to a
      stricter rate limit)
-   - Sends admin messages via the adminSendMessage Cloud Function with
-     a session token
+   - Sends admin messages via the adminSendMessage Cloud Function
+     (posts as "Radio Apollo", orange) with a session token
+   - Sends studio messages via the studioSendMessage Cloud Function
+     (posts as "Studio", green) with a session token
    - Optionally attaches a `replyTo` snapshot when sending so the
      server stores it on the new message and the parent's replyCount
      gets incremented (server-side logic in the Cloud Functions).
@@ -22,6 +24,13 @@
    - Exposes remaining cooldown seconds for the UI
    - Forwards unexpected send failures to Crashlytics (CooldownException
      and ProfanityException are expected and not logged).
+
+   Send routing
+   ────────────
+   sendMessage() picks the path by role:
+     admin  → adminSendMessage   (orange "Radio Apollo")
+     studio → studioSendMessage  (green "Studio")
+     user   → userSendMessage    (claimed username)
 */
 
 import 'dart:convert';
@@ -76,7 +85,12 @@ class ChatService {
   ) {
     final cutoff = DateTime.now().subtract(const Duration(hours: 48));
     final localUsername = UserService.instance.username;
-    final isAdmin = authService.isAdmin;
+    // Privileged viewers (admin or studio) see every message in the
+    // "other people" layout — none of them render as the blue right-
+    // aligned "mine" bubble. So we pass isPrivileged here, not just
+    // isAdmin: a studio session shouldn't see its own green posts as
+    // blue either.
+    final isPrivilegedViewer = authService.isPrivileged;
 
     return snap.docs
         .where((doc) {
@@ -93,7 +107,7 @@ class ChatService {
             data: data,
             time: AppDateUtils.formatTime(dt),
             localUsername: localUsername,
-            isAdminViewer: isAdmin,
+            isAdminViewer: isPrivilegedViewer,
           );
         })
         .toList();
@@ -109,6 +123,9 @@ class ChatService {
 
     if (authService.isAdmin) {
       return _sendAdminMessage(trimmed, replyPayload: replyPayload);
+    }
+    if (authService.isStudio) {
+      return _sendStudioMessage(trimmed, replyPayload: replyPayload);
     }
     return _sendUserMessage(trimmed, replyPayload: replyPayload);
   }
@@ -225,6 +242,35 @@ class ChatService {
         e,
         st,
         reason: 'ChatService._sendAdminMessage',
+        fatal: false,
+      );
+      rethrow;
+    }
+  }
+
+  Future<bool> _sendStudioMessage(
+    String text, {
+    Map<String, dynamic>? replyPayload,
+  }) async {
+    final token = authService.sessionToken;
+    if (token == null) return false;
+
+    try {
+      final response = await AppCheckHttp.post('studioSendMessage', {
+        'token': token,
+        'text': text,
+        'replyTo': ?replyPayload,
+      });
+
+      if (response.statusCode != 200) {
+        throw Exception('Bericht kon niet worden verzonden. Probeer opnieuw.');
+      }
+      return true;
+    } catch (e, st) {
+      FirebaseCrashlytics.instance.recordError(
+        e,
+        st,
+        reason: 'ChatService._sendStudioMessage',
         fatal: false,
       );
       rethrow;

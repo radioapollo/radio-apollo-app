@@ -1,11 +1,11 @@
 /* Chat Title Widget
 
-   Displays the chat title, username, or admin mode badge.
-   Also shows the logout button when in admin mode,
-   or a "Kies een naam" button when the user has no username yet.
+   Displays the chat title, username, or mode badge.
 
-   When in admin mode, also shows a "Meldingen" button that opens
-   the reports inbox.
+   Modes:
+   - admin  → "ADMIN MODE" (orange) + logout + reports inbox button
+   - studio → "STUDIO MODE" (green) + logout
+   - user   → "Ingelogd als: <name>" or a "Kies een naam" button
 
    This is a pure presentation widget — all state is passed in
    via constructor parameters.
@@ -17,6 +17,7 @@ import '../../theme/app_theme.dart';
 
 class ChatTitle extends StatelessWidget {
   final bool isAdmin;
+  final bool isStudio;
   final String? username;
   final bool hasUsername;
   final VoidCallback onLogout;
@@ -28,10 +29,13 @@ class ChatTitle extends StatelessWidget {
     required this.isAdmin,
     required this.hasUsername,
     required this.onLogout,
+    this.isStudio = false,
     this.username,
     this.onPickUsername,
     this.onOpenReports,
   });
+
+  bool get _isPrivileged => isAdmin || isStudio;
 
   @override
   Widget build(BuildContext context) {
@@ -50,6 +54,18 @@ class ChatTitle extends StatelessWidget {
                   const Padding(
                     padding: EdgeInsets.only(top: AppDimensions.spaceSmall),
                     child: Text('ADMIN MODE', style: AppTextStyles.adminBadge),
+                  )
+                else if (isStudio)
+                  const Padding(
+                    padding: EdgeInsets.only(top: AppDimensions.spaceSmall),
+                    child: Text(
+                      'STUDIO MODE',
+                      style: TextStyle(
+                        color: AppColors.studioBadge,
+                        fontSize: 12,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
                   )
                 else if (hasUsername && username != null)
                   Padding(
@@ -72,8 +88,8 @@ class ChatTitle extends StatelessWidget {
           if (isAdmin && onOpenReports != null)
             _ReportsButton(onTap: onOpenReports!),
 
-          // ── Logout button (admin only) ────────────────────────────────────
-          if (isAdmin)
+          // ── Logout button (admin or studio) ───────────────────────────────
+          if (_isPrivileged)
             TextButton.icon(
               onPressed: onLogout,
               icon: Icon(

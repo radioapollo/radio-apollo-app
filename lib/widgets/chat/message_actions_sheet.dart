@@ -9,14 +9,15 @@
    - Verwijder bericht  → calls AdminModerationService.deleteMessage
    - Verban [user]      → calls AdminModerationService.banUsername
 
-   Own messages and admin messages skip the admin sub-menu, since
-   you can't moderate yourself or the studio role. Copy is still
-   available on every message regardless of who sent it.
+   Station messages (admin "Radio Apollo" / studio "Studio") and the
+   admin's own messages skip the admin sub-menu's BAN action — you
+   can't meaningfully ban the station's own identities, and a username
+   ban wouldn't affect the password-backed studio account anyway. An
+   admin can still DELETE a station message (e.g. remove a studio post).
+   Copy is always available on every message.
 
    For users (non-admin), MessageBubble registers a long-press handler
-   that opens this sheet with just the "Kopiëren" entry. The icon-
-   button row under each bubble (like / reply / flag) is unchanged —
-   long-press is purely an additional discovery path for copying text.
+   that opens this sheet with just the "Kopiëren" entry.
 */
 
 import 'package:flutter/material.dart';
@@ -30,9 +31,15 @@ class MessageActionsSheet {
   static Future<void> show(BuildContext context, Message message) async {
     final isAdmin = AuthService.instance.isAdmin;
     final isOwn = message.isCurrentUser;
-    final isAdminMessage = message.role == 'admin';
+    final isStationMessage =
+        message.role == 'admin' || message.role == 'studio';
     final username = message.username;
-    final canModerate = isAdmin && !isOwn && !isAdminMessage;
+
+    // Admins can delete any non-own message (including station posts).
+    final canDelete = isAdmin && !isOwn;
+    // Banning only makes sense for a real user's claimed name, not for
+    // the station identities ("Radio Apollo" / "Studio").
+    final canBan = isAdmin && !isOwn && !isStationMessage && username != null;
 
     await showModalBottomSheet<void>(
       context: context,
@@ -59,8 +66,8 @@ class MessageActionsSheet {
                 },
               ),
 
-              // ── Admin actions (only when canModerate) ─────────────────────
-              if (canModerate) ...[
+              // ── Admin: delete ─────────────────────────────────────────────
+              if (canDelete)
                 ListTile(
                   leading: const Icon(
                     Icons.delete_outline,
@@ -73,22 +80,23 @@ class MessageActionsSheet {
                     await _confirmDeleteMessage(context, message);
                   },
                 ),
-                if (username != null)
-                  ListTile(
-                    leading: const Icon(
-                      Icons.gavel_outlined,
-                      color: AppColors.offlineIcon,
-                    ),
-                    title: Text('Verban $username'),
-                    subtitle: const Text(
-                      'Deze gebruikersnaam kan nooit meer chatten.',
-                    ),
-                    onTap: () async {
-                      Navigator.pop(sheetContext);
-                      await _confirmBanUsername(context, username);
-                    },
+
+              // ── Admin: ban (real users only) ──────────────────────────────
+              if (canBan)
+                ListTile(
+                  leading: const Icon(
+                    Icons.gavel_outlined,
+                    color: AppColors.offlineIcon,
                   ),
-              ],
+                  title: Text('Verban $username'),
+                  subtitle: const Text(
+                    'Deze gebruikersnaam kan nooit meer chatten.',
+                  ),
+                  onTap: () async {
+                    Navigator.pop(sheetContext);
+                    await _confirmBanUsername(context, username!);
+                  },
+                ),
 
               ListTile(
                 leading: const Icon(Icons.close),
@@ -110,10 +118,6 @@ class MessageActionsSheet {
   ) async {
     await Clipboard.setData(ClipboardData(text: text));
     if (!context.mounted) return;
-    // Android 13+ shows its own "copied to clipboard" toast, so showing
-    // a SnackBar would be redundant on new devices. Older Androids and
-    // iOS don't, so we always show one — duplicate feedback is better
-    // than silent feedback.
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(
         content: Text('Bericht gekopieerd.'),

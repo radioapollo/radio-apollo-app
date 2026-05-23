@@ -3,14 +3,24 @@
    Main chat screen where users talk to the studio in real time.
 
    This screen is an orchestrator — it manages the username flow,
-   admin state, text input, and reply state, then delegates all
+   admin/studio state, text input, and reply state, then delegates all
    rendering to dedicated child widgets:
 
-   - ChatHeader        → logo + long-press admin login
-   - ChatTitle         → title, username badge, logout / pick-name button
+   - ChatHeader        → logo + long-press login
+   - ChatTitle         → title, username badge, mode badge, logout
    - ChatMessageList   → StreamBuilder with loading/error/empty states
    - ChatInputField    → text field + send button + reply banner
    - UsernamePrompt    → tappable bar shown when no username is set
+
+   Privileged roles
+   ────────────────
+   Admin and studio are both "privileged" sessions that authenticate
+   with a password and post via a session token. Neither needs a
+   claimed username, and neither is subject to the user send cooldown.
+   The few places that used to check `isAdmin` for "can post without a
+   username / skip cooldown" now check `isPrivileged` so studio behaves
+   the same way. Moderation entry points (reports inbox) remain
+   admin-only.
 
    Features:
    - Optional username prompt on first visit (can be skipped)
@@ -19,16 +29,12 @@
    - Messages streamed live from Firestore (last 48 hours only)
    - 160 character limit with a countdown near the limit
    - Own messages on the right (blue), others on the left
-   - Admin messages in orange with a radio icon
+   - Admin messages orange ("Radio Apollo"), studio messages green ("Studio")
    - Per-message action row (like / reply / flag) under each bubble
-   - Reply state managed at this level: tapping reply on a bubble
-     stores the target in `_replyingTo`, which the input field shows
-     as a banner. Sending forwards the target to ChatService.
-   - Long-press the logo to open the admin login
+   - Reply state managed at this level
+   - Long-press the logo to open the login
    - Long-press a message: admin only, opens moderation actions
    - Keyboard stays open between messages so the user can keep typing
-   - Existing users without EULA acceptance are prompted on chat open
-     and again as a safety net if they try to send before accepting
 */
 
 import 'dart:async';
@@ -129,6 +135,8 @@ class _ChatScreenState extends State<ChatScreen>
   }
 
   Future<void> _ensureUsername() async {
+    // Privileged sessions (admin/studio) don't need a claimed username.
+    if (_authService.isPrivileged) return;
     await UserService.instance.init();
     final needsUsername = !UserService.instance.hasUsername;
     final needsEula = !EulaService.instance.hasAccepted;
@@ -148,7 +156,7 @@ class _ChatScreenState extends State<ChatScreen>
   // ── Reply handlers ────────────────────────────────────────────────────────
 
   void _onReplyTo(Message message) {
-    if (!UserService.instance.hasUsername && !_authService.isAdmin) {
+    if (!UserService.instance.hasUsername && !_authService.isPrivileged) {
       _promptUsername();
       return;
     }
@@ -165,14 +173,15 @@ class _ChatScreenState extends State<ChatScreen>
   Future<void> _sendMessage() async {
     if (_sending) return;
 
-    if (!_authService.isAdmin && _cooldownRemaining > 0) {
+    // Cooldown only applies to regular users, not privileged sessions.
+    if (!_authService.isPrivileged && _cooldownRemaining > 0) {
       _flashCooldownHint();
       return;
     }
 
     if (_controller.text.trim().isEmpty) return;
 
-    if (!UserService.instance.hasUsername && !_authService.isAdmin) {
+    if (!UserService.instance.hasUsername && !_authService.isPrivileged) {
       await _promptUsername();
       return;
     }
@@ -234,12 +243,13 @@ class _ChatScreenState extends State<ChatScreen>
     });
   }
 
-  // ── Snackbar / admin login / reports ──────────────────────────────────────
+  // ── Snackbar / login / reports ─────────────────────────────────────────────
 
   void _showSnack(String message) {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text(message),
+        behavior: SnackBarBehavior.floating,
         duration: const Duration(seconds: 4),
         margin: const EdgeInsets.all(AppDimensions.paddingLarge),
         shape: RoundedRectangleBorder(
@@ -276,6 +286,8 @@ class _ChatScreenState extends State<ChatScreen>
 
     final hasUsername = UserService.instance.hasUsername;
     final isAdmin = _authService.isAdmin;
+    final isStudio = _authService.isStudio;
+    final isPrivileged = _authService.isPrivileged;
 
     return SizedBox.expand(
       child: Container(
@@ -290,6 +302,7 @@ class _ChatScreenState extends State<ChatScreen>
               const SizedBox(height: AppDimensions.spaceMedium),
               ChatTitle(
                 isAdmin: isAdmin,
+                isStudio: isStudio,
                 username: UserService.instance.username,
                 hasUsername: hasUsername,
                 onLogout: _onLogout,
@@ -303,7 +316,7 @@ class _ChatScreenState extends State<ChatScreen>
               ),
 
               // ── Input area: real input or "pick a name" prompt ──────────
-              if (hasUsername || isAdmin)
+              if (hasUsername || isPrivileged)
                 ChatInputField(
                   controller: _controller,
                   focusNode: _textFieldFocus,

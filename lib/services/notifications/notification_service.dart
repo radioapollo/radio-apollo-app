@@ -42,7 +42,7 @@
    Tap-to-route
    ────────────
    Three message-arrival paths can end with a tap:
-   - Cold start (app terminated)        → getInitialMessage() in init()
+   - Cold start (app terminated)        → getInitialMessage() in main()
    - Background → user taps             → onMessageOpenedApp stream
    - Foreground → local plugin renders  → onDidReceiveNotificationResponse
    All three feed NotificationRouter.setRequestedTabForCategory(),
@@ -116,9 +116,8 @@ class NotificationService {
     if (isAuthorized) {
       await _reconcileSubscriptions();
     }
-
+ 
     _wireMessageHandlers();
-    await _handleColdStartTap();
   }
 
   Future<void> _initLocalPlugin() async {
@@ -149,12 +148,6 @@ class NotificationService {
   void _wireMessageHandlers() {
     FirebaseMessaging.onMessage.listen(_displayForegroundMessage);
     FirebaseMessaging.onMessageOpenedApp.listen(_onMessageOpenedApp);
-  }
-
-  Future<void> _handleColdStartTap() async {
-    final message = await _fcm.getInitialMessage();
-    if (message == null) return;
-    _routeFromMessage(message);
   }
 
   void _onMessageOpenedApp(RemoteMessage message) {

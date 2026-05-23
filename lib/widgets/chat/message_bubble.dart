@@ -4,6 +4,7 @@
 
    Appearance varies by role:
    - admin  → orange bubble, left-aligned, radio icon, "Radio Apollo" label
+   - studio → green bubble, left-aligned, "Studio" label
    - own    → blue bubble, right-aligned, no label
    - other  → white bubble, left-aligned, username label above
 
@@ -27,10 +28,10 @@
 
    Visibility rules:
    - Like + reply are visible to everyone (including admins) on
-     non-own, non-Studio messages.
+     non-own, non-station messages (station = admin or studio).
    - Like + reply are hidden on the user's own pre-admin messages
      (you can't like yourself).
-   - Flag is hidden from Studio messages and from admin viewers
+   - Flag is hidden from station messages and from admin viewers
      (admins moderate via long-press, not by flagging).
 
    Identity for likes
@@ -38,13 +39,10 @@
    The like is attributed to whichever identity the viewer is in
    RIGHT NOW:
    - As a regular user → `likedBy.<username>` (LikeService.toggleLike)
-   - As an admin       → `likedBy.Studio`     (LikeService.toggleStudioLike)
+   - As an admin       → `likedBy.__admin__`  (LikeService.toggleStudioLike)
 
-   The two are independent. Admin Raf can have liked a message as
-   Raf (filled heart when not in admin mode) and also need to
-   separately like it as Studio (outline heart in admin mode until
-   tapped). The total count reflects both. Logging out of admin
-   doesn't remove the Studio like; it persists until an admin
+   The two are independent. The total count reflects both. Logging out
+   of admin doesn't remove the admin like; it persists until an admin
    untaps it.
 
    Long-press behaviour
@@ -83,7 +81,9 @@ class _MessageBubbleState extends State<MessageBubble> {
   bool _likeBusy = false;
 
   bool _resolveLikedForViewer(Message m) {
-    return AuthService.instance.isAdmin ? m.likedByStudio : m.likedByMe;
+    // Studio shares the admin (__admin__) like identity, so a privileged
+    // viewer (admin OR studio) reads the same likedByAdmin flag.
+    return AuthService.instance.isPrivileged ? m.likedByAdmin : m.likedByMe;
   }
 
   @override
@@ -96,18 +96,30 @@ class _MessageBubbleState extends State<MessageBubble> {
   }
 
   bool get _hasUsername => UserService.instance.hasUsername;
-  bool get _isAdminViewer => AuthService.instance.isAdmin;
 
   /// True when this message was sent by the local user under their
-  /// regular (non-admin) username. Matters because `Message.isCurrentUser`
-  /// is hard-coded to false when the viewer is admin (to preserve the
+  /// regular (non-station) username. Matters because `Message.isCurrentUser`
+  /// is hard-coded to false when the viewer is privileged (to preserve the
   /// other-people bubble layout), but we still need to know "is this MY
   /// own message" to hide the like/reply row on it.
   bool get _isLocalUserMessage {
     final local = UserService.instance.username;
     return local != null &&
         widget.message.username == local &&
-        widget.message.role != 'admin';
+        widget.message.role == 'user';
+  }
+
+  /// True when this is a station message (admin/studio) sent by the
+  /// SAME identity the viewer currently holds. An admin shouldn't be
+  /// able to reply to / like the orange "Radio Apollo" messages they
+  /// themselves post, and likewise studio shouldn't act on the green
+  /// "Studio" messages. (Cross-identity is still allowed: an admin can
+  /// act on a studio message and vice-versa.)
+  bool get _isOwnStationMessage {
+    final role = widget.message.role;
+    if (role == 'admin') return AuthService.instance.isAdmin;
+    if (role == 'studio') return AuthService.instance.isStudio;
+    return false;
   }
 
   @override
@@ -115,12 +127,16 @@ class _MessageBubbleState extends State<MessageBubble> {
     final message = widget.message;
     final isCurrentUser = message.isCurrentUser;
     final isAdminMessage = message.role == 'admin';
+    final isStudioMessage = message.role == 'studio';
+    final isStationMessage = isAdminMessage || isStudioMessage;
     final isUser = isCurrentUser;
 
-    // Show the like/reply/flag row when:
-    //  - It's NOT the local user's own message (no self-likes)
-    //  - It's NOT the bubble currently rendered as "yours" (alignment-wise)
-    final showActionRow = !isCurrentUser && !_isLocalUserMessage;
+    // Show the like/reply/flag row when it's NOT your own message in any
+    // identity: not your regular-user message, not the bubble rendered as
+    // "yours", and not a station message from the identity you currently
+    // hold (admin viewing Radio Apollo, or studio viewing Studio).
+    final showActionRow =
+        !isCurrentUser && !_isLocalUserMessage && !_isOwnStationMessage;
 
     return GestureDetector(
       // Long-press is the standard messaging-app gesture for "do
@@ -166,7 +182,7 @@ class _MessageBubbleState extends State<MessageBubble> {
                 AppDimensions.spaceXSmall,
               ),
               decoration: AppDecorations.chatBubble(
-                isAdmin: isAdminMessage,
+                role: message.role,
                 isUser: isUser,
               ),
               child: Column(
@@ -174,7 +190,7 @@ class _MessageBubbleState extends State<MessageBubble> {
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   if (message.replyTo != null)
-                    _buildReplyTag(message.replyTo!, isUser, isAdminMessage),
+                    _buildReplyTag(message.replyTo!, isUser, isStationMessage),
                   Row(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
@@ -191,6 +207,10 @@ class _MessageBubbleState extends State<MessageBubble> {
                         child: Text(
                           message.text,
                           style: AppTextStyles.bubbleText.copyWith(
+                            // Dark text on the light blue "mine" bubble is
+                            // white; on the orange admin and green studio
+                            // bubbles we also want dark text for contrast;
+                            // on the themed surface bubble it's textBody.
                             color: isUser
                                 ? AppColors.textOnDark
                                 : AppColors.textBody,
@@ -203,7 +223,7 @@ class _MessageBubbleState extends State<MessageBubble> {
                     const SizedBox(height: AppDimensions.spaceXSmall),
                     _buildActionRow(
                       message,
-                      isAdminMessage: isAdminMessage,
+                      isStationMessage: isStationMessage,
                       isUser: isUser,
                     ),
                   ],
@@ -218,12 +238,10 @@ class _MessageBubbleState extends State<MessageBubble> {
 
   // ── Compact reply tag ────────────────────────────────────────────────────
 
-  Widget _buildReplyTag(ReplyPreview reply, bool isUser, bool isAdmin) {
-    // The reply tag is light text on the dark blue "your own" bubble,
-    // dark text everywhere else — including the orange Studio bubble,
-    // where the original light-white treatment washed out against the
-    // orange background. Only the blue user bubble keeps the on-dark
-    // colour because that's the only background that genuinely needs it.
+  Widget _buildReplyTag(ReplyPreview reply, bool isUser, bool isStation) {
+    // Light text only on the dark-blue "your own" bubble. On the orange
+    // admin and green studio bubbles (and the themed surface bubble) the
+    // background is light enough that dark text reads better.
     final color = isUser
         ? AppColors.textOnDark.withValues(alpha: 0.7)
         : AppColors.textSecondary;
@@ -256,22 +274,20 @@ class _MessageBubbleState extends State<MessageBubble> {
 
   Widget _buildActionRow(
     Message message, {
-    required bool isAdminMessage,
+    required bool isStationMessage,
     required bool isUser,
   }) {
-    // Light text/icons only on the dark-blue "your own" bubble. The
-    // orange Studio bubble is light enough that dark icons read
-    // better than the previous washed-out light treatment, so we
-    // treat it the same as a white user bubble.
+    // Light icons only on the dark-blue "your own" bubble. Orange/green
+    // station bubbles and white user bubbles get dark icons.
     final onDark = isUser;
 
-    // Hide the like button on Studio's own posts.
-    final showLike = !isAdminMessage;
+    // Hide the like button on station (admin/studio) posts.
+    final showLike = !isStationMessage;
 
-    // The flag (report/block) button is for users to flag other users.
-    // Hidden on Studio messages (admins aren't flagged this way) and
-    // hidden from admin viewers (admins moderate via long-press).
-    final showFlag = !isAdminMessage && !_isAdminViewer;
+    // The flag (report/block) button is for regular users to flag other
+    // users. Hidden on station messages and hidden from privileged
+    // viewers (admin moderates via long-press; studio isn't a moderator).
+    final showFlag = !isStationMessage && !AuthService.instance.isPrivileged;
 
     return Row(
       mainAxisSize: MainAxisSize.min,
@@ -311,7 +327,10 @@ class _MessageBubbleState extends State<MessageBubble> {
     final message = widget.message;
     if (message.id == null) return;
 
-    if (!_isAdminViewer && !_hasUsername) {
+    // Privileged sessions (admin/studio) like via the session-token path
+    // and don't need a claimed username. Regular users do.
+    final isPrivileged = AuthService.instance.isPrivileged;
+    if (!isPrivileged && !_hasUsername) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text('Stel eerst een gebruikersnaam in om te liken.'),
@@ -330,7 +349,9 @@ class _MessageBubbleState extends State<MessageBubble> {
     });
 
     try {
-      if (_isAdminViewer) {
+      if (isPrivileged) {
+        // Both admin and studio toggle the shared __admin__ like via
+        // the same Cloud Function (adminToggleLike accepts either token).
         await LikeService.instance.toggleStudioLike(message.id!);
       } else {
         await LikeService.instance.toggleLike(message.id!);
@@ -369,11 +390,11 @@ class _ActionIcon extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // onDark is true only on the dark blue "your own" bubble — see
-    // _buildActionRow. On white user bubbles and orange Studio bubbles
-    // we want dark icons because the backgrounds are light enough that
-    // light icons washed out. So the else branch (dark grey icons) is
-    // the right colour for everything that isn't the blue bubble.
+    // onDark is true only on the dark blue "your own" bubble. On white
+    // user bubbles and orange/green station bubbles we want dark icons
+    // because the backgrounds are light enough that light icons washed
+    // out. So the else branch (dark grey icons) is the right colour for
+    // everything that isn't the blue bubble.
     final Color color;
     if (tinted) {
       color = onDark ? AppColors.textOnDark : AppColors.primaryLight;
@@ -394,7 +415,10 @@ class _ActionIcon extends StatelessWidget {
             Icon(icon, size: 15, color: color),
             if (count != null && count! > 0) ...[
               const SizedBox(width: 3),
-              Text('$count', style: TextStyle(fontSize: 11, color: color)),
+              Text(
+                '$count',
+                style: TextStyle(fontSize: 11, color: color),
+              ),
             ],
           ],
         ),
