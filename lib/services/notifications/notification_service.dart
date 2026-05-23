@@ -116,7 +116,7 @@ class NotificationService {
     if (isAuthorized) {
       await _reconcileSubscriptions();
     }
- 
+
     _wireMessageHandlers();
   }
 

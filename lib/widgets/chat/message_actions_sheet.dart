@@ -94,7 +94,7 @@ class MessageActionsSheet {
                   ),
                   onTap: () async {
                     Navigator.pop(sheetContext);
-                    await _confirmBanUsername(context, username!);
+                    await _confirmBanUsername(context, username);
                   },
                 ),
 

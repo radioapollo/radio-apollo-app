@@ -415,10 +415,7 @@ class _ActionIcon extends StatelessWidget {
             Icon(icon, size: 15, color: color),
             if (count != null && count! > 0) ...[
               const SizedBox(width: 3),
-              Text(
-                '$count',
-                style: TextStyle(fontSize: 11, color: color),
-              ),
+              Text('$count', style: TextStyle(fontSize: 11, color: color)),
             ],
           ],
         ),
