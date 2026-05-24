@@ -39,11 +39,13 @@
    The like is attributed to whichever identity the viewer is in
    RIGHT NOW:
    - As a regular user → `likedBy.<username>` (LikeService.toggleLike)
-   - As an admin       → `likedBy.__admin__`  (LikeService.toggleStudioLike)
+   - As an admin       → `likedBy.adminLike`  (LikeService.toggleStudioLike)
+   - As studio         → `likedBy.studioLike` (LikeService.toggleStudioLike)
 
-   The two are independent. The total count reflects both. Logging out
-   of admin doesn't remove the admin like; it persists until an admin
-   untaps it.
+   Admin and studio are SEPARATE like identities — both can like the
+   same message at once (count reaches 2), and neither cancels the
+   other. The server (adminToggleLike) picks the right cell from the
+   session token's role. The total count reflects every distinct like.
 
    Long-press behaviour
    ────────────────────
@@ -81,9 +83,13 @@ class _MessageBubbleState extends State<MessageBubble> {
   bool _likeBusy = false;
 
   bool _resolveLikedForViewer(Message m) {
-    // Studio shares the admin (__admin__) like identity, so a privileged
-    // viewer (admin OR studio) reads the same likedByAdmin flag.
-    return AuthService.instance.isPrivileged ? m.likedByAdmin : m.likedByMe;
+    // Admin and studio are separate like identities, each with its own
+    // field. Reflect whichever one the viewer currently holds. A regular
+    // user reflects their own username-keyed like.
+    final auth = AuthService.instance;
+    if (auth.isAdmin) return m.likedByAdmin;
+    if (auth.isStudio) return m.likedByStudio;
+    return m.likedByMe;
   }
 
   @override
@@ -350,8 +356,10 @@ class _MessageBubbleState extends State<MessageBubble> {
 
     try {
       if (isPrivileged) {
-        // Both admin and studio toggle the shared __admin__ like via
-        // the same Cloud Function (adminToggleLike accepts either token).
+        // Admin and studio each toggle their OWN like via the same
+        // Cloud Function. adminToggleLike keys the like by the token's
+        // role server-side (admin → adminLike, studio → studioLike), so
+        // the client just calls it and the server picks the right cell.
         await LikeService.instance.toggleStudioLike(message.id!);
       } else {
         await LikeService.instance.toggleLike(message.id!);

@@ -19,13 +19,18 @@
    Engagement fields (added with chat actions feature):
    - likes           total like count
    - likedByMe       whether the local user's regular username liked it
-   - likedByAdmin    whether the admin identity liked it; keyed under the
-                     reserved map field `likedBy.__admin__` (not a real
-                     username) so it never collides with the green "Studio"
-                     account's display name or any user's name. Separate
-                     from likedByMe so an admin can like AS the admin in
-                     addition to having liked the message as their regular
-                     user before going admin.
+   - likedByAdmin    whether the ADMIN station identity liked it; keyed
+                     under `likedBy.adminLike`
+   - likedByStudio   whether the STUDIO station identity liked it; keyed
+                     under `likedBy.studioLike`
+
+     Admin and studio are SEPARATE like identities — both can like the
+     same message at once (count reaches 2), and one logging out doesn't
+     remove the other's like. Both are independent from a regular user's
+     like, which is keyed under `likedBy.<username>`. The key names start
+     with a letter and don't match Firestore's reserved __.*__ pattern,
+     so they never collide with a username or get rejected by Firestore.
+
    - replyCount      number of replies pointing at this message
    - replyTo         small embedded snapshot of the message being replied
                      to, if any. We embed instead of resolving by id so a
@@ -73,6 +78,7 @@ class Message {
   final int likes;
   final bool likedByMe;
   final bool likedByAdmin;
+  final bool likedByStudio;
   final int replyCount;
   final ReplyPreview? replyTo;
 
@@ -86,6 +92,7 @@ class Message {
     this.likes = 0,
     this.likedByMe = false,
     this.likedByAdmin = false,
+    this.likedByStudio = false,
     this.replyCount = 0,
     this.replyTo,
   });
@@ -109,10 +116,12 @@ class Message {
     final likedByMap = (data['likedBy'] as Map<String, dynamic>?) ?? const {};
     final likedByMe =
         localUsername != null && likedByMap[localUsername] == true;
-    // Admin like lives under the reserved key __admin__ (see the
-    // adminToggleLike Cloud Function). Not a real username, so no
-    // collision with the "Studio" display name or any user.
-    final likedByAdmin = likedByMap['__admin__'] == true;
+    // Station likes live under dedicated keys (see the adminToggleLike
+    // Cloud Function). They start with a letter and don't match
+    // Firestore's reserved __.*__ field pattern, so they're safe and
+    // never collide with a username.
+    final likedByAdmin = likedByMap['adminLike'] == true;
+    final likedByStudio = likedByMap['studioLike'] == true;
     final replyCount = (data['replyCount'] as num?)?.toInt() ?? 0;
 
     final replyTo = ReplyPreview.fromMap(data['replyTo']);
@@ -135,6 +144,7 @@ class Message {
       likes: likes,
       likedByMe: likedByMe,
       likedByAdmin: likedByAdmin,
+      likedByStudio: likedByStudio,
       replyCount: replyCount,
       replyTo: replyTo,
     );
