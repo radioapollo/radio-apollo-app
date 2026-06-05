@@ -144,3 +144,6 @@ test/
 lib/functions/test
 
 .firebase/
+# Swift Package Manager local state
+ios/Runner.xcodeproj/project.xcworkspace/xcshareddata/swiftpm/
+ios/Runner.xcworkspace/xcshareddata/swiftpm/

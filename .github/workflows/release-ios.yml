@@ -1,9 +1,9 @@
 name: Release iOS
 
 on:
-  push:
-    tags:
-      - 'v*'
+  # NOTE: tag trigger temporarily disabled until Apple Developer Program
+  # enrollment + Match distribution cert + App Check DeviceCheck are set up.
+  # Re-enable by restoring the `push: tags: ['v*']` block below.
   workflow_dispatch:
 
 jobs:

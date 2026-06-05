@@ -76,9 +76,15 @@ class ApolloCard extends StatelessWidget {
     mainAxisSize: MainAxisSize.max,
     crossAxisAlignment: CrossAxisAlignment.start,
     children: [
-      Text(
-        title,
-        style: AppTextStyles.apolloCardTitle.copyWith(color: textColor),
+      FittedBox(
+        fit: BoxFit.scaleDown,
+        alignment: Alignment.centerLeft,
+        child: Text(
+          title,
+          maxLines: 1,
+          softWrap: false,
+          style: AppTextStyles.apolloCardTitle.copyWith(color: textColor),
+        ),
       ),
       const SizedBox(height: AppDimensions.paddingSmall),
       Icon(icon, size: AppDimensions.iconXXLarge, color: textColor),

@@ -374,6 +374,7 @@ class RadioAudioHandler extends BaseAudioHandler {
             .toString()
             .trim();
         final songTitle = _stripHtml(rawTitle);
+        debugPrint('[AudioHandler] stats raw="$rawTitle" parsed="$songTitle" isRealSong=${_isRealSong(songTitle)}');
 
         if (songTitle.isNotEmpty && songTitle != _lastSongTitle) {
           _lastSongTitle = songTitle;
@@ -441,8 +442,8 @@ class RadioAudioHandler extends BaseAudioHandler {
     mediaItem.add(
       MediaItem(
         id: AppConstants.streamUrl,
-        title: '',
-        artist: '',
+        title: _currentProgram.isNotEmpty ? _currentProgram : 'Radio Apollo',
+        artist: 'LIVE uitzending',
         album: album,
         artUri: artUri,
       ),
