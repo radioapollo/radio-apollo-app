@@ -28,12 +28,14 @@ import 'player/recently_played_sheet.dart';
 
 class LivePlayerCard extends StatelessWidget {
   final bool isPlaying;
+  final bool isBuffering;
   final VoidCallback onPlayPause;
   final VoidCallback? onTap;
 
   const LivePlayerCard({
     super.key,
     required this.isPlaying,
+    this.isBuffering = false,
     required this.onPlayPause,
     this.onTap,
   });
@@ -150,13 +152,25 @@ class LivePlayerCard extends StatelessWidget {
                         children: [
                           GestureDetector(
                             onTap: onPlayPause,
-                            child: Icon(
-                              isPlaying
-                                  ? Icons.pause_circle_filled
-                                  : Icons.play_circle_fill,
-                              color: AppColors.textOnDark,
-                              size: AppDimensions.iconPlayPause,
-                            ),
+                            child: isBuffering
+                                ? SizedBox(
+                                    width: AppDimensions.iconPlayPause,
+                                    height: AppDimensions.iconPlayPause,
+                                    child: const Padding(
+                                      padding: EdgeInsets.all(6),
+                                      child: CircularProgressIndicator(
+                                        strokeWidth: 3,
+                                        color: AppColors.textOnDark,
+                                      ),
+                                    ),
+                                  )
+                                : Icon(
+                                    isPlaying
+                                        ? Icons.pause_circle_filled
+                                        : Icons.play_circle_fill,
+                                    color: AppColors.textOnDark,
+                                    size: AppDimensions.iconPlayPause,
+                                  ),
                           ),
 
                           const SizedBox(width: AppDimensions.spaceMedium),

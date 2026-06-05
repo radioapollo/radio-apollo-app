@@ -40,6 +40,11 @@ class _HomeScreenState extends State<HomeScreen>
           StreamBuilder<PlaybackState>(
             stream: services.audioHandler.playbackState,
             builder: (context, snapshot) => LivePlayerCard(
+              isBuffering:
+                  snapshot.data?.processingState ==
+                      AudioProcessingState.loading ||
+                  snapshot.data?.processingState ==
+                      AudioProcessingState.buffering,
               isPlaying: snapshot.data?.playing ?? false,
               onPlayPause: services.audioHandler.toggle,
               onTap: () => widget.onNavigate(1),

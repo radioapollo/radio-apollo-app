@@ -374,7 +374,6 @@ class RadioAudioHandler extends BaseAudioHandler {
             .toString()
             .trim();
         final songTitle = _stripHtml(rawTitle);
-        debugPrint('[AudioHandler] stats raw="$rawTitle" parsed="$songTitle" isRealSong=${_isRealSong(songTitle)}');
 
         if (songTitle.isNotEmpty && songTitle != _lastSongTitle) {
           _lastSongTitle = songTitle;
