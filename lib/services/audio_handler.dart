@@ -117,6 +117,7 @@ class RadioAudioHandler extends BaseAudioHandler {
   StreamSubscription<GoogleCastSession?>? _castSessionSub;
   StreamSubscription<GoggleCastMediaStatus?>? _castMediaStatusSub;
   bool _isCasting = false;
+  bool _connecting = false;
 
   bool get isCasting => _isCasting;
 
@@ -128,12 +129,24 @@ class RadioAudioHandler extends BaseAudioHandler {
 
       final playing = state.playing;
 
+      // While a play request is in flight but audio hasn't started yet,
+      // report `loading` so the UI keeps showing the spinner instead of
+      // briefly flashing the play button during the ready-but-not-playing gap.
+      if (playing) _connecting = false;
+      // If the player falls back to idle while we were connecting, the
+      // attempt ended without playing (e.g. no network) — clear the
+      // connecting flag so the spinner doesn't hang forever.
+      if (state.processingState == ProcessingState.idle) _connecting = false;
+      final processing = _connecting
+          ? AudioProcessingState.loading
+          : _mapState(state.processingState);
+
       playbackState.add(
         PlaybackState(
           controls: [if (playing) MediaControl.pause else MediaControl.play],
           systemActions: const {MediaAction.play, MediaAction.pause},
           playing: playing,
-          processingState: _mapState(state.processingState),
+          processingState: processing,
           updatePosition: Duration.zero,
         ),
       );
@@ -496,8 +509,24 @@ class RadioAudioHandler extends BaseAudioHandler {
       return;
     }
 
-    await _player.setUrl(AppConstants.streamUrl);
-    await _player.play();
+    _connecting = true;
+    try {
+      await _player.setUrl(AppConstants.streamUrl);
+      await _player.play();
+    } catch (e) {
+      debugPrint('[AudioHandler] Playback start failed: $e');
+      _connecting = false;
+      await _player.stop();
+      playbackState.add(
+        PlaybackState(
+          controls: const [MediaControl.play],
+          systemActions: const {MediaAction.play, MediaAction.pause},
+          playing: false,
+          processingState: AudioProcessingState.idle,
+          updatePosition: Duration.zero,
+        ),
+      );
+    }
   }
 
   @override
@@ -515,6 +544,7 @@ class RadioAudioHandler extends BaseAudioHandler {
       return;
     }
 
+    _connecting = false;
     await _player.stop();
   }
 
