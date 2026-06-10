@@ -101,6 +101,7 @@ import 'constants/constants.dart';
 import 'theme/app_theme.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'services/chat/eula_service.dart';
+import 'services/update_service.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -361,6 +362,7 @@ Future<void> _initInBackground(
   } catch (e, st) {
     debugPrint('[main] CurrentProgramService start failed: $e');
     _recordError(e, st, reason: 'CurrentProgramService.start');
+    await UpdateService.checkForUpdate();
   }
 }
 
