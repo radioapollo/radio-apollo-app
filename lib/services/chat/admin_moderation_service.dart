@@ -53,13 +53,20 @@ class AdminModerationService {
     final uri = Uri.parse(AppConstants.cloudFunctionUrl(name));
     final body = {'token': token, ...payload};
 
-    final response = await http
-        .post(
-          uri,
-          headers: {'Content-Type': 'application/json'},
-          body: jsonEncode(body),
-        )
-        .timeout(const Duration(seconds: 15));
+    late final http.Response response;
+    try {
+      response = await http
+          .post(
+            uri,
+            headers: {'Content-Type': 'application/json'},
+            body: jsonEncode(body),
+          )
+          .timeout(const Duration(seconds: 15));
+    } on TimeoutException {
+      throw Exception('Server antwoordt niet. Probeer het later opnieuw.');
+    } catch (_) {
+      throw Exception('Controleer je netwerkverbinding en probeer opnieuw.');
+    }
 
     if (response.statusCode == 401) {
       throw Exception('Sessie verlopen. Log opnieuw in.');
