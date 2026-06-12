@@ -232,6 +232,18 @@ class _MessageBubbleState extends State<MessageBubble> {
                       isStationMessage: isStationMessage,
                       isUser: isUser,
                     ),
+                  ] else if (_isLocalUserMessage && message.likes > 0) ...[
+                    // Your own message: show the like count read-only.
+                    // You can't like yourself (onTap: null), but you
+                    // should still see how many likes it received.
+                    const SizedBox(height: AppDimensions.spaceXSmall),
+                    _ActionIcon(
+                      icon: Icons.thumb_up,
+                      count: message.likes,
+                      onDark: isUser,
+                      tinted: true,
+                      onTap: null,
+                    ),
                   ],
                 ],
               ),
