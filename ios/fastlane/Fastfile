@@ -41,7 +41,7 @@ platform :ios do
     match(
       type:          "appstore",
       app_identifier: APP_IDENTIFIER,
-      readonly:      true,
+      readonly:      ENV["MATCH_READONLY"] != "false",
       git_url:       ENV["MATCH_GIT_URL"],
       api_key:       api_key
     )

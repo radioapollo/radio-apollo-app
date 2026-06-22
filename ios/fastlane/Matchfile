@@ -4,6 +4,7 @@
 #
 # git_url("git@github.com:YOUR-GITHUB-USER/radio-apollo-certificates.git")
 
+git_url("git@github.com:radioapollo/radio-apollo-certificates.git")
 storage_mode("git")
 type("appstore")
 app_identifier(["be.radioapollo.app"])

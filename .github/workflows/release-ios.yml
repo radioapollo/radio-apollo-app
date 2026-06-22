@@ -5,6 +5,15 @@ on:
   # enrollment + Match distribution cert + App Check DeviceCheck are set up.
   # Re-enable by restoring the `push: tags: ['v*']` block below.
   workflow_dispatch:
+    inputs:
+      generate_certs:
+        description: 'Generate/refresh signing certs (sets MATCH_READONLY=false)'
+        required: false
+        default: 'false'
+        type: choice
+        options:
+          - 'false'
+          - 'true'
 
 jobs:
   build-and-release:
@@ -50,6 +59,7 @@ jobs:
         env:
           MATCH_PASSWORD: ${{ secrets.MATCH_PASSWORD }}
           MATCH_GIT_URL: ${{ secrets.MATCH_GIT_URL }}
+          MATCH_READONLY: ${{ github.event.inputs.generate_certs == 'true' && 'false' || 'true' }}
           APP_STORE_CONNECT_KEY_ID: ${{ secrets.APP_STORE_CONNECT_KEY_ID }}
           APP_STORE_CONNECT_ISSUER_ID: ${{ secrets.APP_STORE_CONNECT_ISSUER_ID }}
           APP_STORE_CONNECT_API_KEY_PATH: fastlane/AuthKey.p8
