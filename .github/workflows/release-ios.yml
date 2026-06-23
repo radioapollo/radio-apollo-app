@@ -35,7 +35,7 @@ jobs:
         uses: ruby/setup-ruby@v1
         with:
           ruby-version: '3.2'
-          bundler-cache: true
+          bundler-cache: false
           working-directory: ios
 
       - name: Install Flutter dependencies
@@ -53,6 +53,10 @@ jobs:
         run: |
           mkdir -p ios/fastlane
           echo "${{ secrets.APP_STORE_CONNECT_API_KEY_BASE64 }}" | base64 --decode > ios/fastlane/AuthKey.p8
+
+      - name: Install Ruby gems (fresh, no cache)
+        working-directory: ios
+        run: bundle install --jobs 4 --retry 3
 
       - name: Run Fastlane beta lane
         working-directory: ios
