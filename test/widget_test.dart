@@ -32,10 +32,12 @@ void main() {
 
   group('AppDateUtils.shiftList', () {
     test('shift of 0 returns the list unchanged', () {
-      expect(
-        AppDateUtils.shiftList(['a', 'b', 'c', 'd'], 0),
-        ['a', 'b', 'c', 'd'],
-      );
+      expect(AppDateUtils.shiftList(['a', 'b', 'c', 'd'], 0), [
+        'a',
+        'b',
+        'c',
+        'd',
+      ]);
     });
 
     test('positive shift rotates left', () {
@@ -272,10 +274,7 @@ void main() {
   group('Day-shift invariant', () {
     List<String> shiftedDaysFor(int todayWeekday, int selectedIndex) {
       final shift = todayWeekday - (selectedIndex + 1);
-      return AppDateUtils.shiftList(
-        List.from(ProgramService.weekdays),
-        shift,
-      );
+      return AppDateUtils.shiftList(List.from(ProgramService.weekdays), shift);
     }
 
     test('today lands at selectedIndex for every weekday × every index', () {
@@ -724,9 +723,7 @@ void main() {
     });
 
     test('maps studio_messages → tab 4 (chat)', () {
-      NotificationRouter.instance.setRequestedTabForCategory(
-        'studio_messages',
-      );
+      NotificationRouter.instance.setRequestedTabForCategory('studio_messages');
       expect(NotificationRouter.instance.requestedTab.value, 4);
     });
 
@@ -756,9 +753,7 @@ void main() {
     });
 
     test('consume() clears the requested tab', () {
-      NotificationRouter.instance.setRequestedTabForCategory(
-        'studio_messages',
-      );
+      NotificationRouter.instance.setRequestedTabForCategory('studio_messages');
       expect(NotificationRouter.instance.requestedTab.value, 4);
       NotificationRouter.instance.consume();
       expect(NotificationRouter.instance.requestedTab.value, isNull);
@@ -806,47 +801,53 @@ void main() {
       AppCheckHttp.resetForTesting();
     });
 
-    test('attaches X-Firebase-AppCheck header when token is available',
-        () async {
-      AppCheckHttp.tokenFetcher = stubToken('fake-token');
+    test(
+      'attaches X-Firebase-AppCheck header when token is available',
+      () async {
+        AppCheckHttp.tokenFetcher = stubToken('fake-token');
 
-      String? capturedAuthHeader;
-      AppCheckHttp.clientFactory = () => MockClient((req) async {
-        capturedAuthHeader = req.headers['X-Firebase-AppCheck'];
-        return http.Response('{"ok":true}', 200);
-      });
+        String? capturedAuthHeader;
+        AppCheckHttp.clientFactory = () => MockClient((req) async {
+          capturedAuthHeader = req.headers['X-Firebase-AppCheck'];
+          return http.Response('{"ok":true}', 200);
+        });
 
-      final response = await AppCheckHttp.post('userSendMessage', {'k': 'v'});
-      expect(response.statusCode, 200);
-      expect(capturedAuthHeader, 'fake-token');
-    });
+        final response = await AppCheckHttp.post('userSendMessage', {'k': 'v'});
+        expect(response.statusCode, 200);
+        expect(capturedAuthHeader, 'fake-token');
+      },
+    );
 
-    test('omits X-Firebase-AppCheck header when token fetch returns null',
-        () async {
-      AppCheckHttp.tokenFetcher = stubToken(null);
+    test(
+      'omits X-Firebase-AppCheck header when token fetch returns null',
+      () async {
+        AppCheckHttp.tokenFetcher = stubToken(null);
 
-      Map<String, String>? capturedHeaders;
-      AppCheckHttp.clientFactory = () => MockClient((req) async {
-        capturedHeaders = req.headers;
-        return http.Response('{"ok":true}', 200);
-      });
+        Map<String, String>? capturedHeaders;
+        AppCheckHttp.clientFactory = () => MockClient((req) async {
+          capturedHeaders = req.headers;
+          return http.Response('{"ok":true}', 200);
+        });
 
-      await AppCheckHttp.post('userSendMessage', {});
-      expect(capturedHeaders!.containsKey('X-Firebase-AppCheck'), isFalse);
-    });
+        await AppCheckHttp.post('userSendMessage', {});
+        expect(capturedHeaders!.containsKey('X-Firebase-AppCheck'), isFalse);
+      },
+    );
 
-    test('soft-fails when token fetcher throws and requireAppCheck is false',
-        () async {
-      // The non-strict path swallows token-fetch errors and proceeds
-      // without the header. The server decides what to do.
-      AppCheckHttp.tokenFetcher = stubTokenThrows();
-      AppCheckHttp.clientFactory = () => MockClient((req) async {
-        return http.Response('{"ok":true}', 200);
-      });
+    test(
+      'soft-fails when token fetcher throws and requireAppCheck is false',
+      () async {
+        // The non-strict path swallows token-fetch errors and proceeds
+        // without the header. The server decides what to do.
+        AppCheckHttp.tokenFetcher = stubTokenThrows();
+        AppCheckHttp.clientFactory = () => MockClient((req) async {
+          return http.Response('{"ok":true}', 200);
+        });
 
-      final response = await AppCheckHttp.post('userSendMessage', {});
-      expect(response.statusCode, 200);
-    });
+        final response = await AppCheckHttp.post('userSendMessage', {});
+        expect(response.statusCode, 200);
+      },
+    );
 
     test(
       'throws a localised error when token fetcher fails and requireAppCheck is true',

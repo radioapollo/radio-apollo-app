@@ -55,6 +55,10 @@
 	<string>Om dit evenement aan je agenda toe te voegen.</string>
 	<key>NSLocalNetworkUsageDescription</key>
 	<string>Radio Apollo uses the local network to discover Cast-enabled devices on your WiFi network.</string>
+	<key>NSMicrophoneUsageDescription</key>
+	<string>Deze app gebruikt de microfoon niet zelf. Een onderdeel voor casten naar andere apparaten vereist deze toestemming.</string>
+	<key>NSBluetoothAlwaysUsageDescription</key>
+	<string>Deze toestemming wordt gebruikt om Cast-apparaten in de buurt te vinden.</string>
 	<key>UIApplicationSceneManifest</key>
 	<dict>
 		<key>UIApplicationSupportsMultipleScenes</key>
