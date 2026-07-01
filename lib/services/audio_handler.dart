@@ -62,6 +62,8 @@ import 'package:http/http.dart' as http;
 import 'package:flutter_chrome_cast/flutter_chrome_cast.dart';
 import '../constants/constants.dart';
 import '../models/recent_song.dart';
+import '../models/sonos_device.dart';
+import 'sonos_service.dart';
 import 'cast_service.dart';
 
 class RadioAudioHandler extends BaseAudioHandler {
@@ -118,6 +120,9 @@ class RadioAudioHandler extends BaseAudioHandler {
   StreamSubscription<GoggleCastMediaStatus?>? _castMediaStatusSub;
   bool _isCasting = false;
   bool _connecting = false;
+
+  SonosDevice? _sonosDevice;
+  bool get isSonos => _sonosDevice != null;
 
   bool get isCasting => _isCasting;
 
@@ -228,6 +233,84 @@ class RadioAudioHandler extends BaseAudioHandler {
         updatePosition: Duration.zero,
       ),
     );
+  }
+
+  /// Called by the device picker when the user taps a Sonos speaker.
+  Future<void> connectSonos(SonosDevice device) async {
+    // If a Chromecast session is somehow active, leave it cleanly first.
+    if (_isCasting) {
+      try {
+        await GoogleCastSessionManager.instance.endSessionAndStopCasting();
+      } catch (_) {}
+    }
+
+    _sonosDevice = device;
+
+    // Silence the local player — the speaker will play the stream itself.
+    try {
+      await _player.stop();
+    } catch (_) {}
+
+    _publishSonosPlaybackState(optimisticPlaying: true);
+
+    try {
+      await SonosService.instance.playStream(
+        device,
+        streamUrl: AppConstants.streamUrl,
+        title: _currentProgram.isNotEmpty ? _currentProgram : 'Radio Apollo',
+      );
+    } catch (e) {
+      debugPrint('[AudioHandler] Sonos playStream failed: $e');
+      // Surface as stopped so the UI doesn't lie about playing.
+      _publishSonosPlaybackState(optimisticPlaying: false);
+      rethrow; // let the sheet show the error
+    }
+  }
+
+  Future<void> disconnectSonos() async {
+    final device = _sonosDevice;
+    _sonosDevice = null;
+    if (device != null) {
+      try {
+        await SonosService.instance.stop(device);
+      } catch (e) {
+        debugPrint('[AudioHandler] Sonos stop failed: $e');
+      }
+    }
+    playbackState.add(
+      PlaybackState(
+        controls: const [MediaControl.play],
+        systemActions: const {MediaAction.play, MediaAction.pause},
+        playing: false,
+        processingState: AudioProcessingState.idle,
+        updatePosition: Duration.zero,
+      ),
+    );
+  }
+
+  void _publishSonosPlaybackState({required bool optimisticPlaying}) {
+    playbackState.add(
+      PlaybackState(
+        controls: [
+          if (optimisticPlaying) MediaControl.pause else MediaControl.play,
+        ],
+        systemActions: const {MediaAction.play, MediaAction.pause},
+        playing: optimisticPlaying,
+        processingState: AudioProcessingState.ready,
+        updatePosition: Duration.zero,
+      ),
+    );
+  }
+
+  /// Exposed so the in-sheet volume slider can drive the speaker.
+  Future<void> setSonosVolume(int volume) async {
+    final device = _sonosDevice;
+    if (device == null) return;
+    try {
+      await SonosService.instance.setVolume(device, volume);
+    } catch (e) {
+      debugPrint('[AudioHandler] Sonos setVolume failed: $e');
+    }
   }
 
   void _publishCastPlaybackState(
@@ -490,6 +573,20 @@ class RadioAudioHandler extends BaseAudioHandler {
       ),
     );
 
+    if (isSonos) {
+      try {
+        await SonosService.instance.playStream(
+          _sonosDevice!,
+          streamUrl: AppConstants.streamUrl,
+          title: _currentProgram.isNotEmpty ? _currentProgram : 'Radio Apollo',
+        );
+      } catch (e) {
+        debugPrint('[AudioHandler] Sonos play failed: $e');
+      }
+      _publishSonosPlaybackState(optimisticPlaying: true);
+      return;
+    }
+
     if (_isCasting) {
       try {
         final hasMedia =
@@ -534,6 +631,20 @@ class RadioAudioHandler extends BaseAudioHandler {
 
   @override
   Future<void> pause() async {
+    if (isSonos) {
+      try {
+        await SonosService.instance.playStream(
+          _sonosDevice!,
+          streamUrl: AppConstants.streamUrl,
+          title: _currentProgram.isNotEmpty ? _currentProgram : 'Radio Apollo',
+        );
+      } catch (e) {
+        debugPrint('[AudioHandler] Sonos play failed: $e');
+      }
+      _publishSonosPlaybackState(optimisticPlaying: true);
+      return;
+    }
+
     if (_isCasting) {
       try {
         await GoogleCastRemoteMediaClient.instance.pause();
@@ -550,6 +661,11 @@ class RadioAudioHandler extends BaseAudioHandler {
 
   @override
   Future<void> stop() async {
+    if (isSonos) {
+      await disconnectSonos();
+      return;
+    }
+
     if (_isCasting) {
       try {
         await GoogleCastRemoteMediaClient.instance.stop();
@@ -565,6 +681,16 @@ class RadioAudioHandler extends BaseAudioHandler {
   }
 
   Future<void> toggle() async {
+    if (isSonos) {
+      final state = await SonosService.instance.getPlaybackState(_sonosDevice!);
+      if (state == SonosPlaybackState.playing) {
+        await pause();
+      } else {
+        await _startPlayback();
+      }
+      return;
+    }
+
     if (_isCasting) {
       final castPlaying =
           GoogleCastRemoteMediaClient.instance.mediaStatus?.playerState ==
@@ -591,6 +717,12 @@ class RadioAudioHandler extends BaseAudioHandler {
     await _castSessionSub?.cancel();
     await _castMediaStatusSub?.cancel();
     await _recentSongsController.close();
+    if (isSonos) {
+      try {
+        await SonosService.instance.stop(_sonosDevice!);
+      } catch (_) {}
+      _sonosDevice = null;
+    }
     await super.onTaskRemoved();
   }
 }

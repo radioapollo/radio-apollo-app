@@ -47,6 +47,7 @@
 	<array>
 		<string>_CC1AD845._googlecast._tcp</string>
 		<string>_googlecast._tcp</string>
+		<string>_sonos._tcp</string>
 	</array>
 	<key>NSCalendarsUsageDescription</key>
 	<string>Om dit evenement aan je agenda toe te voegen.</string>
