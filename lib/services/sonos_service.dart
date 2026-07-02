@@ -137,10 +137,25 @@ class SonosService {
       });
 
       // Send the search a couple of times — UDP is lossy and some
-      // speakers answer only the second probe.
-      socket.send(message.codeUnits, InternetAddress(_ssdpAddress), _ssdpPort);
+      // speakers answer only the second probe. Wrapped defensively: on
+      // networks with no route for multicast (e.g. some iOS network
+      // states), send() throws SocketException. Swallow it so discovery
+      // simply finds nothing rather than surfacing an uncaught error.
+      void safeSend() {
+        try {
+          socket!.send(
+            message.codeUnits,
+            InternetAddress(_ssdpAddress),
+            _ssdpPort,
+          );
+        } catch (e) {
+          debugPrint('[SonosService] SSDP send skipped: $e');
+        }
+      }
+
+      safeSend();
       await Future.delayed(const Duration(milliseconds: 300));
-      socket.send(message.codeUnits, InternetAddress(_ssdpAddress), _ssdpPort);
+      safeSend();
 
       // Listen for the discovery window, then wrap up.
       Timer(_discoveryWindow, () {

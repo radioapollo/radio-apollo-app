@@ -154,13 +154,19 @@ class CastButton extends StatelessWidget {
       backgroundColor: Colors.transparent,
       isScrollControlled: true, // let the sheet grow beyond the default cap
       builder: (sheetCtx) {
-        return DraggableScrollableSheet(
-          initialChildSize: 0.35, // opens at ~45% of screen height
-          minChildSize: 0.25, // can be dragged down to 25%
-          maxChildSize: 0.9, // and up to 90%
-          expand: false,
-          builder: (dragCtx, scrollController) {
-            return Container(
+        final scrollController = ScrollController();
+        // The sheet has a fixed white background. AppColors text colors
+        // are theme-aware (white in dark mode) and would be invisible here,
+        // so the sheet uses explicit dark colors (black87/black54). The
+        // light Theme wrapper keeps Material defaults (ListTile, Slider)
+        // light-on-white too.
+        return Theme(
+          data: ThemeData.light(),
+          child: FractionallySizedBox(
+          heightFactor: 0.6, // fixed ~60% of screen height
+          child: Builder(
+            builder: (dragCtx) {
+              return Container(
               decoration: const BoxDecoration(
                 color: AppColors.white,
                 borderRadius: BorderRadius.vertical(
@@ -203,7 +209,7 @@ class CastButton extends StatelessWidget {
                               width: 40,
                               height: 4,
                               decoration: BoxDecoration(
-                                color: AppColors.textSecondary,
+                                color: Colors.black54,
                                 borderRadius: BorderRadius.circular(2),
                               ),
                             ),
@@ -221,7 +227,7 @@ class CastButton extends StatelessWidget {
                               style: TextStyle(
                                 fontSize: 18,
                                 fontWeight: FontWeight.w700,
-                                color: AppColors.textBody,
+                                color: Colors.black87,
                               ),
                             ),
                           ),
@@ -236,7 +242,7 @@ class CastButton extends StatelessWidget {
                                 'Geen apparaten gevonden.\n'
                                 'Zorg dat je op hetzelfde wifi-netwerk zit.',
                                 style: TextStyle(
-                                  color: AppColors.textSecondary,
+                                  color: Colors.black54,
                                   fontSize: 13,
                                 ),
                               ),
@@ -319,8 +325,10 @@ class CastButton extends StatelessWidget {
                   );
                 },
               ),
-            );
-          },
+              );
+            },
+          ),
+        ),
         );
       },
     );
@@ -335,19 +343,19 @@ class CastButton extends StatelessWidget {
     return ListTile(
       leading: Icon(
         isCurrent ? Icons.cast_connected : Icons.cast,
-        color: isCurrent ? AppColors.primaryMid : AppColors.textBody,
+        color: isCurrent ? AppColors.primaryMid : Colors.black87,
       ),
       title: Text(
         device.friendlyName,
         style: TextStyle(
           fontWeight: isCurrent ? FontWeight.w600 : FontWeight.w500,
-          color: AppColors.textBody,
+          color: Colors.black87,
         ),
       ),
       subtitle: (device.modelName != null && device.modelName!.isNotEmpty)
           ? Text(
               device.modelName!,
-              style: TextStyle(color: AppColors.textSecondary, fontSize: 12),
+              style: TextStyle(color: Colors.black54, fontSize: 12),
             )
           : null,
       onTap: isCurrent
@@ -380,18 +388,18 @@ class CastButton extends StatelessWidget {
     return ListTile(
       leading: Icon(
         Icons.speaker,
-        color: isCurrent ? AppColors.primaryMid : AppColors.textBody,
+        color: isCurrent ? AppColors.primaryMid : Colors.black87,
       ),
       title: Text(
         device.roomName,
         style: TextStyle(
           fontWeight: isCurrent ? FontWeight.w600 : FontWeight.w500,
-          color: AppColors.textBody,
+          color: Colors.black87,
         ),
       ),
       subtitle: Text(
         'Sonos',
-        style: TextStyle(color: AppColors.textSecondary, fontSize: 12),
+        style: TextStyle(color: Colors.black54, fontSize: 12),
       ),
       onTap: (isCurrent || audioHandler == null)
           ? null
@@ -466,7 +474,7 @@ class _VolumeSliderState extends State<_VolumeSlider> {
       ),
       child: Row(
         children: [
-          Icon(Icons.volume_down, color: AppColors.textSecondary, size: 22),
+          Icon(Icons.volume_down, color: Colors.black54, size: 22),
           Expanded(
             child: Slider(
               value: _localValue,
@@ -485,7 +493,7 @@ class _VolumeSliderState extends State<_VolumeSlider> {
               },
             ),
           ),
-          Icon(Icons.volume_up, color: AppColors.textSecondary, size: 22),
+          Icon(Icons.volume_up, color: Colors.black54, size: 22),
         ],
       ),
     );
@@ -543,7 +551,7 @@ class _SonosVolumeSliderState extends State<_SonosVolumeSlider> {
       ),
       child: Row(
         children: [
-          Icon(Icons.volume_down, color: AppColors.textSecondary, size: 22),
+          Icon(Icons.volume_down, color: Colors.black54, size: 22),
           Expanded(
             child: Slider(
               value: _localValue,
@@ -561,7 +569,7 @@ class _SonosVolumeSliderState extends State<_SonosVolumeSlider> {
               },
             ),
           ),
-          Icon(Icons.volume_up, color: AppColors.textSecondary, size: 22),
+          Icon(Icons.volume_up, color: Colors.black54, size: 22),
         ],
       ),
     );
