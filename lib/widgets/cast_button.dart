@@ -163,172 +163,176 @@ class CastButton extends StatelessWidget {
         return Theme(
           data: ThemeData.light(),
           child: FractionallySizedBox(
-          heightFactor: 0.6, // fixed ~60% of screen height
-          child: Builder(
-            builder: (dragCtx) {
-              return Container(
-              decoration: const BoxDecoration(
-                color: AppColors.white,
-                borderRadius: BorderRadius.vertical(
-                  top: Radius.circular(AppDimensions.radiusXLarge),
-                ),
-              ),
-              child: StreamBuilder<GoogleCastSession?>(
-                stream: GoogleCastSessionManager.instance.currentSessionStream,
-                initialData: GoogleCastSessionManager.instance.currentSession,
-                builder: (ctx, sessionSnap) {
-                  final session = sessionSnap.data;
-                  final connectedNow =
-                      GoogleCastSessionManager.instance.connectionState ==
-                      GoogleCastConnectState.connected;
+            heightFactor: 0.6, // fixed ~60% of screen height
+            child: Builder(
+              builder: (dragCtx) {
+                return Container(
+                  decoration: const BoxDecoration(
+                    color: AppColors.white,
+                    borderRadius: BorderRadius.vertical(
+                      top: Radius.circular(AppDimensions.radiusXLarge),
+                    ),
+                  ),
+                  child: StreamBuilder<GoogleCastSession?>(
+                    stream:
+                        GoogleCastSessionManager.instance.currentSessionStream,
+                    initialData:
+                        GoogleCastSessionManager.instance.currentSession,
+                    builder: (ctx, sessionSnap) {
+                      final session = sessionSnap.data;
+                      final connectedNow =
+                          GoogleCastSessionManager.instance.connectionState ==
+                          GoogleCastConnectState.connected;
 
-                  final sonosActive = audioHandler?.isSonos == true;
+                      final sonosActive = audioHandler?.isSonos == true;
 
-                  return StreamBuilder<List<SonosDevice>>(
-                    stream: SonosService.instance.devicesStream,
-                    initialData: sonosDevices,
-                    builder: (ctx2, sonosSnap) {
-                      final liveSonos = sonosSnap.data ?? const <SonosDevice>[];
+                      return StreamBuilder<List<SonosDevice>>(
+                        stream: SonosService.instance.devicesStream,
+                        initialData: sonosDevices,
+                        builder: (ctx2, sonosSnap) {
+                          final liveSonos =
+                              sonosSnap.data ?? const <SonosDevice>[];
 
-                      final nothingFound =
-                          devices.isEmpty &&
-                          liveSonos.isEmpty &&
-                          !connectedNow &&
-                          !sonosActive;
+                          final nothingFound =
+                              devices.isEmpty &&
+                              liveSonos.isEmpty &&
+                              !connectedNow &&
+                              !sonosActive;
 
-                      return ListView(
-                        controller: scrollController,
-                        padding: const EdgeInsets.only(
-                          bottom: AppDimensions.paddingLarge,
-                        ),
-                        children: [
-                          // Grab handle
-                          const SizedBox(height: 10),
-                          Center(
-                            child: Container(
-                              width: 40,
-                              height: 4,
-                              decoration: BoxDecoration(
-                                color: Colors.black54,
-                                borderRadius: BorderRadius.circular(2),
-                              ),
+                          return ListView(
+                            controller: scrollController,
+                            padding: const EdgeInsets.only(
+                              bottom: AppDimensions.paddingLarge,
                             ),
-                          ),
-                          const SizedBox(height: AppDimensions.spaceMedium),
-
-                          Padding(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: AppDimensions.paddingXLarge,
-                            ),
-                            child: Text(
-                              (connectedNow || sonosActive)
-                                  ? 'Casten'
-                                  : 'Cast naar apparaat',
-                              style: TextStyle(
-                                fontSize: 18,
-                                fontWeight: FontWeight.w700,
-                                color: Colors.black87,
-                              ),
-                            ),
-                          ),
-                          const SizedBox(height: AppDimensions.spaceMedium),
-
-                          if (nothingFound)
-                            Padding(
-                              padding: EdgeInsets.all(
-                                AppDimensions.paddingXLarge,
-                              ),
-                              child: Text(
-                                'Geen apparaten gevonden.\n'
-                                'Zorg dat je op hetzelfde wifi-netwerk zit.',
-                                style: TextStyle(
-                                  color: Colors.black54,
-                                  fontSize: 13,
+                            children: [
+                              // Grab handle
+                              const SizedBox(height: 10),
+                              Center(
+                                child: Container(
+                                  width: 40,
+                                  height: 4,
+                                  decoration: BoxDecoration(
+                                    color: Colors.black54,
+                                    borderRadius: BorderRadius.circular(2),
+                                  ),
                                 ),
                               ),
-                            )
-                          else ...[
-                            // Chromecast devices
-                            ...devices.map(
-                              (device) => _buildDeviceTile(sheetCtx, device),
-                            ),
-                            // Sonos speakers, in the same list
-                            ...liveSonos.map(
-                              (device) => _buildSonosTile(
-                                sheetCtx,
-                                context,
-                                audioHandler,
-                                device,
-                              ),
-                            ),
-                          ],
+                              const SizedBox(height: AppDimensions.spaceMedium),
 
-                          // Chromecast connected controls
-                          if (connectedNow) ...[
-                            const Divider(height: 24),
-                            _VolumeSlider(session: session),
-                            const Divider(height: 24),
-                            ListTile(
-                              leading: const Icon(
-                                Icons.stop_circle_outlined,
-                                color: AppColors.live,
+                              Padding(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: AppDimensions.paddingXLarge,
+                                ),
+                                child: Text(
+                                  (connectedNow || sonosActive)
+                                      ? 'Casten'
+                                      : 'Cast naar apparaat',
+                                  style: TextStyle(
+                                    fontSize: 18,
+                                    fontWeight: FontWeight.w700,
+                                    color: Colors.black87,
+                                  ),
+                                ),
                               ),
-                              title: const Text(
-                                'Stop casten',
-                                style: TextStyle(color: AppColors.live),
-                              ),
-                              onTap: () async {
-                                Navigator.of(sheetCtx).pop();
-                                try {
-                                  await GoogleCastSessionManager.instance
-                                      .endSessionAndStopCasting();
-                                } catch (e) {
-                                  debugPrint(
-                                    '[CastButton] End session failed: $e',
-                                  );
-                                }
-                              },
-                            ),
-                          ],
+                              const SizedBox(height: AppDimensions.spaceMedium),
 
-                          // Sonos connected controls
-                          if (sonosActive &&
-                              !connectedNow &&
-                              audioHandler != null) ...[
-                            const Divider(height: 24),
-                            _SonosVolumeSlider(audioHandler: audioHandler),
-                            const Divider(height: 24),
-                            ListTile(
-                              leading: const Icon(
-                                Icons.stop_circle_outlined,
-                                color: AppColors.live,
-                              ),
-                              title: const Text(
-                                'Stop afspelen',
-                                style: TextStyle(color: AppColors.live),
-                              ),
-                              onTap: () async {
-                                Navigator.of(sheetCtx).pop();
-                                try {
-                                  await audioHandler.disconnectSonos();
-                                } catch (e) {
-                                  debugPrint(
-                                    '[CastButton] Sonos disconnect failed: $e',
-                                  );
-                                }
-                              },
-                            ),
-                          ],
-                        ],
+                              if (nothingFound)
+                                Padding(
+                                  padding: EdgeInsets.all(
+                                    AppDimensions.paddingXLarge,
+                                  ),
+                                  child: Text(
+                                    'Geen apparaten gevonden.\n'
+                                    'Zorg dat je op hetzelfde wifi-netwerk zit.',
+                                    style: TextStyle(
+                                      color: Colors.black54,
+                                      fontSize: 13,
+                                    ),
+                                  ),
+                                )
+                              else ...[
+                                // Chromecast devices
+                                ...devices.map(
+                                  (device) =>
+                                      _buildDeviceTile(sheetCtx, device),
+                                ),
+                                // Sonos speakers, in the same list
+                                ...liveSonos.map(
+                                  (device) => _buildSonosTile(
+                                    sheetCtx,
+                                    context,
+                                    audioHandler,
+                                    device,
+                                  ),
+                                ),
+                              ],
+
+                              // Chromecast connected controls
+                              if (connectedNow) ...[
+                                const Divider(height: 24),
+                                _VolumeSlider(session: session),
+                                const Divider(height: 24),
+                                ListTile(
+                                  leading: const Icon(
+                                    Icons.stop_circle_outlined,
+                                    color: AppColors.live,
+                                  ),
+                                  title: const Text(
+                                    'Stop casten',
+                                    style: TextStyle(color: AppColors.live),
+                                  ),
+                                  onTap: () async {
+                                    Navigator.of(sheetCtx).pop();
+                                    try {
+                                      await GoogleCastSessionManager.instance
+                                          .endSessionAndStopCasting();
+                                    } catch (e) {
+                                      debugPrint(
+                                        '[CastButton] End session failed: $e',
+                                      );
+                                    }
+                                  },
+                                ),
+                              ],
+
+                              // Sonos connected controls
+                              if (sonosActive &&
+                                  !connectedNow &&
+                                  audioHandler != null) ...[
+                                const Divider(height: 24),
+                                _SonosVolumeSlider(audioHandler: audioHandler),
+                                const Divider(height: 24),
+                                ListTile(
+                                  leading: const Icon(
+                                    Icons.stop_circle_outlined,
+                                    color: AppColors.live,
+                                  ),
+                                  title: const Text(
+                                    'Stop afspelen',
+                                    style: TextStyle(color: AppColors.live),
+                                  ),
+                                  onTap: () async {
+                                    Navigator.of(sheetCtx).pop();
+                                    try {
+                                      await audioHandler.disconnectSonos();
+                                    } catch (e) {
+                                      debugPrint(
+                                        '[CastButton] Sonos disconnect failed: $e',
+                                      );
+                                    }
+                                  },
+                                ),
+                              ],
+                            ],
+                          );
+                        },
                       );
                     },
-                  );
-                },
-              ),
-              );
-            },
+                  ),
+                );
+              },
+            ),
           ),
-        ),
         );
       },
     );
