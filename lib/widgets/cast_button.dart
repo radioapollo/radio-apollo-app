@@ -1,23 +1,24 @@
 /* Cast Button Widget
 
-   An always-available casting button for the home screen player.
+   An always-visible casting button for the home screen player.
 
-   Unlike `GoogleCastMiniController` — which only becomes visible once
-   a Cast session is already active — this button shows as soon as at
-   least one Cast device (Chromecast) OR one Sonos speaker has been
-   discovered on the local network, so the user has a clear affordance
-   to start casting.
+   Tapping it opens a draggable bottom sheet listing discovered
+   Chromecasts AND Sonos speakers together. Picking a Chromecast starts
+   a Cast session; picking a Sonos speaker hands off to the audio
+   handler, which loads the radio stream onto the speaker over its local
+   UPnP API.
+
+   The sheet spans the full width, sits flush to the bottom edges, and
+   has a grab handle at the top so the user can drag it taller or
+   shorter (DraggableScrollableSheet). Its content scrolls, which keeps
+   long device lists usable.
 
    Behaviour:
    - Hidden entirely on web (casting is mobile-only here).
-   - Hidden when there are no discovered devices (Chromecast or Sonos)
-     AND no active session.
-   - Icons.cast when disconnected, Icons.cast_connected when a session
-     is active. Both are tappable.
-   - Tap → opens a bottom sheet listing discovered Chromecasts AND Sonos
-     speakers together. Picking a Chromecast starts a Cast session;
-     picking a Sonos speaker hands off to the audio handler, which loads
-     the radio stream onto the speaker over its local UPnP API.
+   - Otherwise always shown. If no devices are found, the sheet explains
+     that rather than the button silently vanishing.
+   - Icons.cast when disconnected, Icons.cast_connected when a Chromecast
+     session or a Sonos speaker is active.
    - When connected, the sheet shows a volume slider and a stop action.
 
    Chromecast vs Sonos
@@ -25,25 +26,17 @@
    Chromecast has a full SDK (sessions, media status, volume) via
    flutter_chrome_cast. Sonos has none of that — it's driven directly
    through SonosService (SSDP discovery + SOAP control). The two paths
-   are deliberately kept separate here: the Chromecast code below is
-   exactly as it was, and the Sonos code sits alongside it. If Sonos
-   fails on a given network, the Chromecast experience is unaffected.
+   are kept separate: the Chromecast code is unchanged, the Sonos code
+   sits alongside it. If Sonos fails on a network, Chromecast is
+   unaffected.
 
    Why an in-sheet volume slider?
-   The phone's hardware volume buttons do not reliably control the
-   Cast device's volume on Android, because the audio_service
-   foreground notification holds a higher-priority claim on the
-   media volume keys than the Cast SDK's media router. Rather than
-   fight Android's media routing rules, we expose a slider here that
-   talks directly to the Cast SDK via
-   `GoogleCastSessionManager.instance.setDeviceVolume(...)`. This
-   works the same on iOS and Android. The Sonos slider is analogous,
-   talking to the speaker via SonosService.
-
-   Discovery is started/stopped by the parent app lifecycle (see
-   `main.dart`) for Chromecast; Sonos discovery is (re)triggered when
-   this button builds, since Sonos has no long-running discovery
-   manager of its own.
+   The phone's hardware volume buttons do not reliably control the Cast
+   device's volume on Android, because the audio_service foreground
+   notification holds a higher-priority claim on the media volume keys
+   than the Cast SDK's media router. So we expose a slider that talks
+   directly to the Cast SDK. The Sonos slider is analogous, talking to
+   the speaker via SonosService.
 */
 
 import 'package:flutter/foundation.dart';
@@ -95,20 +88,22 @@ class CastButton extends StatelessWidget {
                     GoogleCastSessionManager.instance.connectionState ==
                     GoogleCastConnectState.connected;
 
-                final sonosActive = ServiceProvider.of(
-                  context,
-                ).audioHandler.isSonos;
-
-                // Show the button if any target exists or anything is
-                // currently active.
-                final hasAnyDevice =
-                    devices.isNotEmpty || sonosDevices.isNotEmpty;
-                if (!hasAnyDevice && !isConnected && !sonosActive) {
-                  return const SizedBox.shrink();
+                // Defensive: if the ServiceProvider can't be found from
+                // here, treat Sonos as inactive rather than throwing and
+                // blanking the button.
+                bool sonosActive = false;
+                try {
+                  sonosActive = ServiceProvider.of(
+                    context,
+                  ).audioHandler.isSonos;
+                } catch (_) {
+                  sonosActive = false;
                 }
 
                 final showConnected = isConnected || sonosActive;
 
+                // Always visible (except on web). Device presence only
+                // affects the sheet contents, not the icon.
                 return IconButton(
                   iconSize: size,
                   padding: EdgeInsets.zero,
@@ -145,158 +140,185 @@ class CastButton extends StatelessWidget {
     List<SonosDevice> sonosDevices,
     bool isConnected,
   ) {
-    // Capture the audio handler from a context that sits under
-    // ServiceProvider (the sheet's own builder context does not).
-    final audioHandler = ServiceProvider.of(context).audioHandler;
+    // Capture the audio handler from a context under ServiceProvider.
+    // Defensive: may be null if not found.
+    dynamic audioHandler;
+    try {
+      audioHandler = ServiceProvider.of(context).audioHandler;
+    } catch (_) {
+      audioHandler = null;
+    }
 
     showModalBottomSheet<void>(
       context: context,
-      backgroundColor: AppColors.white,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(
-          top: Radius.circular(AppDimensions.radiusXLarge),
-        ),
-      ),
+      backgroundColor: Colors.transparent,
+      isScrollControlled: true, // let the sheet grow beyond the default cap
       builder: (sheetCtx) {
-        return StreamBuilder<GoogleCastSession?>(
-          stream: GoogleCastSessionManager.instance.currentSessionStream,
-          initialData: GoogleCastSessionManager.instance.currentSession,
-          builder: (ctx, sessionSnap) {
-            final session = sessionSnap.data;
-            final connectedNow =
-                GoogleCastSessionManager.instance.connectionState ==
-                GoogleCastConnectState.connected;
+        return DraggableScrollableSheet(
+          initialChildSize: 0.35, // opens at ~45% of screen height
+          minChildSize: 0.25, // can be dragged down to 25%
+          maxChildSize: 0.9, // and up to 90%
+          expand: false,
+          builder: (dragCtx, scrollController) {
+            return Container(
+              decoration: const BoxDecoration(
+                color: AppColors.white,
+                borderRadius: BorderRadius.vertical(
+                  top: Radius.circular(AppDimensions.radiusXLarge),
+                ),
+              ),
+              child: StreamBuilder<GoogleCastSession?>(
+                stream: GoogleCastSessionManager.instance.currentSessionStream,
+                initialData: GoogleCastSessionManager.instance.currentSession,
+                builder: (ctx, sessionSnap) {
+                  final session = sessionSnap.data;
+                  final connectedNow =
+                      GoogleCastSessionManager.instance.connectionState ==
+                      GoogleCastConnectState.connected;
 
-            final sonosActive = audioHandler.isSonos;
+                  final sonosActive = audioHandler?.isSonos == true;
 
-            return StreamBuilder<List<SonosDevice>>(
-              stream: SonosService.instance.devicesStream,
-              initialData: sonosDevices,
-              builder: (ctx2, sonosSnap) {
-                final liveSonos = sonosSnap.data ?? const <SonosDevice>[];
+                  return StreamBuilder<List<SonosDevice>>(
+                    stream: SonosService.instance.devicesStream,
+                    initialData: sonosDevices,
+                    builder: (ctx2, sonosSnap) {
+                      final liveSonos = sonosSnap.data ?? const <SonosDevice>[];
 
-                final nothingFound =
-                    devices.isEmpty &&
-                    liveSonos.isEmpty &&
-                    !connectedNow &&
-                    !sonosActive;
+                      final nothingFound =
+                          devices.isEmpty &&
+                          liveSonos.isEmpty &&
+                          !connectedNow &&
+                          !sonosActive;
 
-                return SafeArea(
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(
-                      vertical: AppDimensions.paddingLarge,
-                    ),
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Padding(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: AppDimensions.paddingXLarge,
-                          ),
-                          child: Text(
-                            (connectedNow || sonosActive)
-                                ? 'Casten'
-                                : 'Cast naar apparaat',
-                            style: TextStyle(
-                              fontSize: 18,
-                              fontWeight: FontWeight.w700,
-                              color: AppColors.textBody,
-                            ),
-                          ),
+                      return ListView(
+                        controller: scrollController,
+                        padding: const EdgeInsets.only(
+                          bottom: AppDimensions.paddingLarge,
                         ),
-                        const SizedBox(height: AppDimensions.spaceMedium),
-
-                        if (nothingFound)
-                          Padding(
-                            padding: EdgeInsets.all(
-                              AppDimensions.paddingXLarge,
-                            ),
-                            child: Text(
-                              'Geen apparaten gevonden.\n'
-                              'Zorg dat je op hetzelfde wifi-netwerk zit.',
-                              style: TextStyle(
+                        children: [
+                          // Grab handle
+                          const SizedBox(height: 10),
+                          Center(
+                            child: Container(
+                              width: 40,
+                              height: 4,
+                              decoration: BoxDecoration(
                                 color: AppColors.textSecondary,
-                                fontSize: 13,
+                                borderRadius: BorderRadius.circular(2),
                               ),
                             ),
-                          )
-                        else ...[
-                          // Chromecast devices
-                          ...devices.map(
-                            (device) => _buildDeviceTile(sheetCtx, device),
                           ),
-                          // Sonos speakers, in the same list
-                          ...liveSonos.map(
-                            (device) => _buildSonosTile(
-                              sheetCtx,
-                              context,
-                              audioHandler,
-                              device,
-                            ),
-                          ),
-                        ],
+                          const SizedBox(height: AppDimensions.spaceMedium),
 
-                        // Chromecast connected controls
-                        if (connectedNow) ...[
-                          const Divider(height: 24),
-                          _VolumeSlider(session: session),
-                          const Divider(height: 24),
-                          ListTile(
-                            leading: const Icon(
-                              Icons.stop_circle_outlined,
-                              color: AppColors.live,
+                          Padding(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: AppDimensions.paddingXLarge,
                             ),
-                            title: const Text(
-                              'Stop casten',
-                              style: TextStyle(color: AppColors.live),
+                            child: Text(
+                              (connectedNow || sonosActive)
+                                  ? 'Casten'
+                                  : 'Cast naar apparaat',
+                              style: TextStyle(
+                                fontSize: 18,
+                                fontWeight: FontWeight.w700,
+                                color: AppColors.textBody,
+                              ),
                             ),
-                            onTap: () async {
-                              Navigator.of(sheetCtx).pop();
-                              try {
-                                await GoogleCastSessionManager.instance
-                                    .endSessionAndStopCasting();
-                              } catch (e) {
-                                debugPrint(
-                                  '[CastButton] End session failed: $e',
-                                );
-                              }
-                            },
                           ),
-                        ],
+                          const SizedBox(height: AppDimensions.spaceMedium),
 
-                        // Sonos connected controls (mutually exclusive
-                        // with a Chromecast session in practice).
-                        if (sonosActive && !connectedNow) ...[
-                          const Divider(height: 24),
-                          _SonosVolumeSlider(audioHandler: audioHandler),
-                          const Divider(height: 24),
-                          ListTile(
-                            leading: const Icon(
-                              Icons.stop_circle_outlined,
-                              color: AppColors.live,
+                          if (nothingFound)
+                            Padding(
+                              padding: EdgeInsets.all(
+                                AppDimensions.paddingXLarge,
+                              ),
+                              child: Text(
+                                'Geen apparaten gevonden.\n'
+                                'Zorg dat je op hetzelfde wifi-netwerk zit.',
+                                style: TextStyle(
+                                  color: AppColors.textSecondary,
+                                  fontSize: 13,
+                                ),
+                              ),
+                            )
+                          else ...[
+                            // Chromecast devices
+                            ...devices.map(
+                              (device) => _buildDeviceTile(sheetCtx, device),
                             ),
-                            title: const Text(
-                              'Stop afspelen',
-                              style: TextStyle(color: AppColors.live),
+                            // Sonos speakers, in the same list
+                            ...liveSonos.map(
+                              (device) => _buildSonosTile(
+                                sheetCtx,
+                                context,
+                                audioHandler,
+                                device,
+                              ),
                             ),
-                            onTap: () async {
-                              Navigator.of(sheetCtx).pop();
-                              try {
-                                await audioHandler.disconnectSonos();
-                              } catch (e) {
-                                debugPrint(
-                                  '[CastButton] Sonos disconnect failed: $e',
-                                );
-                              }
-                            },
-                          ),
+                          ],
+
+                          // Chromecast connected controls
+                          if (connectedNow) ...[
+                            const Divider(height: 24),
+                            _VolumeSlider(session: session),
+                            const Divider(height: 24),
+                            ListTile(
+                              leading: const Icon(
+                                Icons.stop_circle_outlined,
+                                color: AppColors.live,
+                              ),
+                              title: const Text(
+                                'Stop casten',
+                                style: TextStyle(color: AppColors.live),
+                              ),
+                              onTap: () async {
+                                Navigator.of(sheetCtx).pop();
+                                try {
+                                  await GoogleCastSessionManager.instance
+                                      .endSessionAndStopCasting();
+                                } catch (e) {
+                                  debugPrint(
+                                    '[CastButton] End session failed: $e',
+                                  );
+                                }
+                              },
+                            ),
+                          ],
+
+                          // Sonos connected controls
+                          if (sonosActive &&
+                              !connectedNow &&
+                              audioHandler != null) ...[
+                            const Divider(height: 24),
+                            _SonosVolumeSlider(audioHandler: audioHandler),
+                            const Divider(height: 24),
+                            ListTile(
+                              leading: const Icon(
+                                Icons.stop_circle_outlined,
+                                color: AppColors.live,
+                              ),
+                              title: const Text(
+                                'Stop afspelen',
+                                style: TextStyle(color: AppColors.live),
+                              ),
+                              onTap: () async {
+                                Navigator.of(sheetCtx).pop();
+                                try {
+                                  await audioHandler.disconnectSonos();
+                                } catch (e) {
+                                  debugPrint(
+                                    '[CastButton] Sonos disconnect failed: $e',
+                                  );
+                                }
+                              },
+                            ),
+                          ],
                         ],
-                      ],
-                    ),
-                  ),
-                );
-              },
+                      );
+                    },
+                  );
+                },
+              ),
             );
           },
         );
@@ -344,9 +366,6 @@ class CastButton extends StatelessWidget {
   }
 
   // ── Sonos tile ────────────────────────────────────────────────────────────
-  // liveCtx is a context under ServiceProvider (used for the snackbar);
-  // the audioHandler is passed in directly so we don't depend on the
-  // sheet's own context for the lookup.
 
   Widget _buildSonosTile(
     BuildContext sheetCtx,
@@ -355,8 +374,8 @@ class CastButton extends StatelessWidget {
     SonosDevice device,
   ) {
     final isCurrent =
-        audioHandler.isSonos == true &&
-        audioHandler.sonosDevice?.uuid == device.uuid;
+        audioHandler?.isSonos == true &&
+        audioHandler?.sonosDevice?.uuid == device.uuid;
 
     return ListTile(
       leading: Icon(
@@ -374,7 +393,7 @@ class CastButton extends StatelessWidget {
         'Sonos',
         style: TextStyle(color: AppColors.textSecondary, fontSize: 12),
       ),
-      onTap: isCurrent
+      onTap: (isCurrent || audioHandler == null)
           ? null
           : () async {
               Navigator.of(sheetCtx).pop();
