@@ -147,3 +147,4 @@ lib/functions/test
 # Swift Package Manager local state
 ios/Runner.xcodeproj/project.xcworkspace/xcshareddata/swiftpm/
 ios/Runner.xcworkspace/xcshareddata/swiftpm/
+release-ios.sh
