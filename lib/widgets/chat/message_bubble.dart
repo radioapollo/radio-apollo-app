@@ -62,6 +62,7 @@ import '../../services/chat/user_service.dart';
 import '../../theme/app_theme.dart';
 import 'flag_menu.dart';
 import 'message_actions_sheet.dart';
+import 'dart:ui' show FontFeature;
 
 class MessageBubble extends StatefulWidget {
   final Message message;
@@ -72,6 +73,39 @@ class MessageBubble extends StatefulWidget {
   @override
   State<MessageBubble> createState() => _MessageBubbleState();
 }
+
+  // ── Timestamp (time bold, date softer) ───────────────────────────────────
+
+  Widget _buildTimestamp(String raw) {
+    final parts = raw.split(' ');
+    final time = parts.first;
+    final date = parts.length > 1 ? parts[1] : '';
+
+    return Text.rich(
+      TextSpan(
+        children: [
+          TextSpan(
+            text: time,
+            style: const TextStyle(
+              color: AppColors.usernameLabel,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+          if (date.isNotEmpty)
+            TextSpan(
+              text: '  $date',
+              style: TextStyle(
+                color: AppColors.usernameLabel.withValues(alpha: 0.55),
+              ),
+            ),
+        ],
+      ),
+      style: const TextStyle(
+        fontSize: 10.5,
+        fontFeatures: [FontFeature.tabularFigures()],
+      ),
+    );
+  }
 
 class _MessageBubbleState extends State<MessageBubble> {
   // The visible like state depends on which identity the viewer is
@@ -166,16 +200,26 @@ class _MessageBubbleState extends State<MessageBubble> {
             if (!isUser && message.username != null)
               Padding(
                 padding: const EdgeInsets.only(
-                  left: AppDimensions.spaceSmall,
+                  left: 4,
+                  right: 4,
                   bottom: AppDimensions.spaceXSmall,
                 ),
-                child: Text(
-                  message.username!,
-                  style: const TextStyle(
-                    color: AppColors.usernameLabel,
-                    fontSize: 11,
-                    fontWeight: FontWeight.w600,
-                  ),
+                child: Row(
+                  mainAxisSize: isUser ? MainAxisSize.min : MainAxisSize.max,
+                  children: [
+                    if (!isUser && message.username != null)
+                      Expanded(
+                        child: Text(
+                          message.username!,
+                          style: const TextStyle(
+                            color: AppColors.usernameLabel,
+                            fontSize: 11,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ),
+                    _buildTimestamp(message.time),
+                  ],
                 ),
               ),
 

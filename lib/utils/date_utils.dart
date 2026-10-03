@@ -34,6 +34,12 @@ class AppDateUtils {
     return '${dt.hour.toString().padLeft(2, '0')}:${dt.minute.toString().padLeft(2, '0')}';
   }
 
+  static String formatTimeAndDate(DateTime dt) {
+    final d = dt.day.toString().padLeft(2, '0');
+    final m = dt.month.toString().padLeft(2, '0');
+    return '${formatTime(dt)} $d/$m';
+  }
+
   // ── Schedule time helpers ─────────────────────────────────────────────────
 
   static String formatScheduleTime(String time) {

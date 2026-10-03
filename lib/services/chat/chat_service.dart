@@ -105,7 +105,7 @@ class ChatService {
           return Message.fromFirestoreData(
             docId: doc.id,
             data: data,
-            time: AppDateUtils.formatTime(dt),
+            time: AppDateUtils.formatTimeAndDate(dt),
             localUsername: localUsername,
             isAdminViewer: isPrivilegedViewer,
           );
